@@ -351,10 +351,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 <div id="apikey-modal" class="modal-overlay" style="display:none;z-index:3000">
   <div class="modal-card" style="max-width:440px">
     <h3 style="margin-bottom:8px">Configura API Key</h3>
-    <p class="text-muted" style="margin-bottom:20px;font-size:13px">Per usare AI Coach hai bisogno di una Anthropic API key. Non viene mai trasmessa ad altri server.</p>
+    <p class="text-muted" style="margin-bottom:20px;font-size:13px">Per usare AI Coach hai bisogno di una <strong>Google Gemini API key</strong> (gratuita). Vai su <strong>aistudio.google.com</strong> → Get API key. Non viene mai trasmessa ad altri server.</p>
     <div class="form-group">
-      <label>Anthropic API Key</label>
-      <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+      <label>Gemini API Key</label>
+      <input type="password" id="api-key-input" placeholder="AIza..." />
     </div>
     <div class="btn-row" style="margin-top:16px">
       <button class="btn-primary" onclick="saveApiKey()">Salva</button>
@@ -593,22 +593,21 @@ async function callClaude(systemPrompt, userMessage, containerId) {
   if (containerId) showSkeleton(containerId);
   AppState.aiCallCount = (AppState.aiCallCount||0) + 1;
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: systemPrompt, messages: [{ role:'user', content: userMessage }] })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        generationConfig: { maxOutputTokens: 1000 }
+      })
     });
     if (!resp.ok) {
       const err = await resp.json().catch(()=>({}));
       throw new Error(err.error?.message || `HTTP ${resp.status}`);
     }
     const data = await resp.json();
-    const text = data.content[0].text;
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     if (containerId) {
       const el = document.getElementById(containerId);
       if (el) el.innerHTML = `<p style="font-size:14px;line-height:1.7">${text.replace(/\n/g,'<br>')}</p>`;
@@ -1258,31 +1257,25 @@ async function loadDailyTip() {
     <div class="skeleton" style="height:12px;border-radius:6px;width:90%"></div>`;
 
   try {
-    const apiKey = AppState.settings?.apiKey || '';
+    const apiKey = AppState.apiKey || localStorage.getItem('proovd_api_key') || '';
     if (!apiKey) {
       container.innerHTML = `<span style="color:#777;font-size:13px">Configura la tua API key per ricevere consigli AI personalizzati.</span>`;
       return;
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 200,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }]
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        generationConfig: { maxOutputTokens: 200 }
       })
     });
 
     if (!response.ok) throw new Error('API error ' + response.status);
     const data = await response.json();
-    const text = data.content?.[0]?.text || 'Nessun consiglio disponibile.';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessun consiglio disponibile.';
     container.innerHTML = `<span style="font-size:13px;line-height:1.7">${text}</span>`;
   } catch (e) {
     container.innerHTML = `
@@ -1806,7 +1799,7 @@ async function analyzeCreativeAI() {
 
   const c = AppState.activeCampaign;
   const creative = c.creative;
-  const apiKey = AppState.settings?.apiKey || '';
+  const apiKey = AppState.apiKey || localStorage.getItem('proovd_api_key') || '';
 
   feedback.innerHTML = `
     <div class="skeleton" style="height:12px;border-radius:6px;margin-bottom:6px"></div>
@@ -1822,13 +1815,17 @@ async function analyzeCreativeAI() {
   const userMessage = `Piattaforma: ${getPlatformName(c.platform)}. Creatività: ${creativeDesc}`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:250, system:systemPrompt, messages:[{role:'user',content:userMessage}] })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        generationConfig: { maxOutputTokens: 250 }
+      })
     });
     const data = await response.json();
-    const text = data.content?.[0]?.text || 'Nessun feedback disponibile.';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessun feedback disponibile.';
     feedback.innerHTML = `<div style="background:#AAFF0011;border:1px solid #AAFF0033;border-radius:12px;padding:12px;font-size:12px;line-height:1.6">${text.replace(/\n/g,'<br>')}</div>`;
   } catch(e) {
     feedback.innerHTML = `<p style="font-size:12px;color:#FF4444">Errore AI. <button onclick="analyzeCreativeAI()" class="btn-secondary" style="font-size:11px;padding:2px 8px">Riprova</button></p>`;
@@ -2203,7 +2200,7 @@ async function analyzeCampaignAI() {
   if (!feedback) return;
 
   const c = AppState.activeCampaign;
-  const apiKey = AppState.settings?.apiKey || '';
+  const apiKey = AppState.apiKey || localStorage.getItem('proovd_api_key') || '';
 
   feedback.innerHTML = `
     <div class="skeleton" style="height:12px;border-radius:6px;margin-bottom:8px"></div>
@@ -2228,18 +2225,17 @@ async function analyzeCampaignAI() {
   };
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 350,
-        system: 'Sei un esperto senior di digital marketing. Analizza la campagna e fornisci: 2 punti di forza con ✅, 1-2 rischi con ⚠️, e 1 consiglio finale con 💡. Sii conciso. Rispondi in italiano.',
-        messages: [{ role: 'user', content: `Analizza questa campagna: ${JSON.stringify(brief)}` }]
+        systemInstruction: { parts: [{ text: 'Sei un esperto senior di digital marketing. Analizza la campagna e fornisci: 2 punti di forza con ✅, 1-2 rischi con ⚠️, e 1 consiglio finale con 💡. Sii conciso. Rispondi in italiano.' }] },
+        contents: [{ role: 'user', parts: [{ text: `Analizza questa campagna: ${JSON.stringify(brief)}` }] }],
+        generationConfig: { maxOutputTokens: 350 }
       })
     });
     const data = await response.json();
-    const text = data.content?.[0]?.text || '';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     feedback.innerHTML = `<div style="font-size:13px;line-height:1.7;color:#ccc">${text.replace(/\n/g,'<br>')}</div>`;
   } catch(e) {
     feedback.innerHTML = `<p style="font-size:12px;color:#FF4444">Errore AI. <button onclick="analyzeCampaignAI()" class="btn-secondary" style="font-size:11px;padding:2px 8px">Riprova</button></p>`;
