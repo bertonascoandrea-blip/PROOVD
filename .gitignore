@@ -1,1 +1,6 @@
-part*.html\npart*.js
+part1_shell.html
+part2_modules.js
+part3_modules.js
+part4_modules.js
+part5_modules.js
+.claude/
