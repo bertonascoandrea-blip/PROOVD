@@ -615,11 +615,12 @@ async function callClaude(systemPrompt, userMessage, containerId) {
     checkBadges();
     return text;
   } catch(e) {
+    console.error('[PROOVD AI]', e);
     if (containerId) {
       const el = document.getElementById(containerId);
       if (el) el.innerHTML = `<div style="color:var(--red);font-size:13px">⚠️ Errore: ${e.message}<br><button class="btn-secondary btn-sm" style="margin-top:8px" onclick="callClaude(\`${systemPrompt.replace(/`/g,"'")}\`,\`${userMessage.replace(/`/g,"'")}\`,'${containerId}')">Riprova</button></div>`;
     }
-    return null;
+    return { error: e.message };
   }
 }
 const COACH_SYSTEM = {
@@ -661,8 +662,8 @@ async function sendCoachMessage() {
   document.getElementById('coach-messages').appendChild(thinking);
   const result = await callClaude(system, msg, null);
   thinking.remove();
-  if (result) addCoachMessage('ai', result);
-  else addCoachMessage('ai', 'Errore nella risposta. Verifica la tua API key.');
+  if (result && !result.error) addCoachMessage('ai', result);
+  else addCoachMessage('ai', `❌ Errore: ${result?.error || 'risposta vuota'}. Apri la Console del browser (F12) per i dettagli.`);
 }
 
 // === SIMULATION ENGINE ===
