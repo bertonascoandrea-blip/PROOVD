@@ -5227,21 +5227,7 @@ function updateProovdScore(dimension, delta) {
   checkBadges();
 }
 
-// BADGE SYSTEM
-const ALL_BADGES = [
-  { id: 'first_launch', emoji: '🚀', name: 'First Launch', desc: 'Hai lanciato la tua prima campagna', condition: s => (s.campaigns || []).length >= 1 },
-  { id: 'data_nerd', emoji: '📊', name: 'Data Nerd', desc: 'Hai usato Analytics Lab', condition: s => (s.proovdDimensions?.dataLiteracy || 0) >= 10 },
-  { id: 'roas_master', emoji: '💰', name: 'ROAS Master', desc: 'Hai ottenuto ROAS > 4x su una campagna', condition: s => (s.campaigns || []).some(c => c.roas >= 4) },
-  { id: 'precision', emoji: '🎯', name: 'Precision Targeting', desc: 'Hai configurato targeting avanzato', condition: s => (s.campaigns || []).some(c => c.targeting?.advanced) },
-  { id: 'ai_collaborator', emoji: '🤖', name: 'AI Collaborator', desc: 'Hai consultato AI Coach 10 volte', condition: s => (s.aiCallCount || 0) >= 10 },
-  { id: 'report_ready', emoji: '📈', name: 'Report Ready', desc: 'Hai generato il tuo primo report', condition: s => (s.reportsGenerated || 0) >= 1 },
-  { id: 'multi_platform', emoji: '🌐', name: 'Multi-Platform', desc: 'Hai lanciato campagne su 3+ piattaforme', condition: s => new Set((s.campaigns || []).map(c => c.platform)).size >= 3 },
-  { id: 'interviewer', emoji: '🎤', name: 'Interview Pro', desc: 'Hai completato un colloquio con score 8+', condition: s => (s.proovdDimensions?.interview || 0) >= 80 },
-  { id: 'optimizer', emoji: '⚡', name: 'Speed Optimizer', desc: 'Hai ottimizzato una campagna in tempo', condition: s => (s.proovdDimensions?.optimization || 0) >= 20 },
-  { id: 'token_grower', emoji: '💎', name: 'Token Grower', desc: 'Hai superato 600 token', condition: s => (s.tokens || 500) >= 600 },
-  { id: 'persona_builder', emoji: '👤', name: 'Persona Expert', desc: 'Hai creato 2+ buyer personas', condition: s => (s.personas?.length || 0) >= 2 },
-  { id: 'full_funnel', emoji: '🏆', name: 'Full Funnel', desc: 'Hai mappato un customer journey completo', condition: s => Object.keys(s.journey || {}).length >= 4 },
-];
+// BADGE SYSTEM (uses ALL_BADGES defined in shell)
 
 function checkBadges() {
   if (!AppState.badges) AppState.badges = [];
