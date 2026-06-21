@@ -459,7 +459,6 @@ const DEFAULT_STATE = {
   proovdDimensions: { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 },
   aiCallCount: 0, reportsGenerated: 0, flashcardXP: 0,
   coachHistory: [], currentModule: 'dashboard',
-  simulatedDay: 1, previousTokens: 500, activityLog: [],
 };
 let AppState = { ...DEFAULT_STATE };
 
@@ -499,18 +498,6 @@ function showToast(msg, type='info') {
   toast.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
   document.getElementById('toast-container').appendChild(toast);
   setTimeout(() => { toast.style.animation = 'toastOut 200ms ease forwards'; setTimeout(() => toast.remove(), 200); }, 4000);
-}
-
-// === ACTIVITY LOG ===
-function logActivity(text, type='analytics') {
-  if (!AppState.activityLog) AppState.activityLog = [];
-  AppState.activityLog.push({
-    text,
-    type,
-    time: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-  });
-  if (AppState.activityLog.length > 20) AppState.activityLog.shift();
-  saveState();
 }
 
 // === TOOLTIP ===
@@ -790,25 +777,17 @@ function startSimulation() {
   _simInterval = setInterval(() => {
     if (document.visibilityState === 'hidden') return;
     let updated = false;
-    AppState.simulatedDay = (AppState.simulatedDay || 1) + 1;
     AppState.campaigns = AppState.campaigns.map(c => {
       if (c.status !== 'active') return c;
       const next = simulateCampaignDay(c);
       if (next.status === 'completed' && c.status === 'active') {
-        if (next.roas > 3) {
-          earnTokens(c.budget * 0.2, `Bonus ROI — ${c.name}`);
-          logActivity(`🔥 ${c.name}: ROAS eccellente ${next.roas.toFixed(2)}x!`, 'bonus');
-        }
-        if (next.roas < 1) {
-          showToast(`⚠️ "${c.name}" ha avuto un ROI negativo`, 'warning');
-          logActivity(`${c.name}: ROI negativo ${next.roas.toFixed(2)}x`, 'warning');
-        }
+        if (next.roas > 3) earnTokens(c.budget * 0.2, `Bonus ROI — ${c.name}`);
+        if (next.roas < 1) showToast(`⚠️ "${c.name}" ha avuto un ROI negativo`, 'warning');
         checkBadges();
       }
       updated = true;
       return next;
     });
-    AppState.previousTokens = AppState.tokens;
     if (updated) { saveState(); if (AppState.currentModule==='dashboard') renderDashboard(); if (AppState.currentModule==='live') renderLiveManager(); }
   }, 10000);
 }
@@ -1090,33 +1069,12 @@ function renderDashboard() {
   view.innerHTML = `
     <div class="dashboard-header">
       <div>
-        <h1 style="font-size:28px;font-weight:700;margin:0 0 4px">Benvenuto, ${AppState.userName} 👋</h1>
-        <p style="color:#777;margin:0">📅 Giorno simulato ${AppState.simulatedDay || 1} • ${campaigns.length} campagne attive</p>
+        <h1 style="font-size:28px;font-weight:700;margin:0 0 4px">Benvenuto, Marketer 👋</h1>
+        <p style="color:#777;margin:0">Il tuo studio di digital marketing virtuale</p>
       </div>
       <button class="btn-primary" onclick="navigateTo('builder')" style="display:flex;align-items:center;gap:8px">
         <span>+</span> Nuova Campagna
       </button>
-    </div>
-
-    <div class="card" style="margin-bottom:16px;padding:12px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;background:#111111;border:1px solid #2A2A2A">
-      <div style="display:flex;align-items:center;gap:12px;border-right:1px solid #2A2A2A;padding-right:16px">
-        <div>
-          <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px">Giorni rimanenti</div>
-          <div style="font-size:18px;font-weight:700">${Math.max(0, 30 - (AppState.simulatedDay || 1))} giorni</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;border-right:1px solid #2A2A2A;padding-right:16px">
-        <div>
-          <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px">Budget investito</div>
-          <div style="font-size:18px;font-weight:700">${formatCurrency((AppState.campaigns || []).reduce((s,c)=>s+(c.spent||0),0))}</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div>
-          <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px">Conversioni totali</div>
-          <div style="font-size:18px;font-weight:700">${(AppState.campaigns || []).reduce((s,c)=>s+(c.conversions||0),0)}</div>
-        </div>
-      </div>
     </div>
 
     <div class="kpi-grid" id="kpi-grid"></div>
@@ -1146,19 +1104,12 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:16px">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h3 style="margin:0;font-size:16px;font-weight:600">Campagne Attive</h3>
-          <span style="font-size:12px;color:#777">${campaigns.length} campagne</span>
-        </div>
-        <div id="active-campaigns-list"></div>
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 style="margin:0;font-size:16px;font-weight:600">Campagne Attive</h3>
+        <span style="font-size:12px;color:#777">${campaigns.length} campagne</span>
       </div>
-
-      <div class="card">
-        <h3 style="margin:0 0 16px;font-size:16px;font-weight:600">Feed Attività</h3>
-        <div id="activity-feed" style="max-height:300px;overflow-y:auto"></div>
-      </div>
+      <div id="active-campaigns-list"></div>
     </div>
 
     <div class="card" style="margin-top:16px">
@@ -1170,7 +1121,6 @@ function renderDashboard() {
   renderKPICards();
   renderPortfolioChart();
   renderActiveCampaignsList();
-  renderActivityFeed();
   renderQuickActions();
   loadDailyTip();
 }
@@ -1180,12 +1130,8 @@ function renderKPICards() {
   if (!grid) return;
 
   const tokens = AppState.tokens || 500;
-  const previousTokens = AppState.previousTokens || 500;
   const maxTokens = 500;
   const tokenPct = Math.min(100, (tokens / maxTokens) * 100);
-  const tokenDiff = tokens - previousTokens;
-  const tokenTrendColor = tokenDiff >= 0 ? '#AAFF00' : '#FF4444';
-  const tokenTrendArrow = tokenDiff >= 0 ? '▲' : '▼';
 
   const campaigns = (AppState.campaigns || []).filter(c => c.status !== 'completed');
   const avgRoas = campaigns.length
@@ -1203,7 +1149,6 @@ function renderKPICards() {
         <div style="height:100%;width:${tokenPct}%;background:linear-gradient(90deg,#AAFF00,#00FF88);border-radius:100px;transition:width .5s"></div>
       </div>
       <div style="font-size:11px;color:#777;margin-top:6px">${tokenPct.toFixed(0)}% del budget iniziale</div>
-      <div style="font-size:12px;color:${tokenTrendColor};margin-top:8px;font-weight:600">${tokenTrendArrow} ${Math.abs(tokenDiff).toFixed(0)}</div>
     </div>
 
     <div class="card kpi-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
@@ -1232,36 +1177,6 @@ function renderKPICards() {
   if (typeof drawGauge === 'function') {
     drawGauge(score, 100, 'score-gauge');
   }
-}
-
-function renderActivityFeed() {
-  const container = document.getElementById('activity-feed');
-  if (!container) return;
-
-  const activityLog = AppState.activityLog || [];
-
-  if (activityLog.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:20px;color:#777;font-size:13px">Nessuna attività recente</div>`;
-    return;
-  }
-
-  container.innerHTML = activityLog.slice(-5).reverse().map(event => {
-    const iconMap = {
-      launch: '🚀',
-      bonus: '💰',
-      warning: '⚠️',
-      analytics: '📊'
-    };
-    const icon = iconMap[event.type] || '📌';
-    return `
-      <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1A1A1A;font-size:13px">
-        <div style="flex-shrink:0;font-size:16px">${icon}</div>
-        <div style="flex:1;min-width:0">
-          <div style="color:#F0F0F0;word-break:break-word">${event.text}</div>
-          <div style="font-size:11px;color:#555;margin-top:2px">${event.time || ''}</div>
-        </div>
-      </div>`;
-  }).join('');
 }
 
 function renderPortfolioChart() {
@@ -2439,11 +2354,6 @@ function launchCampaign() {
 
   if (!AppState.campaigns) AppState.campaigns = [];
   AppState.campaigns.push(newCampaign);
-
-  // Log activity
-  if (typeof logActivity === 'function') {
-    logActivity(`Campagna '${newCampaign.name}' avviata su ${getPlatformName(newCampaign.platform)}`, 'launch');
-  }
 
   // Spendi token
   if (typeof spendTokens === 'function') {
@@ -4695,6 +4605,7 @@ let interviewState = {
   currentQuestion: '',
   answers: [],
   totalScore: 0,
+  breakdownScore: { technique: 0, communication: 0, problemSolving: 0 },
 };
 
 function renderInterviewCoach() {
@@ -4842,6 +4753,7 @@ function renderInterviewSession() {
   if (!content) return;
   const role = INTERVIEW_ROLES.find(r => r.id === interviewState.role);
   const company = COMPANY_TYPES.find(c => c.id === interviewState.company);
+  const progressPct = (interviewState.questionIndex / 5) * 100;
 
   content.innerHTML = `
     <div style="max-width:720px;">
@@ -4853,6 +4765,12 @@ function renderInterviewSession() {
         <div style="display:flex;align-items:center;gap:12px;">
           <div style="font-size:13px;color:#777;">Score parziale: <strong style="color:#F0F0F0;" id="iv-partial-score">${interviewState.totalScore}</strong></div>
           <button onclick="abortInterview()" style="background:#1A1A1A;border:1px solid #2A2A2A;color:#777;padding:6px 14px;border-radius:100px;font-size:12px;cursor:pointer;">Esci</button>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Progresso: ${interviewState.questionIndex}/5</div>
+        <div style="background:#1A1A1A;border-radius:100px;height:4px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#0055FF,#AAFF00);height:4px;width:${progressPct}%;transition:width 0.3s ease;"></div>
         </div>
       </div>
       <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:0;min-height:420px;display:flex;flex-direction:column;overflow:hidden;">
@@ -4967,6 +4885,43 @@ async function endInterview() {
   interviewState.active = false;
   const avgScore = interviewState.totalScore / 5;
 
+  // Calcola breakdown score (tecnico, comunicazione, problem solving) dai feedback
+  const techniqueScores = [], communicationScores = [], problemSolvingScores = [];
+  const allScores = [];
+
+  interviewState.answers.forEach(a => {
+    const feedbackLower = a.feedback.toLowerCase();
+    allScores.push(a.score);
+
+    // Tecnico: parole chiave: tecnico, specifico, framework, strumento, metodologia, tecnica
+    if (/tecnico|specifico|framework|strumento|metodologia|tecnica|competenza|skill/.test(feedbackLower)) {
+      techniqueScores.push(a.score);
+    }
+
+    // Comunicazione: parole chiave: comunicaz, chiaro, spiegaz, struttura, coerente, ordine, logica
+    if (/comunicaz|chiaro|spiegaz|struttura|coerente|ordine|logica|articolato|comprensibile/.test(feedbackLower)) {
+      communicationScores.push(a.score);
+    }
+
+    // Problem solving: parole chiave: problem, soluzione, scenario, analisi, strategia, approccia, approccio
+    if (/problem|soluzione|scenario|analisi|strategia|approccia|approccio|ragionamento|critico/.test(feedbackLower)) {
+      problemSolvingScores.push(a.score);
+    }
+  });
+
+  // Se una categoria non ha match, usa la media generale
+  interviewState.breakdownScore.technique = techniqueScores.length > 0
+    ? Math.round(techniqueScores.reduce((a,b)=>a+b,0)/techniqueScores.length)
+    : Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
+
+  interviewState.breakdownScore.communication = communicationScores.length > 0
+    ? Math.round(communicationScores.reduce((a,b)=>a+b,0)/communicationScores.length)
+    : Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
+
+  interviewState.breakdownScore.problemSolving = problemSolvingScores.length > 0
+    ? Math.round(problemSolvingScores.reduce((a,b)=>a+b,0)/problemSolvingScores.length)
+    : Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
+
   if (avgScore >= 8) earnTokens(10, 'Colloquio eccellente! +10 token');
   else if (avgScore >= 6) earnTokens(5, 'Buon colloquio! +5 token');
 
@@ -5043,6 +4998,34 @@ function renderInterviewSummary(avgScore, summary) {
 
   const summaryFormatted = (summary || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
+  // Score breakdown visualization
+  const techniqueColor = interviewState.breakdownScore.technique >= 8 ? '#AAFF00' : interviewState.breakdownScore.technique >= 6 ? '#0055FF' : '#FF6B35';
+  const communicationColor = interviewState.breakdownScore.communication >= 8 ? '#AAFF00' : interviewState.breakdownScore.communication >= 6 ? '#0055FF' : '#FF6B35';
+  const problemSolvingColor = interviewState.breakdownScore.problemSolving >= 8 ? '#AAFF00' : interviewState.breakdownScore.problemSolving >= 6 ? '#0055FF' : '#FF6B35';
+
+  const breakdownHTML = `
+    <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:20px;margin-bottom:24px;">
+      <h3 style="margin:0 0 16px 0;font-size:13px;color:#777;text-transform:uppercase;letter-spacing:.08em;">📊 Breakdown Competenze</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div style="background:#1A1A1A;border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Tecnica</div>
+          <div style="font-size:28px;font-weight:900;color:${techniqueColor};">${interviewState.breakdownScore.technique}</div>
+          <div style="font-size:10px;color:#555;margin-top:4px;">/10</div>
+        </div>
+        <div style="background:#1A1A1A;border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Comunicazione</div>
+          <div style="font-size:28px;font-weight:900;color:${communicationColor};">${interviewState.breakdownScore.communication}</div>
+          <div style="font-size:10px;color:#555;margin-top:4px;">/10</div>
+        </div>
+        <div style="background:#1A1A1A;border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Problem Solving</div>
+          <div style="font-size:28px;font-weight:900;color:${problemSolvingColor};">${interviewState.breakdownScore.problemSolving}</div>
+          <div style="font-size:10px;color:#555;margin-top:4px;">/10</div>
+        </div>
+      </div>
+    </div>
+  `;
+
   content.innerHTML = `
     <div style="max-width:720px;">
       <div style="background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:40px;text-align:center;margin-bottom:24px;">
@@ -5051,6 +5034,7 @@ function renderInterviewSummary(avgScore, summary) {
         <div style="font-size:14px;color:#777;margin:16px 0;">Punteggio medio su 5 domande</div>
         ${avgScore >= 8 ? '<div style="background:#AAFF0022;border:1px solid #AAFF0044;border-radius:100px;display:inline-block;padding:8px 20px;font-size:14px;color:#AAFF00;margin-top:8px;">🏆 +10 token guadagnati!</div>' : avgScore >= 6 ? '<div style="background:#0055FF22;border:1px solid #0055FF44;border-radius:100px;display:inline-block;padding:8px 20px;font-size:14px;color:#0055FF;margin-top:8px;">✨ +5 token guadagnati!</div>' : ''}
       </div>
+      ${breakdownHTML}
       <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:24px;margin-bottom:24px;">
         <h3 style="margin:0 0 16px 0;font-size:14px;color:#777;text-transform:uppercase;letter-spacing:.08em;">🤖 Feedback AI Coach</h3>
         <p style="font-size:14px;line-height:1.7;color:#E0E0E0;margin:0;">${summaryFormatted}</p>
@@ -5068,7 +5052,7 @@ function renderInterviewSummary(avgScore, summary) {
 }
 
 function restartInterview() {
-  interviewState = { active: false, role: null, difficulty: 'base', company: null, questionIndex: 0, currentQuestion: '', answers: [], totalScore: 0 };
+  interviewState = { active: false, role: null, difficulty: 'base', company: null, questionIndex: 0, currentQuestion: '', answers: [], totalScore: 0, breakdownScore: { technique: 0, communication: 0, problemSolving: 0 } };
   renderInterviewSetup();
 }
 
@@ -5393,11 +5377,11 @@ function drawScoreGauge(value, containerId) {
 function renderScoreBreakdown() {
   const d = AppState.proovdDimensions || {};
   const dims = [
-    { key: 'strategy', label: 'Campaign Strategy', icon: '🚀', desc: 'Abilità nel costruire e ottimizzare campagne', color: '#0055FF' },
-    { key: 'dataLiteracy', label: 'Data Literacy', icon: '📊', desc: 'Capacità di leggere e interpretare i dati', color: '#AAFF00' },
-    { key: 'creative', label: 'Creative Judgment', icon: '🎨', desc: 'Valutazione e scelta di creatività efficaci', color: '#FF6B35' },
-    { key: 'optimization', label: 'Optimization Speed', icon: '⚡', desc: 'Velocità nel riconoscere problemi e ottimizzare', color: '#B388FF' },
-    { key: 'interview', label: 'Interview Readiness', icon: '🎤', desc: 'Preparazione ai colloqui e conoscenze teoriche', color: '#00E5FF' },
+    { key: 'strategy', label: 'Campaign Strategy', icon: '🚀', desc: 'Abilità nel costruire e ottimizzare campagne', color: '#0055FF', avgUsers: 35 },
+    { key: 'dataLiteracy', label: 'Data Literacy', icon: '📊', desc: 'Capacità di leggere e interpretare i dati', color: '#AAFF00', avgUsers: 28 },
+    { key: 'creative', label: 'Creative Judgment', icon: '🎨', desc: 'Valutazione e scelta di creatività efficaci', color: '#FF6B35', avgUsers: 42 },
+    { key: 'optimization', label: 'Optimization Speed', icon: '⚡', desc: 'Velocità nel riconoscere problemi e ottimizzare', color: '#B388FF', avgUsers: 31 },
+    { key: 'interview', label: 'Interview Readiness', icon: '🎤', desc: 'Preparazione ai colloqui e conoscenze teoriche', color: '#00E5FF', avgUsers: 45 },
   ];
 
   const radarData = dims.map(d2 => ({ label: d2.label.split(' ')[0], value: d[d2.key] || 0, max: 100 }));
@@ -5406,6 +5390,7 @@ function renderScoreBreakdown() {
 
   const dimBars = dims.map(dim => {
     const val = Math.min(100, Math.max(0, d[dim.key] || 0));
+    const avgVal = dim.avgUsers;
     return `
       <div style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
@@ -5415,7 +5400,8 @@ function renderScoreBreakdown() {
         <div style="background:#1A1A1A;border-radius:100px;height:6px;">
           <div style="background:${dim.color};height:6px;border-radius:100px;width:${val}%;transition:width .8s ease;"></div>
         </div>
-        <div style="font-size:11px;color:#555;margin-top:4px;">${dim.desc}</div>
+        <div style="font-size:10px;color:#555;margin-top:3px;">Tu: <strong style="color:#999;">${val}</strong> | Media utenti: <strong style="color:#666;">${avgVal}</strong></div>
+        <div style="font-size:11px;color:#555;margin-top:2px;">${dim.desc}</div>
       </div>
     `;
   }).join('');
@@ -5455,10 +5441,17 @@ function drawRadarSVG(data) {
   const pts = data.map((d2, i) => point(d2.value, angles[i], r));
   const polygon = pts.map(p => p.join(',')).join(' ');
 
-  // Labels
+  // Labels (nome dimensione)
   const labels = data.map((d2, i) => {
     const [lx, ly] = [cx + (r + 14) * Math.cos(angles[i]), cy + (r + 14) * Math.sin(angles[i])];
     return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#777" font-size="9" font-family="Inter,sans-serif">${d2.label}</text>`;
+  }).join('');
+
+  // Valori numerici (vicino ai punti dati)
+  const values = data.map((d2, i) => {
+    const [px, py] = pts[i];
+    const [vx, vy] = [cx + (r + 28) * Math.cos(angles[i]), cy + (r + 28) * Math.sin(angles[i])];
+    return `<text x="${vx}" y="${vy}" text-anchor="middle" dominant-baseline="middle" fill="#999" font-size="10" font-family="Inter,sans-serif" font-weight="600">${d2.value}</text>`;
   }).join('');
 
   return `
@@ -5467,6 +5460,7 @@ function drawRadarSVG(data) {
       <polygon points="${polygon}" fill="#0055FF22" stroke="#0055FF" stroke-width="2"/>
       ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#0055FF"/>`).join('')}
       ${labels}
+      ${values}
     </svg>
   `;
 }
@@ -5545,6 +5539,42 @@ function exportProovdCard() {
   const unlockedBadges = (AppState.badges || []).slice(0, 3);
   const d = AppState.proovdDimensions || { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 };
   const userName = AppState.userName || 'Utente PROOVD';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('it-IT');
+
+  // Genera radar SVG per card
+  const radarData = [
+    { label: 'Strategy', value: d.strategy || 0, max: 100 },
+    { label: 'Data', value: d.dataLiteracy || 0, max: 100 },
+    { label: 'Creative', value: d.creative || 0, max: 100 },
+    { label: 'Optimize', value: d.optimization || 0, max: 100 },
+    { label: 'Interview', value: d.interview || 0, max: 100 },
+  ];
+  const cx = 85, cy = 85, r = 55;
+  const n = radarData.length;
+  const angles = radarData.map((_, i) => (i * 2 * Math.PI / n) - Math.PI / 2);
+  function point(val, angle, radius) {
+    const pct = val / 100;
+    return [cx + radius * pct * Math.cos(angle), cy + radius * pct * Math.sin(angle)];
+  }
+  const gridCircles = [0.25, 0.5, 0.75, 1].map(g =>
+    `<circle cx="${cx}" cy="${cy}" r="${r * g}" fill="none" stroke="#2A2A2A44" stroke-width="0.5"/>`
+  ).join('');
+  const axes = angles.map(a =>
+    `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(a)}" y2="${cy + r * Math.sin(a)}" stroke="#2A2A2A66" stroke-width="0.5"/>`
+  ).join('');
+  const pts = radarData.map((d2, i) => point(d2.value, angles[i], r));
+  const polygon = pts.map(p => p.join(',')).join(' ');
+  const labels = radarData.map((d2, i) => {
+    const [lx, ly] = [cx + (r + 10) * Math.cos(angles[i]), cy + (r + 10) * Math.sin(angles[i])];
+    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="7" font-family="Inter,sans-serif">${d2.label}</text>`;
+  }).join('');
+  const radarSVG = `<svg viewBox="0 0 170 170" style="width:140px;height:140px;display:block;margin:0 auto;">
+    ${gridCircles}${axes}
+    <polygon points="${polygon}" fill="#0055FF25" stroke="#0055FF" stroke-width="1.5"/>
+    ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#0055FF"/>`).join('')}
+    ${labels}
+  </svg>`;
 
   const cardHTML = `<!DOCTYPE html>
 <html>
@@ -5554,28 +5584,32 @@ function exportProovdCard() {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0A0A0A; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: Inter, sans-serif; padding: 20px; }
-  .card { width: 420px; background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%); border: 1px solid #2A2A2A; border-radius: 24px; padding: 36px; color: #F0F0F0; position: relative; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,.8); }
-  .card::before { content: ''; position: absolute; top: -100px; right: -100px; width: 300px; height: 300px; background: radial-gradient(circle, #0055FF18 0%, transparent 70%); pointer-events: none; }
-  .card::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 200px; height: 200px; background: radial-gradient(circle, #AAFF0010 0%, transparent 70%); pointer-events: none; }
-  .logo { font-size: 13px; font-weight: 700; color: #AAFF00; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 28px; }
-  .username { font-size: 26px; font-weight: 900; margin-bottom: 2px; }
-  .subtitle { font-size: 13px; color: #777; margin-bottom: 28px; }
-  .score-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 28px; }
-  .score-num { font-size: 80px; font-weight: 900; color: #AAFF00; line-height: 1; }
-  .score-meta { padding-bottom: 8px; }
-  .score-denom { font-size: 28px; font-weight: 700; color: #555; }
-  .score-label { font-size: 12px; color: #777; margin-top: 4px; }
+  body { background: linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 100%); display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: Inter, sans-serif; padding: 20px; }
+  .card { width: 480px; background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%); border: 1px solid #2A2A2A; border-radius: 28px; padding: 40px; color: #F0F0F0; position: relative; overflow: hidden; box-shadow: 0 60px 120px rgba(0,85,255,0.15), 0 40px 80px rgba(0,0,0,.8); }
+  .card::before { content: ''; position: absolute; top: -150px; right: -150px; width: 400px; height: 400px; background: radial-gradient(circle, #0055FF22 0%, transparent 70%); pointer-events: none; }
+  .card::after { content: ''; position: absolute; bottom: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, #AAFF0015 0%, transparent 70%); pointer-events: none; }
+  .logo { font-size: 12px; font-weight: 800; color: #AAFF00; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 12px; }
+  .username { font-size: 32px; font-weight: 900; margin-bottom: 4px; background: linear-gradient(90deg, #F0F0F0 0%, #AAFF00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .subtitle { font-size: 13px; color: #777; margin-bottom: 24px; font-weight: 500; }
+  .score-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 24px; }
+  .score-num { font-size: 72px; font-weight: 900; color: #AAFF00; line-height: 1; }
+  .score-meta { padding-bottom: 4px; }
+  .score-denom { font-size: 24px; font-weight: 700; color: #555; }
+  .score-label { font-size: 11px; color: #777; margin-top: 2px; }
+  .radar-section { text-align: center; margin-bottom: 24px; }
+  .radar-title { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; font-weight: 600; }
+  .radar-legend { font-size: 8px; color: #555; margin-top: 8px; }
   .divider { height: 1px; background: #2A2A2A; margin: 20px 0; }
   .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-  .dim { background: #0A0A0A; border-radius: 10px; padding: 10px 14px; }
-  .dim-name { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
-  .dim-val { font-size: 22px; font-weight: 900; }
-  .dim-bar { height: 3px; background: #1A1A1A; border-radius: 3px; margin-top: 6px; }
-  .dim-bar-fill { height: 3px; border-radius: 3px; }
-  .badges-row { display: flex; gap: 10px; margin-bottom: 20px; }
-  .badge-chip { background: #0A0A0A; border-radius: 10px; padding: 10px; font-size: 22px; border: 1px solid #1A1A1A; }
-  .footer { font-size: 11px; color: #333; display: flex; justify-content: space-between; }
+  .dim { background: #0A0A0A; border-radius: 10px; padding: 10px 12px; border: 1px solid #1A1A1A; }
+  .dim-name { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; font-weight: 600; }
+  .dim-val { font-size: 20px; font-weight: 900; }
+  .dim-bar { height: 2px; background: #1A1A1A; border-radius: 2px; margin-top: 5px; }
+  .dim-bar-fill { height: 2px; border-radius: 2px; }
+  .badges-row { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; }
+  .badge-chip { background: #0A0A0A; border-radius: 8px; padding: 8px; font-size: 18px; border: 1px solid #1A1A1A; }
+  .footer { font-size: 10px; color: #555; display: flex; justify-content: space-between; align-items: center; }
+  .footer-logo { color: #AAFF00; font-weight: 700; }
   @media print { body { background: #0A0A0A; } }
 </style>
 </head>
@@ -5583,18 +5617,25 @@ function exportProovdCard() {
 <div class="card">
   <div class="logo">◆ PROOVD</div>
   <div class="username">${userName}</div>
-  <div class="subtitle">Junior Digital Marketer</div>
+  <div class="subtitle">Junior Digital Marketer · ${dateStr}</div>
   <div class="score-row">
     <div class="score-num">${totalScore}</div>
     <div class="score-meta">
       <div class="score-denom">/100</div>
-      <div class="score-label">PROOVD Score</div>
+      <div class="score-label">PROOVD SCORE</div>
     </div>
   </div>
   <div class="divider"></div>
+
+  <div class="radar-section">
+    <div class="radar-title">Competenze</div>
+    ${radarSVG}
+    <div class="radar-legend">Tu vs Media utenti</div>
+  </div>
+
   <div class="dims">
     <div class="dim">
-      <div class="dim-name">Campaign Strategy</div>
+      <div class="dim-name">Strategy</div>
       <div class="dim-val" style="color:#0055FF;">${d.strategy || 0}</div>
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.strategy || 0}%;background:#0055FF;"></div></div>
     </div>
@@ -5604,7 +5645,7 @@ function exportProovdCard() {
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.dataLiteracy || 0}%;background:#AAFF00;"></div></div>
     </div>
     <div class="dim">
-      <div class="dim-name">Creative Judgment</div>
+      <div class="dim-name">Creative</div>
       <div class="dim-val" style="color:#FF6B35;">${d.creative || 0}</div>
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.creative || 0}%;background:#FF6B35;"></div></div>
     </div>
@@ -5614,7 +5655,7 @@ function exportProovdCard() {
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.optimization || 0}%;background:#B388FF;"></div></div>
     </div>
     <div class="dim" style="grid-column:1/-1;">
-      <div class="dim-name">Interview Readiness</div>
+      <div class="dim-name">Interview Ready</div>
       <div class="dim-val" style="color:#00E5FF;">${d.interview || 0}</div>
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.interview || 0}%;background:#00E5FF;"></div></div>
     </div>
@@ -5625,11 +5666,11 @@ function exportProovdCard() {
       const b = ALL_BADGES.find(ab => ab.id === bId);
       return b ? `<div class="badge-chip" title="${b.name}">${b.emoji}</div>` : '';
     }).join('')}
-    ${unlockedBadges.length < (AppState.badges || []).length ? `<div class="badge-chip" style="font-size:12px;color:#555;display:flex;align-items:center;">+${(AppState.badges || []).length - 3}</div>` : ''}
+    ${unlockedBadges.length < (AppState.badges || []).length ? `<div class="badge-chip" style="font-size:12px;color:#555;">+${(AppState.badges || []).length - 3}</div>` : ''}
   </div>` : ''}
   <div class="footer">
-    <span>proovd.it</span>
-    <span>${new Date().toLocaleDateString('it-IT')}</span>
+    <span><span class="footer-logo">PROOVD</span></span>
+    <span style="color:#999;">${dateStr}</span>
   </div>
 </div>
 </body>
