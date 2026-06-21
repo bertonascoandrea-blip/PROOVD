@@ -2538,12 +2538,17 @@ function renderCampaignTableHTML() {
             <th style="padding:12px 8px;font-weight:500;">Conv.</th>
             <th style="padding:12px 8px;font-weight:500;">CPA</th>
             <th style="padding:12px 8px;font-weight:500;">ROAS</th>
+            <th style="padding:12px 8px;font-weight:500;">Reach</th>
+            <th style="padding:12px 8px;font-weight:500;">Freq.</th>
+            <th style="padding:12px 8px;font-weight:500;">CPA (ext)</th>
+            <th style="padding:12px 8px;font-weight:500;">Fase</th>
             <th style="padding:12px 8px;font-weight:500;">Giorni</th>
             <th style="padding:12px 8px;font-weight:500;">Azioni</th>
           </tr>
         </thead>
         <tbody id="campaign-tbody">
           ${rows}
+          ${renderTotalsRow(filtered)}
         </tbody>
       </table>
     </div>
@@ -2570,6 +2575,12 @@ function renderCampaignRow(campaign) {
 
   const isExpanded = AppState.expandedRows && AppState.expandedRows.has(c.id);
   const platformLabel = getPlatformLabel(c.platform);
+  const dayCount = c.dayCount || ((c.duration || c.days || 0) - (c.daysLeft || 0));
+  const phaseBadge = dayCount < 3
+    ? '<span style="font-size:10px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:100px;padding:2px 7px;color:#FFB800;white-space:nowrap;">🎓 Learning</span>'
+    : dayCount < 7
+    ? '<span style="font-size:10px;background:#1A1A1A;border:1px solid #0055FF;border-radius:100px;padding:2px 7px;color:#0055FF;white-space:nowrap;">⚡ Ottimizzando</span>'
+    : '<span style="font-size:10px;background:#1A1A1A;border:1px solid #AAFF00;border-radius:100px;padding:2px 7px;color:#AAFF00;white-space:nowrap;">✅ Regime</span>';
 
   return `
     <tr data-id="${c.id}" style="border-bottom:1px solid #1A1A1A;transition:background 0.2s;" onmouseover="this.style.background='#111111'" onmouseout="this.style.background='transparent'">
@@ -2587,6 +2598,10 @@ function renderCampaignRow(campaign) {
       <td style="padding:10px 8px;color:#F0F0F0;">${formatNumber(conversions)}</td>
       <td style="padding:10px 8px;color:#F0F0F0;">${conversions > 0 ? formatCurrency(cpa) : '—'}</td>
       <td style="padding:10px 8px;color:${roasColor};font-weight:700;">${roas.toFixed(2)}x</td>
+      <td style="padding:10px 8px;color:#F0F0F0;">${c.reach != null ? formatNumber(c.reach) : '—'}</td>
+      <td style="padding:10px 8px;color:#F0F0F0;">${c.frequency != null ? c.frequency.toFixed(1) : '—'}</td>
+      <td style="padding:10px 8px;color:#F0F0F0;">${c.cpa != null ? formatCurrency(c.cpa) : '—'}</td>
+      <td style="padding:10px 8px;">${phaseBadge}</td>
       <td style="padding:10px 8px;color:#777777;">${daysLeft}g</td>
       <td style="padding:10px 8px;">
         <div style="display:flex;gap:4px;flex-wrap:wrap;">
@@ -2698,6 +2713,39 @@ function generateBarChart(items) {
       `;
     }).join('')}
   </svg>`;
+}
+
+function renderTotalsRow(campaigns) {
+  if (!campaigns || campaigns.length === 0) return '';
+  const totalBudget = campaigns.reduce((s, c) => s + (c.budget || 0), 0);
+  const totalSpent = campaigns.reduce((s, c) => s + (c.spent || 0), 0);
+  const totalConversions = campaigns.reduce((s, c) => s + (c.conversions || 0), 0);
+  const totalRevenue = campaigns.reduce((s, c) => s + (c.revenue || 0), 0);
+  const avgROAS = totalSpent > 0 ? totalRevenue / totalSpent : 0;
+  const roasColor = avgROAS >= 3 ? '#AAFF00' : avgROAS >= 1 ? '#FFB800' : '#FF4444';
+  // Columns: expand, Nome, Piattaforma, Stato, Speso, Impressioni, Click, CTR, CPC, Conv., CPA, ROAS, Reach, Freq., CPA(ext), Fase, Giorni, Azioni
+  return `
+    <tr style="border-top:2px solid #2A2A2A;background:#111111;font-weight:700;">
+      <td style="padding:10px 8px;"></td>
+      <td style="padding:10px 8px;color:#777777;font-size:11px;white-space:nowrap;">TOTALI<br><span style="color:#555555;font-size:10px;font-weight:400;">Budget: ${formatCurrency(totalBudget)}</span></td>
+      <td style="padding:10px 8px;"></td>
+      <td style="padding:10px 8px;"></td>
+      <td style="padding:10px 8px;color:#F0F0F0;">${formatCurrency(totalSpent)}</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;color:#F0F0F0;">${formatNumber(totalConversions)}</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;color:${roasColor};">${avgROAS.toFixed(2)}x</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;"></td>
+      <td style="padding:10px 8px;color:#777777;">—</td>
+      <td style="padding:10px 8px;"></td>
+    </tr>
+  `;
 }
 
 function toggleExpandRow(campaignId) {
@@ -3523,9 +3571,73 @@ Dati attuali: Spesa €${campaign.spent || 0}, Click ${campaign.clicks || 0}, Co
   }
 }
 
+function renderAllPlatformsBenchmarkTable() {
+  const platforms = [
+    { key: 'meta', label: 'Meta Ads' },
+    { key: 'google_search', label: 'Google Search' },
+    { key: 'google_display', label: 'Google Display' },
+    { key: 'youtube', label: 'YouTube Ads' },
+    { key: 'tiktok', label: 'TikTok Ads' },
+    { key: 'linkedin', label: 'LinkedIn Ads' },
+    { key: 'pinterest', label: 'Pinterest Ads' },
+    { key: 'snapchat', label: 'Snapchat Ads' },
+    { key: 'x_ads', label: 'X Ads' },
+    { key: 'email', label: 'Email Marketing' },
+    { key: 'seo', label: 'SEO/SEM' },
+    { key: 'programmatic', label: 'Programmatic/DSP' },
+  ];
+  // Find best CTR platform
+  let bestCTRKey = platforms[0].key;
+  let bestCTR = 0;
+  platforms.forEach(p => {
+    const b = platformBenchmarks[p.key];
+    if (b && b.ctr > bestCTR) { bestCTR = b.ctr; bestCTRKey = p.key; }
+  });
+  const rows = platforms.map(p => {
+    const b = platformBenchmarks[p.key] || {};
+    const cpm = b.cpm != null ? b.cpm : 0;
+    const difficolta = cpm < 5 ? '<span style="color:#AAFF00;font-weight:600;">Facile</span>'
+      : cpm <= 15 ? '<span style="color:#FFB800;font-weight:600;">Media</span>'
+      : '<span style="color:#FF4444;font-weight:600;">Alta</span>';
+    const isBestCTR = p.key === bestCTRKey;
+    const rowStyle = isBestCTR
+      ? 'border-bottom:1px solid #1A1A1A;border-left:3px solid #AAFF00;background:#0d1a00;'
+      : 'border-bottom:1px solid #1A1A1A;';
+    return `
+      <tr style="${rowStyle}">
+        <td style="padding:9px 10px;color:#F0F0F0;font-weight:${isBestCTR ? '600' : '400'};">${p.label}${isBestCTR ? ' <span style="font-size:10px;color:#AAFF00;">★ miglior CTR</span>' : ''}</td>
+        <td style="padding:9px 10px;color:#F0F0F0;text-align:right;">${cpm > 0 ? '€' + cpm.toFixed(2) : '—'}</td>
+        <td style="padding:9px 10px;color:${isBestCTR ? '#AAFF00' : '#F0F0F0'};text-align:right;font-weight:${isBestCTR ? '700' : '400'};">${b.ctr != null ? b.ctr.toFixed(2) + '%' : '—'}</td>
+        <td style="padding:9px 10px;color:#F0F0F0;text-align:right;">${b.cvr != null ? b.cvr.toFixed(2) + '%' : '—'}</td>
+        <td style="padding:9px 10px;color:#F0F0F0;text-align:right;">${b.cpc != null && b.cpc > 0 ? '€' + b.cpc.toFixed(2) : '—'}</td>
+        <td style="padding:9px 10px;text-align:right;">${difficolta}</td>
+      </tr>
+    `;
+  }).join('');
+  return `
+    <div class="card" style="padding:20px;margin-bottom:20px;overflow-x:auto;">
+      <h3 style="color:#F0F0F0;font-size:14px;font-weight:600;margin-bottom:16px;">📊 Confronto tutte le piattaforme</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="color:#777777;border-bottom:1px solid #2A2A2A;text-align:left;">
+            <th style="padding:9px 10px;font-weight:500;">Nome</th>
+            <th style="padding:9px 10px;font-weight:500;text-align:right;">CPM medio</th>
+            <th style="padding:9px 10px;font-weight:500;text-align:right;">CTR medio</th>
+            <th style="padding:9px 10px;font-weight:500;text-align:right;">CVR medio</th>
+            <th style="padding:9px 10px;font-weight:500;text-align:right;">CPC medio</th>
+            <th style="padding:9px 10px;font-weight:500;text-align:right;">Difficoltà</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 function renderBenchmarks() {
   return `
     <div>
+      ${renderAllPlatformsBenchmarkTable()}
       <div class="card" style="padding:20px;margin-bottom:20px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
           <div>
