@@ -65,7 +65,7 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
   white-space:nowrap;overflow:hidden;position:relative;
   border:none;background:none;color:var(--muted);width:100%;text-align:left;
 }
-.nav-item:hover{background:var(--surface2);color:var(--text);transform:translateX(2px)}
+.nav-item:hover{background:rgba(0,85,255,0.15);color:var(--text);transform:translateX(2px)}
 .nav-item.active{background:var(--surface2);color:var(--lime);border-left:2px solid var(--lime);padding-left:10px}
 .nav-item svg{flex-shrink:0;width:20px;height:20px}
 .nav-label{font-size:13px;font-weight:500;opacity:1;transition:opacity var(--transition)}
@@ -97,7 +97,7 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .view.active{display:block;animation:fadeIn 200ms ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 /* === CARDS === */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:transform var(--transition),border-color var(--transition)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:transform var(--transition),border-color var(--transition);box-shadow:0 2px 12px rgba(0,0,0,0.3)}
 .card:hover:not(.no-hover){border-color:#3a3a3a}
 .card-sm{padding:16px}
 /* === GRID === */
@@ -105,14 +105,17 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 /* === BUTTONS === */
-.btn-primary{background:var(--blue);color:#fff;border:none;border-radius:var(--radius-pill);padding:10px 20px;font-weight:600;transition:transform var(--transition),opacity var(--transition)}
+.btn-primary{background:var(--blue);color:#fff;border:none;border-radius:var(--radius-pill);padding:10px 20px;font-weight:600;transition:all 0.15s ease}
 .btn-primary:hover{transform:scale(0.98);opacity:0.9}
+.btn-primary:active{transform:scale(0.96)}
 .btn-primary:disabled{opacity:0.4;cursor:not-allowed}
-.btn-secondary{background:none;color:var(--text);border:1px solid var(--border);border-radius:var(--radius-pill);padding:10px 20px;font-weight:600;transition:background var(--transition)}
+.btn-secondary{background:none;color:var(--text);border:1px solid var(--border);border-radius:var(--radius-pill);padding:10px 20px;font-weight:600;transition:all 0.15s ease}
 .btn-secondary:hover{background:var(--surface2)}
+.btn-secondary:active{transform:scale(0.98)}
 .btn-secondary:disabled{opacity:0.4;cursor:not-allowed}
-.btn-lime{background:var(--lime);color:#000;border:none;border-radius:var(--radius-pill);padding:10px 20px;font-weight:700;transition:transform var(--transition)}
+.btn-lime{background:var(--lime);color:#000;border:none;border-radius:var(--radius-pill);padding:10px 20px;font-weight:700;transition:all 0.15s ease}
 .btn-lime:hover{transform:scale(0.98)}
+.btn-lime:active{transform:scale(0.96)}
 .btn-lime:disabled{opacity:0.4;cursor:not-allowed}
 .btn-sm{padding:6px 14px;font-size:12px}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -163,14 +166,14 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .step-line{flex:1;height:1px;background:var(--border);margin:0 8px}
 .step-line.done{background:var(--lime)}
 /* === KPI CARD === */
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:transform var(--transition),border-color var(--transition)}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:transform var(--transition),border-color var(--transition);box-shadow:0 2px 12px rgba(0,0,0,0.3)}
 .kpi-card:hover{transform:translateY(-2px);border-color:#3a3a3a}
 .kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;margin-bottom:8px}
 .kpi-value{font-size:28px;font-weight:700;line-height:1;margin-bottom:8px}
 .kpi-sub{font-size:12px;color:var(--muted)}
 /* === SKELETON === */
-.skeleton{background:linear-gradient(90deg,var(--surface2) 25%,var(--border) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton{background:linear-gradient(90deg,var(--surface2) 0%,var(--border) 40%,#333 50%,var(--border) 60%,var(--surface2) 100%);background-size:300% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px;will-change:background-position}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-100% 0}}
 .skeleton-text{height:14px;margin-bottom:8px;border-radius:4px}
 .skeleton-text.lg{height:24px}
 .skeleton-text.sm{height:10px;width:60%}
@@ -257,6 +260,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   .view{display:block!important;padding:0}
   .report-doc{padding:24px}
 }
+/* === CHART FIX === */
+#portfolio-chart,[id^="chart-"]{overflow:hidden}
 /* === DECK === */
 .deck-viewer{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .deck-slide{background:var(--surface);padding:48px;min-height:360px;display:flex;align-items:center;justify-content:center}
@@ -534,7 +539,7 @@ function earnTokens(amount, reason) {
 }
 function updateTokenBadge() {
   const el = document.getElementById('token-badge');
-  if (el) el.textContent = '€ ' + Math.round(AppState.tokens) + ' token';
+  if (el) el.textContent = '€ ' + (AppState.tokens || 0).toFixed(2) + ' token';
 }
 function showGameOver() {
   const modal = document.getElementById('gameover-modal');
@@ -932,7 +937,14 @@ function showOnboarding() {
 }
 function renderObStep() {
   const s = OB_STEPS[_obStep];
-  document.getElementById('onboarding-content').innerHTML = `<div style="font-size:56px;margin-bottom:16px">${s.emoji}</div><h2 style="margin-bottom:12px">${s.title}</h2><p style="color:var(--muted);line-height:1.7;font-size:15px">${s.body}</p>`;
+  const extraHtml = _obStep === 0 ? `
+    <div style="margin-top:20px;text-align:left">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px">Come ti chiami?</label>
+      <input id="ob-username-input" type="text" placeholder="Il tuo nome o nickname" value="${AppState.userName !== 'Marketer' ? AppState.userName : ''}"
+        style="width:100%;box-sizing:border-box;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:100px;padding:10px 18px;color:#F0F0F0;font-size:15px;outline:none;font-family:inherit"
+        oninput="AppState.userName=this.value.trim()||'Marketer';saveState();const b=document.getElementById('username-badge');if(b)b.textContent=AppState.userName;">
+    </div>` : '';
+  document.getElementById('onboarding-content').innerHTML = `<div style="font-size:56px;margin-bottom:16px">${s.emoji}</div><h2 style="margin-bottom:12px">${s.title}</h2><p style="color:var(--muted);line-height:1.7;font-size:15px">${s.body}</p>${extraHtml}`;
   document.querySelectorAll('.onboarding-step-dot').forEach((d, i) => d.classList.toggle('active', i === _obStep));
   const backBtn = document.getElementById('ob-back');
   const nextBtn = document.getElementById('ob-next');
@@ -1171,13 +1183,14 @@ function renderPortfolioChart() {
     const w = container.clientWidth || 400;
     const h = 180;
     const pad = 30;
+    const denom = data.length > 1 ? data.length - 1 : 1;
     const pts = data.map((d, i) => {
-      const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+      const x = pad + (i / denom) * (w - pad * 2);
       const y = h - pad - ((d.value / max) * (h - pad * 2));
       return `${x},${y}`;
     }).join(' ');
     const areaPath = `M${pad},${h-pad} ` + data.map((d, i) => {
-      const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+      const x = pad + (i / denom) * (w - pad * 2);
       const y = h - pad - ((d.value / max) * (h - pad * 2));
       return `L${x},${y}`;
     }).join(' ') + ` L${w-pad},${h-pad} Z`;
@@ -1193,7 +1206,7 @@ function renderPortfolioChart() {
         <path d="${areaPath}" fill="url(#areaGrad)"/>
         <polyline points="${pts}" fill="none" stroke="#AAFF00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         ${data.map((d, i) => {
-          const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+          const x = pad + (i / denom) * (w - pad * 2);
           const y = h - pad - ((d.value / max) * (h - pad * 2));
           return `<circle cx="${x}" cy="${y}" r="3" fill="#AAFF00"/>
                   <text x="${x}" y="${h-8}" text-anchor="middle" fill="#555" font-size="10">${d.label}</text>`;
@@ -1215,6 +1228,21 @@ function renderActiveCampaignsList() {
         <h3 style="font-size:16px;font-weight:600;margin:0 0 8px">Nessuna campagna attiva</h3>
         <p style="color:#777;font-size:14px;margin:0 0 20px">Lancia la tua prima campagna per vedere i dati in tempo reale</p>
         <button class="btn-primary" onclick="navigateTo('builder')">🚀 Lancia la tua prima campagna</button>
+        <div style="margin-top:28px;display:flex;flex-direction:column;gap:10px;text-align:left">
+          <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Piattaforme più popolari</div>
+          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
+            <span style="font-size:24px">📘</span>
+            <div><div style="font-size:13px;font-weight:600">Meta Ads</div><div style="font-size:12px;color:#777">Reach enorme su Facebook e Instagram</div></div>
+          </div>
+          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
+            <span style="font-size:24px">🔍</span>
+            <div><div style="font-size:13px;font-weight:600">Google Search</div><div style="font-size:12px;color:#777">Intercetta utenti con alta intenzione d'acquisto</div></div>
+          </div>
+          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
+            <span style="font-size:24px">🎵</span>
+            <div><div style="font-size:13px;font-weight:600">TikTok Ads</div><div style="font-size:12px;color:#777">Video virali per il pubblico giovane e creativo</div></div>
+          </div>
+        </div>
       </div>`;
     return;
   }
