@@ -254,29 +254,11 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .report-preview{min-height:400px}
 @media(max-width:900px){.report-builder-layout{grid-template-columns:1fr}}
 @media print{
-  *{background:transparent;color:#000;box-shadow:none;text-shadow:none}
   #sidebar,#header,#ai-coach-bubble,#toast-container,#command-palette,#mobile-nav,.no-print{display:none!important}
-  body,html{overflow:visible;height:auto;background:#fff;color:#000}
+  body,html{overflow:visible;height:auto}
   #main{overflow:visible}
-  .view{display:block!important;padding:24px;background:#fff;color:#000}
-  .report-doc{padding:24px;font-size:11pt;line-height:1.6;color:#000;background:#fff}
-  .report-doc h2,.report-doc h3,.report-doc h4{color:#000;margin-top:16pt;margin-bottom:8pt;page-break-after:avoid}
-  .report-doc table{width:100%;border-collapse:collapse;margin:12pt 0}
-  .report-doc th,.report-doc td{border:1pt solid #999;padding:8pt;text-align:left;color:#000}
-  .report-doc th{background:#f0f0f0;font-weight:bold}
-  .report-doc div{page-break-inside:avoid}
-  .card,.report-config,.report-preview{border:1pt solid #999;page-break-inside:avoid;margin-bottom:12pt;color:#000}
-  .report-section-cb,.report-campaign-cb,.btn-secondary,.btn-primary,.btn-lime{display:none}
-  @page{margin:20mm;size:A4}
-  @page :first{margin-top:20mm}
-  div[id^="chart-"],#roas-bar-chart{height:150px!important;page-break-inside:avoid}
-  h1{font-size:24pt;margin:0 0 8pt 0}
-  h2{font-size:18pt;margin:16pt 0 8pt 0}
-  h3{font-size:14pt;margin:12pt 0 6pt 0}
-  h4{font-size:12pt;margin:10pt 0 4pt 0}
-  p{margin:0 0 8pt 0}
-  ul,ol{margin:8pt 0;padding-left:20pt}
-  li{margin:2pt 0}
+  .view{display:block!important;padding:0}
+  .report-doc{padding:24px}
 }
 /* === CHART FIX === */
 #portfolio-chart,[id^="chart-"]{overflow:hidden}
@@ -3965,19 +3947,6 @@ function renderReportingStudio() {
   switchReportingTab('builder', view.querySelector('.tab-btn'));
 }
 
-function colorHash(str) {
-  const colors = ['#FF6B9D', '#6BCB77', '#4D96FF', '#FFD93D', '#FF9500', '#A78BFA', '#13C2C2', '#F56565'];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
-  return colors[Math.abs(hash) % colors.length];
-}
-
-function calculatePersonaQuality(p) {
-  const totalFields = 7;
-  const filledFields = (p.name ? 1 : 0) + (p.age ? 1 : 0) + (p.occupation ? 1 : 0) + (p.income ? 1 : 0) + (p.goals.length ? 1 : 0) + (p.painPoints.length ? 1 : 0) + (p.channels.length ? 1 : 0);
-  return Math.round((filledFields / totalFields) * 100);
-}
-
 function switchReportingTab(tab, btn) {
   document.querySelectorAll('#view-reporting .tab-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -4010,35 +3979,43 @@ function renderReportBuilder() {
           </select>
         </div>
         <div class="form-group">
-          <label>Sezioni da includere</label>
+          <label>Metriche</label>
           <div class="checkbox-grid">
-            ${['Executive Summary','KPI Cards','Campaign Table','Performance Charts','Competitor Benchmark','Recommendations'].map(s => `
-              <label class="checkbox-row"><input type="checkbox" class="report-section-cb" value="${s}" checked><span>${s}</span></label>`).join('')}
+            ${['Impressioni','Click','CTR','CPC','Conversioni','CPA','ROAS','Spesa','Revenue'].map(m => `
+              <label class="checkbox-row"><input type="checkbox" class="report-metric-cb" value="${m}" checked><span>${m}</span></label>`).join('')}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Visualizzazioni</label>
+          <div class="checkbox-grid">
+            ${['KPI Cards','Line Chart','Bar Chart','Tabella'].map(v => `
+              <label class="checkbox-row"><input type="checkbox" class="report-viz-cb" value="${v}" checked><span>${v}</span></label>`).join('')}
           </div>
         </div>
         <div class="btn-row" style="margin-top:16px">
           <button class="btn-primary" onclick="updateReportPreview()">Aggiorna preview</button>
-          <button class="btn-secondary" onclick="exportReportPDF()">📥 Scarica PDF</button>
+          <button class="btn-secondary" onclick="exportReportPDF()">Esporta PDF</button>
         </div>
       </div>
       <div id="report-preview-container" class="report-preview card">
         <div class="text-muted" style="text-align:center;padding:40px">Seleziona le campagne e clicca "Aggiorna preview"</div>
       </div>
     </div>`;
-  document.querySelectorAll('.report-campaign-cb, .report-section-cb').forEach(cb => cb.addEventListener('change', updateReportPreview));
+  document.querySelectorAll('.report-campaign-cb, .report-metric-cb, .report-viz-cb').forEach(cb => cb.addEventListener('change', updateReportPreview));
   if (campaigns.length > 0) updateReportPreview();
 }
 
 function updateReportPreview() {
   const selectedIds = [...document.querySelectorAll('.report-campaign-cb:checked')].map(cb => cb.value);
-  const sections = [...document.querySelectorAll('.report-section-cb:checked')].map(cb => cb.value);
+  const metrics = [...document.querySelectorAll('.report-metric-cb:checked')].map(cb => cb.value);
+  const vizs = [...document.querySelectorAll('.report-viz-cb:checked')].map(cb => cb.value);
   const period = document.getElementById('report-period')?.value || '30';
   const campaigns = AppState.campaigns.filter(c => selectedIds.includes(c.id));
   const preview = document.getElementById('report-preview-container');
   if (!preview) return;
   if (campaigns.length === 0) { preview.innerHTML = '<div class="text-muted" style="text-align:center;padding:40px">Seleziona almeno una campagna</div>'; return; }
-  preview.innerHTML = buildReportHTML(campaigns, sections, period);
-  if (sections.includes('Performance Charts')) {
+  preview.innerHTML = buildReportHTML(campaigns, metrics, vizs, period);
+  if (vizs.includes('Line Chart')) {
     campaigns.forEach(c => {
       const data = (c.dailyData || []).map(d => d.clicks || 0);
       if (data.length > 0) drawLineChart(data, `chart-${c.id}`, { color: '#0055FF', label: 'Click' });
@@ -4065,77 +4042,37 @@ function buildReportHTML(campaigns, metrics, vizs, period) {
       <div style="text-align:right"><div style="font-size:13px;color:var(--muted)">Performance Report</div><div style="font-size:12px;color:var(--muted)">Periodo: ultimi ${period} giorni · ${new Date().toLocaleDateString('it-IT')}</div></div>
     </div>`;
 
-  if (sections.includes('Executive Summary')) {
-    html += `<div style="margin-bottom:24px;page-break-after:avoid">
-      <h3 style="color:var(--text);margin-bottom:12px;font-size:16px">Executive Summary</h3>
-      <div style="background:var(--surface2);border-radius:12px;padding:16px;font-size:13px;line-height:1.6">
-        <p>Periodo analizzato: ultimi ${period} giorni. Campagne attive: ${campaigns.length}. ROI medio: <strong>${totals.roas.toFixed(2)}x</strong>.</p>
-        <p>Impressioni totali: <strong>${formatNumber(totals.impressions)}</strong> | Click: <strong>${formatNumber(totals.clicks)}</strong> | CTR: <strong>${formatPercent(totals.ctr)}</strong></p>
-        <p>Spesa totale: <strong>${formatCurrency(totals.spent)}</strong> | Revenue generata: <strong>${formatCurrency(totals.revenue)}</strong></p>
-      </div>
-    </div>`;
-  }
-
-  if (sections.includes('KPI Cards')) {
+  if (vizs.includes('KPI Cards')) {
     const kpiMap = { Impressioni: formatNumber(totals.impressions), Click: formatNumber(totals.clicks), CTR: formatPercent(totals.ctr), CPC: formatCurrency(totals.spent / (totals.clicks || 1)), Conversioni: totals.conversions, CPA: formatCurrency(totals.cpa), ROAS: totals.roas.toFixed(2) + 'x', Spesa: formatCurrency(totals.spent), Revenue: formatCurrency(totals.revenue) };
-    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px;page-break-after:avoid">`;
-    Object.entries(kpiMap).slice(0, 6).forEach(([m, v]) => { html += `<div style="background:var(--surface2);border-radius:12px;padding:16px"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">${m}</div><div style="font-size:22px;font-weight:700">${v}</div></div>`; });
+    const shown = metrics.filter(m => kpiMap[m]);
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px">`;
+    shown.forEach(m => { html += `<div style="background:var(--surface2);border-radius:12px;padding:16px"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">${m}</div><div style="font-size:22px;font-weight:700">${kpiMap[m]}</div></div>`; });
     html += `</div>`;
   }
 
-  if (sections.includes('Performance Charts')) {
-    html += `<div style="margin-bottom:24px;page-break-after:avoid"><h4 style="margin-bottom:12px;font-size:14px">Andamento Click</h4>`;
+  if (vizs.includes('Line Chart')) {
+    html += `<div style="margin-bottom:24px"><h4 style="margin-bottom:12px">Andamento Click</h4>`;
     campaigns.forEach(c => { html += `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">${getPlatformEmoji(c.platform)} ${c.name}</div><div id="chart-${c.id}" style="height:80px"></div></div>`; });
-    html += `<div style="margin-top:16px"><h4 style="margin-bottom:12px;font-size:14px">ROAS per Campagna</h4><div id="roas-bar-chart"></div></div></div>`;
-    setTimeout(() => {
-      campaigns.forEach(c => {
-        const data = (c.dailyData || []).map(d => d.clicks || 0);
-        if (data.length > 0) drawLineChart(data, `chart-${c.id}`, { color: '#0055FF', label: 'Click' });
-      });
-      const barData = campaigns.map(c => ({ label: c.name.substring(0, 12), value: c.roas || 0 }));
-      if (barData.length > 0) drawBarChart(barData, 'roas-bar-chart', { color: '#AAFF00', label: 'ROAS' });
-    }, 50);
+    html += `</div>`;
   }
 
-  if (sections.includes('Campaign Table')) {
-    html += `<div style="margin-bottom:24px;page-break-after:avoid"><h4 style="margin-bottom:12px;font-size:14px">Dettagli Campagne</h4>
-      <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px 12px;color:var(--muted);font-weight:600">Campagna</th><th style="text-align:right;padding:8px 12px;color:var(--muted);font-weight:600">Impressioni</th><th style="text-align:right;padding:8px 12px;color:var(--muted);font-weight:600">Click</th><th style="text-align:right;padding:8px 12px;color:var(--muted);font-weight:600">CTR</th><th style="text-align:right;padding:8px 12px;color:var(--muted);font-weight:600">Conversioni</th><th style="text-align:right;padding:8px 12px;color:var(--muted);font-weight:600">ROAS</th><th style="text-align:right;padding:8px 12px;color:var(--muted);font-weight:600">Spesa</th></tr></thead><tbody>`;
+  if (vizs.includes('Bar Chart')) {
+    const barData = campaigns.map(c => ({ label: c.name.substring(0, 12), value: c.roas || 0 }));
+    html += `<div style="margin-bottom:24px"><h4 style="margin-bottom:12px">ROAS per Campagna</h4><div id="roas-bar-chart"></div></div>`;
+    setTimeout(() => drawBarChart(barData, 'roas-bar-chart', { color: '#AAFF00', label: 'ROAS' }), 50);
+  }
+
+  if (vizs.includes('Tabella') && metrics.length > 0) {
+    html += `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px 12px;color:var(--muted)">Campagna</th>`;
+    metrics.forEach(m => { html += `<th style="text-align:right;padding:8px 12px;color:var(--muted)">${m}</th>`; });
+    html += `</tr></thead><tbody>`;
     campaigns.forEach(c => {
-      html += `<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 12px">${getPlatformEmoji(c.platform)} ${c.name}</td><td style="padding:8px 12px;text-align:right">${formatNumber(c.impressions||0)}</td><td style="padding:8px 12px;text-align:right">${formatNumber(c.clicks||0)}</td><td style="padding:8px 12px;text-align:right">${formatPercent(c.ctr||0)}</td><td style="padding:8px 12px;text-align:right">${c.conversions||0}</td><td style="padding:8px 12px;text-align:right;color:var(--lime);font-weight:600">${(c.roas||0).toFixed(2)}x</td><td style="padding:8px 12px;text-align:right">${formatCurrency(c.spent||0)}</td></tr>`;
+      const row = { Impressioni: formatNumber(c.impressions||0), Click: formatNumber(c.clicks||0), CTR: formatPercent(c.ctr||0), CPC: formatCurrency(c.cpc||0), Conversioni: c.conversions||0, CPA: formatCurrency(c.cpa||0), ROAS: (c.roas||0).toFixed(2)+'x', Spesa: formatCurrency(c.spent||0), Revenue: formatCurrency((c.spent||0)*(c.roas||1)) };
+      html += `<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 12px">${getPlatformEmoji(c.platform)} ${c.name}</td>`;
+      metrics.forEach(m => { html += `<td style="padding:8px 12px;text-align:right">${row[m]||'-'}</td>`; });
+      html += `</tr>`;
     });
-    html += `</tbody></table></div>`;
-  }
-
-  if (sections.includes('Competitor Benchmark')) {
-    const myRoas = totals.roas;
-    const benchmarkRoas = 3.0;
-    const benchmarkCtr = 1.2;
-    html += `<div style="margin-bottom:24px;page-break-after:avoid"><h4 style="margin-bottom:12px;font-size:14px">Posizionamento vs Benchmark</h4>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div style="background:var(--surface2);border-radius:12px;padding:16px">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">ROAS medio</div>
-          <div style="font-size:24px;font-weight:700;color:${myRoas >= benchmarkRoas ? '#AAFF00' : '#FF9500'}">${myRoas.toFixed(2)}x</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:8px">Benchmark: ${benchmarkRoas}x</div>
-        </div>
-        <div style="background:var(--surface2);border-radius:12px;padding:16px">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">CTR medio</div>
-          <div style="font-size:24px;font-weight:700;color:${(totals.ctr || 0) >= benchmarkCtr ? '#AAFF00' : '#FF9500'}">${formatPercent(totals.ctr)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:8px">Benchmark Meta: ${benchmarkCtr}%</div>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  if (sections.includes('Recommendations')) {
-    const topCampaign = campaigns.reduce((best, c) => (c.roas || 0) > (best.roas || 0) ? c : best, campaigns[0] || {});
-    html += `<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:24px;page-break-after:avoid">
-      <h4 style="margin-bottom:12px;font-size:14px;color:var(--text)">Raccomandazioni</h4>
-      <ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.8">
-        <li>La campagna top performer è <strong>${topCampaign.name}</strong> con ROAS ${(topCampaign.roas || 0).toFixed(2)}x. Considera di aumentare il budget del 20%.</li>
-        <li>Analizza i competitor nel tuo settore e differenzia la tua creative strategy.</li>
-        <li>Conduci test A/B continuativi sui targeting e i messaggi per ottimizzare il CTR.</li>
-      </ul>
-    </div>`;
+    html += `</tbody></table>`;
   }
 
   html += `</div>`;
@@ -4153,37 +4090,28 @@ function exportReportPDF() {
 
 function renderReportTemplates() {
   const templates = [
-    { id: 'exec', name: 'Executive Summary', desc: '1 pagina, solo KPI principali per il cliente', icon: '📊', sections: ['Executive Summary','KPI Cards'] },
-    { id: 'campaign', name: 'Campaign Performance', desc: 'Dettaglio per campagna con tabella e KPI', icon: '📈', sections: ['KPI Cards','Campaign Table','Performance Charts'] },
-    { id: 'competitor', name: 'Competitor Analysis', desc: 'Benchmark vs industry standard', icon: '🔍', sections: ['Executive Summary','KPI Cards','Competitor Benchmark','Recommendations'] },
-    { id: 'complete', name: 'Full Report', desc: 'Analisi completa con tutte le sezioni', icon: '📋', sections: ['Executive Summary','KPI Cards','Campaign Table','Performance Charts','Competitor Benchmark','Recommendations'] },
+    { id: 'exec', name: 'Executive Summary', desc: '1 pagina, solo KPI principali per il cliente', icon: '📊', metrics: ['Impressioni','Click','Conversioni','ROAS','Spesa'], vizs: ['KPI Cards'] },
+    { id: 'deep', name: 'Performance Deep Dive', desc: 'Analisi completa con tutti i breakdown', icon: '🔬', metrics: ['Impressioni','Click','CTR','CPC','Conversioni','CPA','ROAS','Spesa','Revenue'], vizs: ['KPI Cards','Line Chart','Bar Chart','Tabella'] },
+    { id: 'weekly', name: 'Weekly Update', desc: 'Formato conciso per aggiornamento settimanale', icon: '📅', metrics: ['Click','CTR','Conversioni','ROAS'], vizs: ['KPI Cards','Tabella'] },
+    { id: 'eoc', name: 'End of Campaign', desc: 'Analisi finale con insight e next steps', icon: '🏁', metrics: ['Impressioni','Click','CTR','CPC','Conversioni','CPA','ROAS','Spesa','Revenue'], vizs: ['KPI Cards','Line Chart','Bar Chart','Tabella'] },
   ];
-
-  let html = '<div style="display:grid;gap:24px">';
-  templates.forEach(t => {
-    html += `<div class="card" onclick="applyTemplate('${t.id}', ${JSON.stringify(t.sections).replace(/"/g,"'")})" style="cursor:pointer;transition:border-color 200ms,transform 200ms">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:32px">${t.icon}</div>
-        <button class="btn-primary btn-sm">Usa template</button>
-      </div>
-      <h3 style="font-size:18px;margin-bottom:6px">${t.name}</h3>
-      <p class="text-muted" style="margin-bottom:16px;font-size:13px">${t.desc}</p>
-      <div style="background:var(--surface2);border-radius:12px;padding:12px;font-size:12px">
-        <div style="color:var(--muted);margin-bottom:6px;font-weight:600">Sezioni incluse:</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px">
-          ${t.sections.map(s => `<span class="pill" style="font-size:11px;background:var(--surface);border:1px solid var(--border)">${s}</span>`).join('')}
-        </div>
-      </div>
+  document.getElementById('reporting-content').innerHTML = `
+    <div class="cards-grid">
+      ${templates.map(t => `
+        <div class="card template-card" onclick="applyTemplate('${t.id}', ${JSON.stringify(t.metrics).replace(/"/g,"'")}, ${JSON.stringify(t.vizs).replace(/"/g,"'")})">
+          <div style="font-size:32px;margin-bottom:12px">${t.icon}</div>
+          <h3>${t.name}</h3>
+          <p class="text-muted">${t.desc}</p>
+          <div style="margin-top:16px"><button class="btn-primary" style="width:100%">Usa template</button></div>
+        </div>`).join('')}
     </div>`;
-  });
-  html += '</div>';
-  document.getElementById('reporting-content').innerHTML = html;
 }
 
-function applyTemplate(id, sections) {
+function applyTemplate(id, metrics, vizs) {
   switchReportingTab('builder', document.querySelector('#view-reporting .tab-btn'));
   setTimeout(() => {
-    document.querySelectorAll('.report-section-cb').forEach(cb => { cb.checked = sections.includes(cb.value); });
+    document.querySelectorAll('.report-metric-cb').forEach(cb => { cb.checked = metrics.includes(cb.value); });
+    document.querySelectorAll('.report-viz-cb').forEach(cb => { cb.checked = vizs.includes(cb.value); });
     updateReportPreview();
   }, 100);
 }
@@ -4413,61 +4341,17 @@ function createPersona() {
 }
 
 function renderPersonaCardHTML(p) {
-  const quality = calculatePersonaQuality(p);
-  const avatarBg = colorHash(p.name);
-  const initials = p.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  const colorTags = ['#0055FF', '#AAFF00', '#FF6B9D', '#4D96FF'];
-
-  return `<div class="card persona-card" style="margin-bottom:16px;border:1px solid var(--border);overflow:hidden">
-    <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:20px">
-      <div style="width:72px;height:72px;border-radius:12px;background:${avatarBg};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:24px;flex-shrink:0">${initials}</div>
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:18px;color:var(--text);margin-bottom:4px">${p.name}</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6">
-          <div>📅 ${p.age} anni</div>
-          <div>💼 ${p.occupation || '-'}</div>
-          <div>💰 ${p.income || '-'}</div>
-        </div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:32px;font-weight:900;color:${quality >= 80 ? '#AAFF00' : quality >= 60 ? '#0055FF' : '#FF9500'}">${quality}%</div>
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Qualità Persona</div>
-      </div>
+  const avatars = { '<€20k': '👩‍🎓', '€20k-€40k': '👨‍💼', '€40k-€70k': '👩‍💼', '>€70k': '🧑‍💼' };
+  const avatar = p.age < 25 ? '👦' : p.age < 35 ? '👩‍💼' : p.age < 50 ? '🧑‍💼' : '👴';
+  return `<div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:40px">${avatar}</div>
+      <div><div style="font-weight:700;font-size:18px">${p.name}</div><div style="color:var(--muted);font-size:13px">${p.age} anni · ${p.occupation}</div><div style="color:var(--muted);font-size:12px">${p.income}</div></div>
     </div>
-
-    ${p.goals.length ? `<div style="margin-bottom:16px">
-      <div style="font-size:12px;color:var(--lime);margin-bottom:8px;text-transform:uppercase;font-weight:600">Obiettivi</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${p.goals.map((g, i) => `<span style="background:${colorTags[i % colorTags.length]}22;border:1px solid ${colorTags[i % colorTags.length]}44;border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text)">🎯 ${g}</span>`).join('')}
-      </div>
-    </div>` : ''}
-
-    ${p.painPoints.length ? `<div style="margin-bottom:16px">
-      <div style="font-size:12px;color:#FF6B9D;margin-bottom:8px;text-transform:uppercase;font-weight:600">Pain Points</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${p.painPoints.map((g, i) => `<span style="background:#FF6B9D22;border:1px solid #FF6B9D44;border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text)">⚠️ ${g}</span>`).join('')}
-      </div>
-    </div>` : ''}
-
-    ${p.channels.length ? `<div style="margin-bottom:16px">
-      <div style="font-size:12px;color:#4D96FF;margin-bottom:8px;text-transform:uppercase;font-weight:600">Canali Preferiti</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${p.channels.map(ch => `<span class="pill" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)">${ch}</span>`).join('')}
-      </div>
-    </div>` : ''}
-
-    <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;gap:8px">
-      <button class="btn-primary" style="flex:1;font-size:12px;padding:10px 12px" onclick="selectPersonaForCampaign('${p.id}', '${p.name.replace(/'/g, "\\'")}')">📊 Usa in Campagna</button>
-      <button class="btn-secondary" style="font-size:12px;padding:10px 12px" onclick="analyzePersonaWithAI({id:'${p.id}',name:'${p.name.replace(/'/g, "\\'")}',age:${p.age},occupation:'${p.occupation.replace(/'/g, "\\'")}',channels:${JSON.stringify(p.channels).replace(/"/g,"'")},behavior:'${p.behavior.replace(/'/g, "\\'")}',goals:${JSON.stringify(p.goals).replace(/"/g,"'")},painPoints:${JSON.stringify(p.painPoints).replace(/"/g,"'")}}); void(0)">🤖 Analizza</button>
-    </div>
+    ${p.goals.length ? `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">OBIETTIVI</div>${p.goals.map(g => `<div style="font-size:13px;margin:3px 0">✅ ${g}</div>`).join('')}</div>` : ''}
+    ${p.painPoints.length ? `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">PAIN POINTS</div>${p.painPoints.map(g => `<div style="font-size:13px;margin:3px 0">❌ ${g}</div>`).join('')}</div>` : ''}
+    ${p.channels.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${p.channels.map(ch => `<span class="pill">${ch}</span>`).join('')}</div>` : ''}
   </div>`;
-}
-
-function selectPersonaForCampaign(personaId, personaName) {
-  AppState.selectedPersona = { id: personaId, name: personaName };
-  saveState();
-  showToast('Persona ' + personaName + ' selezionata. Vai al Campaign Builder', 'success');
-  goToModule('builder');
 }
 
 async function analyzePersonaWithAI(persona) {
@@ -4596,39 +4480,20 @@ function analyzeCompetitors() {
 }
 
 // 6C — CUSTOMER JOURNEY MAPPER
-const JOURNEY_STAGES = ['Awareness', 'Consideration', 'Decision', 'Purchase', 'Loyalty'];
-const JOURNEY_STAGE_EMOJIS = { Awareness: '👁️', Consideration: '🤔', Decision: '📊', Purchase: '🛒', Loyalty: '❤️' };
-const JOURNEY_STAGE_KPI = { Awareness: 'CPM', Consideration: 'CTR', Decision: 'CPA', Purchase: 'ROI', Loyalty: 'LTV' };
-const JOURNEY_SUGGESTED_CHANNELS = {
-  Awareness: ['Meta Ads', 'YouTube', 'Google Display', 'TikTok'],
-  Consideration: ['Google Search', 'LinkedIn', 'Pinterest'],
-  Decision: ['Google Search', 'Email'],
-  Purchase: ['Meta Ads', 'Google Search'],
-  Loyalty: ['Email', 'SMS', 'Social']
-};
+const JOURNEY_STAGES = ['Awareness', 'Interest', 'Consideration', 'Purchase', 'Retention'];
 
 function renderJourneyMapper() {
   if (!AppState.journey) AppState.journey = {};
   document.getElementById('audience-content').innerHTML = `
     <div style="margin-top:24px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
-        <div>
-          <h3 style="margin-bottom:4px">Customer Journey Map</h3>
-          <p class="text-muted" style="font-size:13px">5 stage con KPI e canali suggeriti</p>
-        </div>
-        <button class="btn-secondary" onclick="generateJourneyActionAI()">🤖 Genera Azioni</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>Customer Journey Map</h3>
+        <button class="btn-secondary" onclick="analyzeJourneyWithAI()">Analizza con AI</button>
       </div>
       <div class="journey-map">
         ${JOURNEY_STAGES.map(stage => `
           <div class="journey-stage">
-            <div class="journey-stage-header">${JOURNEY_STAGE_EMOJIS[stage]} ${stage}</div>
-            <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;font-weight:500">KPI: ${JOURNEY_STAGE_KPI[stage]}</div>
-            <div style="background:var(--surface2);border-radius:8px;padding:8px;margin-bottom:10px;font-size:11px">
-              <div style="color:var(--muted);margin-bottom:4px">Canali suggeriti:</div>
-              <div style="display:flex;flex-wrap:wrap;gap:3px">
-                ${JOURNEY_SUGGESTED_CHANNELS[stage].map(ch => `<span style="background:var(--surface);border-radius:4px;padding:2px 6px;font-size:10px">${ch}</span>`).join('')}
-              </div>
-            </div>
+            <div class="journey-stage-header">${stage}</div>
             <div class="journey-touchpoints" id="journey-${stage}">
               ${(AppState.journey[stage]||[]).map((tp, i) => renderTouchpointHTML(stage, tp, i)).join('')}
             </div>
@@ -4637,23 +4502,6 @@ function renderJourneyMapper() {
       </div>
       <div id="journey-ai-output" style="margin-top:24px"></div>
     </div>`;
-}
-
-async function generateJourneyActionAI() {
-  const journey = AppState.journey || {};
-  const desc = JOURNEY_STAGES.map(s => {
-    const touchpoints = (journey[s]||[]).map(tp=>`${tp.platform} (${tp.kpi})`).join(', ');
-    return `${s}: ${touchpoints || 'nessun touchpoint'}`;
-  }).join('\n');
-  const system = `Sei PROOVD AI Coach. Per ogni stage del customer journey, genera UNA azione specifica da implementare. Sii pratico e concreto. Formato: "Stage - Azione". Max 150 parole.`;
-  const result = await callClaude(system, `Customer Journey:\n${desc}`, 'journey-ai-output');
-  if (result) {
-    const actions = result.split('\n').filter(l => l.trim());
-    let html = `<div class="card coach-tip"><div class="coach-tip-header">🤖 Azioni AI Coach</div>`;
-    actions.forEach(a => { html += `<div style="font-size:13px;line-height:1.6;margin:8px 0;padding:8px;background:var(--surface2);border-radius:8px">${a.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`; });
-    html += `</div>`;
-    document.getElementById('journey-ai-output').innerHTML = html;
-  }
 }
 
 function renderTouchpointHTML(stage, tp, index) {
