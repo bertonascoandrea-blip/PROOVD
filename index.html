@@ -680,18 +680,18 @@ async function sendCoachMessage() {
 
 // === SIMULATION ENGINE ===
 const platformBenchmarks = {
-  meta:{ cpm:8, ctr:1.2, cvr:2.1, cpc:0.67, learningDays:3, saturationDays:10 },
-  google_search:{ cpm:0, ctr:4.5, cvr:3.8, cpc:0.85, learningDays:1, saturationDays:30 },
-  google_display:{ cpm:2.5, ctr:0.35, cvr:1.2, cpc:0.71, learningDays:2, saturationDays:25 },
-  youtube:{ cpm:12, ctr:0.7, cvr:1.5, cpc:1.71, learningDays:3, saturationDays:20 },
-  tiktok:{ cpm:6, ctr:1.8, cvr:1.9, cpc:0.33, learningDays:2, saturationDays:7 },
-  linkedin:{ cpm:35, ctr:0.45, cvr:2.8, cpc:7.78, learningDays:5, saturationDays:60 },
-  pinterest:{ cpm:5, ctr:0.8, cvr:1.4, cpc:0.63, learningDays:3, saturationDays:20 },
-  snapchat:{ cpm:7, ctr:1.1, cvr:1.3, cpc:0.64, learningDays:2, saturationDays:10 },
-  x_ads:{ cpm:6.5, ctr:0.9, cvr:1.0, cpc:0.72, learningDays:2, saturationDays:15 },
-  email:{ cpm:0, ctr:22, cvr:3.5, cpc:0, learningDays:1, saturationDays:60 },
-  seo:{ cpm:0, ctr:3.2, cvr:2.5, cpc:0, learningDays:7, saturationDays:90 },
-  programmatic:{ cpm:3, ctr:0.28, cvr:0.9, cpc:1.07, learningDays:3, saturationDays:20 },
+  meta:{ cpm:8, ctr:1.2, cvr:2.1, cpc:0.67 },
+  google_search:{ cpm:0, ctr:4.5, cvr:3.8, cpc:0.85 },
+  google_display:{ cpm:2.5, ctr:0.35, cvr:1.2, cpc:0.71 },
+  youtube:{ cpm:12, ctr:0.7, cvr:1.5, cpc:1.71 },
+  tiktok:{ cpm:6, ctr:1.8, cvr:1.9, cpc:0.33 },
+  linkedin:{ cpm:35, ctr:0.45, cvr:2.8, cpc:7.78 },
+  pinterest:{ cpm:5, ctr:0.8, cvr:1.4, cpc:0.63 },
+  snapchat:{ cpm:7, ctr:1.1, cvr:1.3, cpc:0.64 },
+  x_ads:{ cpm:6.5, ctr:0.9, cvr:1.0, cpc:0.72 },
+  email:{ cpm:0, ctr:22, cvr:3.5, cpc:0 },
+  seo:{ cpm:0, ctr:3.2, cvr:2.5, cpc:0 },
+  programmatic:{ cpm:3, ctr:0.28, cvr:0.9, cpc:1.07 },
 };
 function calculateModifiers(campaign) {
   let mod = 1.0;
@@ -706,36 +706,16 @@ function simulateCampaignDay(campaign) {
   const bench = platformBenchmarks[campaign.platform] || platformBenchmarks.meta;
   const mod = calculateModifiers(campaign);
   const variance = 0.85 + Math.random() * 0.30;
-
-  // Curva di performance realistica: learning → ottimizzazione → regime
-  const dayCount = (campaign.dayCount || 0) + 1;
-  let performanceMultiplier;
-  if (dayCount <= (bench.learningDays || 3)) {
-    performanceMultiplier = 0.60; // fase learning: algoritmo ancora non ottimizzato
-  } else if (dayCount <= (bench.learningDays || 3) + 4) {
-    performanceMultiplier = 0.80; // fase ottimizzazione: dati sufficienti, migliora
-  } else {
-    performanceMultiplier = 1.00; // regime: performance a pieno regime
-  }
-
-  // Budget pacing: varianza ±20% rispetto al budget giornaliero flat
-  const dailyBudget = campaign.budget / campaign.days * (0.8 + Math.random() * 0.4);
-
+  const learningBonus = campaign.days - campaign.daysLeft >= 7 ? 1.20 : 1.0;
+  const dailyBudget = campaign.budget / campaign.days;
   let impressions = 0, clicks = 0, conversions = 0;
   if (bench.cpm > 0) {
-    impressions = Math.round((dailyBudget / bench.cpm) * 1000 * mod * variance * performanceMultiplier);
+    impressions = Math.round((dailyBudget / bench.cpm) * 1000 * mod * variance * learningBonus);
     clicks = Math.round(impressions * (bench.ctr / 100) * mod * variance);
   } else {
-    clicks = Math.round((dailyBudget / Math.max(bench.cpc, 0.01)) * mod * variance * performanceMultiplier);
+    clicks = Math.round((dailyBudget / Math.max(bench.cpc, 0.01)) * mod * variance * learningBonus);
     impressions = Math.round(clicks / ((bench.ctr||1) / 100));
   }
-
-  // audience saturation: CTR cala del 15% su piattaforme social dopo saturationDays
-  const saturationPlatforms = ['meta', 'tiktok', 'snapchat'];
-  if (saturationPlatforms.includes(campaign.platform) && dayCount > (bench.saturationDays || 10)) {
-    clicks = Math.round(clicks * 0.85); // audience saturation
-  }
-
   conversions = Math.round(clicks * (bench.cvr / 100) * mod * variance);
   const aov = campaign.aov || 45;
   const revenue = conversions * aov;
@@ -746,25 +726,16 @@ function simulateCampaignDay(campaign) {
   const newSpent = (campaign.spent||0) + spent;
   const newRevenue = (campaign.revenue||0) + revenue;
   const dailyData = [...(campaign.dailyData||[]), { impressions, clicks, conversions, spent }];
-
-  // Metriche aggiuntive: reach, frequency, CPA
-  const newReach = Math.floor(newImpressions * 0.65);
-  const frequency = ((newImpressions||0) / Math.max(1, (newReach||1))).toFixed(2);
-  const cpa = newConversions > 0 ? (newSpent / newConversions).toFixed(2) : null;
-
   return {
     ...campaign,
-    dayCount,
     impressions: newImpressions,
     clicks: newClicks,
     conversions: newConversions,
     spent: newSpent,
     revenue: newRevenue,
-    reach: newReach,
-    frequency,
     ctr: newImpressions > 0 ? (newClicks / newImpressions * 100) : 0,
     cpc: newClicks > 0 ? (newSpent / newClicks) : 0,
-    cpa,
+    cpa: newConversions > 0 ? (newSpent / newConversions) : 0,
     roas: newSpent > 0 ? (newRevenue / newSpent) : 0,
     daysLeft: Math.max(0, (campaign.daysLeft||0) - 1),
     dailyData,
@@ -1534,15 +1505,57 @@ function renderStep1() {
     </div>`;
 }
 
+const PLATFORM_IDEALE_PER = {
+  meta:           'Brand awareness, Lead generation, E-commerce',
+  google_search:  'Lead generation, Vendite dirette, Ricerca prodotto',
+  google_display: 'Brand awareness, Retargeting, Reach visivo',
+  youtube:        'Brand awareness, Storytelling, Video views',
+  tiktok:         'Brand awareness, E-commerce, Engagement Gen Z',
+  linkedin:       'Lead generation B2B, Recruiting, Brand aziendale',
+  pinterest:      'E-commerce, Ispirazione visiva, Traffico organico',
+  snapchat:       'Brand awareness under-25, App installs, Engagement',
+  x_ads:          'Brand awareness, Engagement real-time, Newsjacking',
+  email:          'Nurturing, Retention, Vendite ricorrenti',
+  seo:            'Traffico organico, Autorità, Acquisizione a lungo termine',
+  programmatic:   'Reach massivo, Retargeting, Brand safety',
+};
+
 function renderPlatformContext(platformId) {
   const p = PLATFORMS.find(pl => pl.id === platformId);
   if (!p) return '';
+
+  const bench = platformBenchmarks[platformId] || {};
+  const ideale = PLATFORM_IDEALE_PER[platformId] || '';
+
+  const benchRows = [];
+  if (bench.cpm > 0) benchRows.push({ label: 'CPM medio', value: `€${bench.cpm.toFixed(2)}` });
+  if (bench.ctr > 0) benchRows.push({ label: 'CTR medio', value: `${bench.ctr}%` });
+  if (bench.cpc > 0) benchRows.push({ label: 'CPC medio', value: `€${bench.cpc.toFixed(2)}` });
 
   return `
     <div class="card" style="position:sticky;top:80px">
       <div style="font-size:32px;margin-bottom:10px">${p.emoji}</div>
       <h3 style="font-size:16px;font-weight:700;margin:0 0 8px">${p.name}</h3>
       <p style="font-size:13px;color:#ccc;line-height:1.6;margin:0 0 16px">${p.when}</p>
+
+      ${ideale ? `
+      <div style="margin-bottom:14px;padding:10px 12px;background:#AAFF0011;border:1px solid #AAFF0033;border-radius:12px">
+        <div style="font-size:10px;color:#AAFF00;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:5px">🎯 Ideale per</div>
+        <div style="font-size:12px;color:#ccc;line-height:1.5">${ideale}</div>
+      </div>` : ''}
+
+      ${benchRows.length ? `
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Benchmark piattaforma</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${benchRows.map(r => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#1A1A1A;border-radius:8px">
+              <span style="font-size:11px;color:#777">${r.label}</span>
+              <span style="font-size:13px;font-weight:700;color:#0055FF">${r.value}</span>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
       <div style="margin-bottom:12px">
         <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">KPI principali</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1817,20 +1830,106 @@ function renderAdMockup(platform, creative) {
   const text = creative.primaryText || 'Testo principale del tuo annuncio. Scrivi qualcosa di coinvolgente!';
   const cta = creative.cta || 'Scopri di più';
 
-  if (platform === 'tiktok' || platform === 'snapchat') {
+  if (platform === 'tiktok') {
     return `
-      <div style="width:180px;max-width:100%;background:#000;border-radius:24px;overflow:hidden;border:6px solid #222;position:relative;height:320px">
-        <div style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);width:100%;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;box-sizing:border-box">
-          <div style="position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:12px;align-items:center">
-            <div style="text-align:center;color:#fff;font-size:10px">❤️<br>12k</div>
-            <div style="text-align:center;color:#fff;font-size:10px">💬<br>234</div>
-            <div style="text-align:center;color:#fff;font-size:10px">↗️<br>Condividi</div>
+      <div style="width:190px;max-width:100%;background:#000;border-radius:24px;overflow:hidden;border:5px solid #1A1A1A;position:relative;height:336px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+        <div style="position:relative;width:100%;height:100%;background:linear-gradient(170deg,#1a0533,#0d1b2e,#0a1f0a);display:flex;flex-direction:column;justify-content:flex-end">
+          <!-- Video placeholder gradient -->
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.85));pointer-events:none"></div>
+          <!-- TikTok top bar -->
+          <div style="position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:10px 12px">
+            <span style="color:#fff;font-size:9px;font-weight:600">Seguiti &nbsp; <span style="border-bottom:2px solid #fff">Per te</span></span>
+            <span style="color:#fff;font-size:14px">🔍</span>
           </div>
-          <div style="color:#fff;font-size:11px;font-weight:700;margin-bottom:4px">${headline}</div>
-          <div style="color:rgba(255,255,255,.8);font-size:10px;margin-bottom:8px;line-height:1.4">${text.substring(0,80)}...</div>
-          <div style="background:#fff;color:#000;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;text-align:center;display:inline-block">${cta}</div>
+          <!-- Sponsor badge -->
+          <div style="position:absolute;top:36px;left:10px;font-size:8px;color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:4px;padding:2px 6px;backdrop-filter:blur(4px)">Sponsorizzato</div>
+          <!-- Right actions -->
+          <div style="position:absolute;right:10px;bottom:80px;display:flex;flex-direction:column;gap:14px;align-items:center">
+            <div style="width:34px;height:34px;background:#ff2d55;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px">👤</div>
+            <div style="text-align:center;color:#fff">
+              <div style="font-size:18px">❤️</div>
+              <div style="font-size:8px;margin-top:1px">12.4k</div>
+            </div>
+            <div style="text-align:center;color:#fff">
+              <div style="font-size:18px">💬</div>
+              <div style="font-size:8px;margin-top:1px">348</div>
+            </div>
+            <div style="text-align:center;color:#fff">
+              <div style="font-size:18px">↗️</div>
+              <div style="font-size:8px;margin-top:1px">Condividi</div>
+            </div>
+          </div>
+          <!-- Bottom content -->
+          <div style="position:relative;padding:0 12px 12px">
+            <div style="color:#fff;font-size:11px;font-weight:700;margin-bottom:4px;text-shadow:0 1px 4px rgba(0,0,0,.8)">@brand_name</div>
+            <div style="color:rgba(255,255,255,.9);font-size:9px;margin-bottom:8px;line-height:1.4;text-shadow:0 1px 3px rgba(0,0,0,.7)">${text.substring(0,70)}${text.length>70?'...':''}</div>
+            <div style="background:#fff;color:#000;border-radius:6px;padding:6px 14px;font-size:10px;font-weight:700;text-align:center;display:inline-block">${cta}</div>
+          </div>
+          <!-- Bottom TikTok nav bar -->
+          <div style="background:rgba(0,0,0,.6);padding:6px 0;display:flex;justify-content:space-around;border-top:1px solid rgba(255,255,255,.08)">
+            ${['🏠','🔍','➕','📬','👤'].map(ic=>`<span style="color:#fff;font-size:14px">${ic}</span>`).join('')}
+          </div>
         </div>
-        <div style="position:absolute;top:10px;left:10px;font-size:9px;color:#fff;background:rgba(0,0,0,.5);border-radius:4px;padding:2px 6px">Annuncio</div>
+      </div>`;
+  }
+
+  if (platform === 'snapchat') {
+    return `
+      <div style="width:190px;max-width:100%;background:#000;border-radius:24px;overflow:hidden;border:5px solid #1A1A1A;position:relative;height:336px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+        <div style="position:relative;width:100%;height:100%;background:linear-gradient(135deg,#FFFC00,#FFC107,#FF6B35);display:flex;flex-direction:column;justify-content:flex-end">
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.75))"></div>
+          <div style="position:absolute;top:10px;left:12px;font-size:8px;color:#fff;background:rgba(0,0,0,.35);border-radius:4px;padding:2px 6px">Annuncio</div>
+          <div style="position:relative;padding:0 12px 12px">
+            <div style="color:#fff;font-size:11px;font-weight:700;margin-bottom:4px;text-shadow:0 1px 4px rgba(0,0,0,.6)">${headline}</div>
+            <div style="color:rgba(255,255,255,.9);font-size:9px;margin-bottom:8px;line-height:1.4">${text.substring(0,60)}${text.length>60?'...':''}</div>
+            <div style="background:#FFFC00;color:#000;border-radius:6px;padding:6px 14px;font-size:10px;font-weight:700;text-align:center;display:inline-block">${cta}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (platform === 'youtube') {
+    return `
+      <div style="background:#0f0f0f;border-radius:12px;overflow:hidden;max-width:320px;font-family:Roboto,system-ui,sans-serif;border:1px solid #2A2A2A">
+        <!-- Video area -->
+        <div style="background:linear-gradient(135deg,#1a0533,#0d1b2e);height:160px;position:relative;display:flex;align-items:center;justify-content:center">
+          <div style="width:48px;height:48px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px">▶</div>
+          <div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.8);color:#fff;font-size:9px;padding:2px 6px;border-radius:3px">Annuncio · 0:15</div>
+          <div style="position:absolute;bottom:8px;right:8px;background:#cc0000;color:#fff;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700">Salta ▶</div>
+        </div>
+        <!-- Info bar -->
+        <div style="padding:10px 12px;display:flex;gap:8px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:#0055FF;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">B</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:700;color:#f1f1f1;line-height:1.3;margin-bottom:2px">${headline.substring(0,50)}</div>
+            <div style="font-size:10px;color:#aaa">Brand Name · Sponsorizzato</div>
+          </div>
+        </div>
+        <div style="padding:0 12px 10px">
+          <div style="background:#0055FF;color:#fff;padding:7px 16px;border-radius:6px;font-size:11px;font-weight:700;text-align:center">${cta}</div>
+        </div>
+      </div>`;
+  }
+
+  if (platform === 'linkedin') {
+    return `
+      <div style="background:#1b1f23;border-radius:12px;overflow:hidden;max-width:320px;font-family:system-ui,sans-serif;border:1px solid #2A2A2A">
+        <div style="padding:12px;display:flex;align-items:center;gap:10px">
+          <div style="width:40px;height:40px;background:#0077b5;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;flex-shrink:0">B</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#e8e8e8">Brand Name</div>
+            <div style="font-size:10px;color:#999">50.000 follower · Sponsorizzato</div>
+          </div>
+        </div>
+        <div style="padding:0 12px 10px;font-size:12px;color:#ccc;line-height:1.5">${text.substring(0,100)}${text.length>100?'...':''}</div>
+        <div style="background:#2A2A2A;height:140px;display:flex;align-items:center;justify-content:center;color:#777;font-size:11px">📷 Immagine 1200×627px</div>
+        <div style="padding:10px 12px;border-top:1px solid #2A2A2A;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:10px;color:#999">brand.com</div>
+            <div style="font-size:12px;font-weight:700;color:#e8e8e8">${headline.substring(0,40)}</div>
+          </div>
+          <div style="background:#0077b5;color:#fff;padding:6px 14px;border-radius:100px;font-size:11px;font-weight:700;white-space:nowrap">${cta}</div>
+        </div>
       </div>`;
   }
 
@@ -1838,22 +1937,27 @@ function renderAdMockup(platform, creative) {
   return `
     <div style="background:#fff;border-radius:12px;overflow:hidden;max-width:320px;font-family:system-ui,sans-serif">
       <div style="padding:10px 12px;display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;background:#0055FF;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700">B</div>
-        <div>
+        <div style="width:34px;height:34px;background:#0055FF;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700">B</div>
+        <div style="flex:1">
           <div style="font-size:12px;font-weight:700;color:#1c1e21">Brand Name</div>
           <div style="font-size:10px;color:#65676b">Sponsorizzato · 🌐</div>
         </div>
+        <div style="color:#65676b;font-size:16px">···</div>
       </div>
-      <div style="padding:0 12px 10px;font-size:12px;color:#1c1e21;line-height:1.5">${text.substring(0,100)}</div>
-      <div style="background:linear-gradient(135deg,#667eea,#764ba2);height:160px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;text-align:center;padding:12px">
-        📸 Immagine / Video<br><span style="font-weight:400;font-size:10px;opacity:.8">1200×628px</span>
+      <div style="padding:0 12px 10px;font-size:12px;color:#1c1e21;line-height:1.5">${text.substring(0,120)}${text.length>120?'...':''}</div>
+      <div style="background:#e4e6ea;height:170px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px">
+        <div style="width:48px;height:48px;background:#bec3cb;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">🖼️</div>
+        <div style="font-size:10px;color:#65676b">1200 × 628 px</div>
       </div>
       <div style="background:#f0f2f5;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:10px;color:#65676b">tuodominio.it</div>
-          <div style="font-size:12px;font-weight:700;color:#1c1e21">${headline}</div>
+        <div style="min-width:0;flex:1;margin-right:8px">
+          <div style="font-size:10px;color:#65676b;text-transform:uppercase">tuodominio.it</div>
+          <div style="font-size:12px;font-weight:700;color:#1c1e21;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${headline}</div>
         </div>
-        <div style="background:#1877f2;color:#fff;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap">${cta}</div>
+        <div style="background:#1877f2;color:#fff;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0">${cta}</div>
+      </div>
+      <div style="padding:8px 12px;display:flex;gap:0;border-top:1px solid #e4e6ea">
+        ${['👍 Mi piace','💬 Commenta','↗️ Condividi'].map(a=>`<div style="flex:1;text-align:center;font-size:11px;color:#65676b;padding:4px 0">${a}</div>`).join('')}
       </div>
     </div>`;
 }
@@ -2077,8 +2181,41 @@ function renderStep5() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div>
         <div class="card" style="margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:600;margin:0 0 14px">Budget campagna</h3>
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Importo totale (€)</label>
+            <input type="number" id="budget-input" min="10" max="${AppState.tokens||500}" value="${c.budget||100}"
+              oninput="AppState.activeCampaign.budget=Number(this.value)||100;updateBudgetEstimator()"
+              style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:16px;font-weight:700;outline:none;box-sizing:border-box"
+              onfocus="this.style.borderColor='#0055FF'" onblur="this.style.borderColor='#2A2A2A'"/>
+            <div style="font-size:11px;color:#777;margin-top:5px">Disponibile: <span style="color:#AAFF00;font-weight:600">€${AppState.tokens||500}</span></div>
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Durata (giorni)</label>
+            <input type="range" min="1" max="90" value="${c.duration||7}"
+              oninput="AppState.activeCampaign.duration=Number(this.value);document.getElementById('duration-label').textContent=this.value+' giorni';updateBudgetEstimator()"
+              style="width:100%;accent-color:#0055FF"/>
+            <div style="font-size:13px;color:#F0F0F0;font-weight:600;margin-top:4px" id="duration-label">${c.duration||7} giorni</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:600;margin:0 0 12px">⚡ Budget Estimator</h3>
+          <div style="font-size:11px;color:#777;margin-bottom:12px">Aggiornamento in tempo reale mentre cambi il budget</div>
+          <div id="budget-estimator-rows">
+            ${renderBudgetEstimatorRows(c)}
+          </div>
+          <div style="margin-top:12px;padding:10px 12px;background:#0055FF11;border:1px solid #0055FF33;border-radius:12px">
+            <div style="font-size:10px;color:#0055FF;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">ROAS stimato</div>
+            <div id="roas-range" style="font-size:20px;font-weight:800;color:#F0F0F0">${getRoasRange(c)}</div>
+            <div style="font-size:10px;color:#777;margin-top:2px">Basato su benchmark ± varianza storica</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
           <h3 style="font-size:14px;font-weight:600;margin:0 0 14px">Tipo di budget</h3>
-          <div style="display:flex;gap:8px;margin-bottom:16px">
+          <div style="display:flex;gap:8px;margin-bottom:0">
             <button onclick="AppState.activeCampaign.bidding.daily=true;renderBuilderStep()" style="flex:1;padding:10px;border-radius:12px;border:1px solid ${isDaily?'#0055FF':'#2A2A2A'};background:${isDaily?'#0055FF22':'transparent'};color:${isDaily?'#F0F0F0':'#777'};cursor:pointer">
               <div style="font-size:13px;font-weight:600">Budget Giornaliero</div>
               <div style="font-size:11px;color:#777;margin-top:3px">${formatCurrency(c.budget/c.duration)}/giorno</div>
@@ -2127,6 +2264,68 @@ function renderStep5() {
         </div>
       </div>
     </div>`;
+}
+
+function renderBudgetEstimatorRows(campaign) {
+  const platform = campaign.platform || 'meta';
+  const bench = platformBenchmarks[platform] || platformBenchmarks.meta;
+  const budget = campaign.budget || 100;
+  const cpm = bench.cpm || 5;
+  const ctr = bench.ctr || 1;
+  const cvr = bench.cvr || 2;
+
+  let impressioni = 0, click = 0, conversioni = 0;
+  if (cpm > 0) {
+    impressioni = Math.round((budget / cpm) * 1000);
+    click = Math.round(impressioni * ctr / 100);
+  } else if (bench.cpc > 0) {
+    click = Math.round(budget / bench.cpc);
+    impressioni = Math.round(click / (ctr / 100));
+  }
+  conversioni = Math.round(click * cvr / 100);
+
+  const rows = [
+    { label: 'Impressioni stimate', value: formatNumber(impressioni), color: '#F0F0F0' },
+    { label: 'Click stimati', value: formatNumber(click), color: '#0055FF' },
+    { label: 'Conversioni stimate', value: formatNumber(conversioni), color: '#AAFF00' },
+  ];
+
+  return rows.map(r => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #1A1A1A">
+      <span style="font-size:12px;color:#777">${r.label}</span>
+      <span style="font-size:14px;font-weight:700;color:${r.color}">${r.value}</span>
+    </div>`).join('');
+}
+
+function getRoasRange(campaign) {
+  const platform = campaign.platform || 'meta';
+  const bench = platformBenchmarks[platform] || platformBenchmarks.meta;
+  const cvr = bench.cvr || 2;
+  const ctr = bench.ctr || 1;
+  const cpm = bench.cpm || 5;
+  const budget = campaign.budget || 100;
+
+  let click = 0;
+  if (cpm > 0) {
+    const impressioni = (budget / cpm) * 1000;
+    click = impressioni * ctr / 100;
+  } else if (bench.cpc > 0) {
+    click = budget / bench.cpc;
+  }
+  const conv = click * cvr / 100;
+  const aov = 45;
+  const baseRoas = budget > 0 ? (conv * aov) / budget : 0;
+  const low = Math.max(0.5, baseRoas * 0.75).toFixed(1);
+  const high = (baseRoas * 1.35).toFixed(1);
+  return `${low}x — ${high}x`;
+}
+
+function updateBudgetEstimator() {
+  const c = AppState.activeCampaign;
+  const rows = document.getElementById('budget-estimator-rows');
+  const roasEl = document.getElementById('roas-range');
+  if (rows) rows.innerHTML = renderBudgetEstimatorRows(c);
+  if (roasEl) roasEl.textContent = getRoasRange(c);
 }
 
 function calculateEstimates(campaign) {
@@ -2538,17 +2737,12 @@ function renderCampaignTableHTML() {
             <th style="padding:12px 8px;font-weight:500;">Conv.</th>
             <th style="padding:12px 8px;font-weight:500;">CPA</th>
             <th style="padding:12px 8px;font-weight:500;">ROAS</th>
-            <th style="padding:12px 8px;font-weight:500;">Reach</th>
-            <th style="padding:12px 8px;font-weight:500;">Freq.</th>
-            <th style="padding:12px 8px;font-weight:500;">CPA (ext)</th>
-            <th style="padding:12px 8px;font-weight:500;">Fase</th>
             <th style="padding:12px 8px;font-weight:500;">Giorni</th>
             <th style="padding:12px 8px;font-weight:500;">Azioni</th>
           </tr>
         </thead>
         <tbody id="campaign-tbody">
           ${rows}
-          ${renderTotalsRow(filtered)}
         </tbody>
       </table>
     </div>
@@ -2575,12 +2769,6 @@ function renderCampaignRow(campaign) {
 
   const isExpanded = AppState.expandedRows && AppState.expandedRows.has(c.id);
   const platformLabel = getPlatformLabel(c.platform);
-  const dayCount = c.dayCount || ((c.duration || c.days || 0) - (c.daysLeft || 0));
-  const phaseBadge = dayCount < 3
-    ? '<span style="font-size:10px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:100px;padding:2px 7px;color:#FFB800;white-space:nowrap;">🎓 Learning</span>'
-    : dayCount < 7
-    ? '<span style="font-size:10px;background:#1A1A1A;border:1px solid #0055FF;border-radius:100px;padding:2px 7px;color:#0055FF;white-space:nowrap;">⚡ Ottimizzando</span>'
-    : '<span style="font-size:10px;background:#1A1A1A;border:1px solid #AAFF00;border-radius:100px;padding:2px 7px;color:#AAFF00;white-space:nowrap;">✅ Regime</span>';
 
   return `
     <tr data-id="${c.id}" style="border-bottom:1px solid #1A1A1A;transition:background 0.2s;" onmouseover="this.style.background='#111111'" onmouseout="this.style.background='transparent'">
@@ -2598,10 +2786,6 @@ function renderCampaignRow(campaign) {
       <td style="padding:10px 8px;color:#F0F0F0;">${formatNumber(conversions)}</td>
       <td style="padding:10px 8px;color:#F0F0F0;">${conversions > 0 ? formatCurrency(cpa) : '—'}</td>
       <td style="padding:10px 8px;color:${roasColor};font-weight:700;">${roas.toFixed(2)}x</td>
-      <td style="padding:10px 8px;color:#F0F0F0;">${c.reach != null ? formatNumber(c.reach) : '—'}</td>
-      <td style="padding:10px 8px;color:#F0F0F0;">${c.frequency != null ? c.frequency.toFixed(1) : '—'}</td>
-      <td style="padding:10px 8px;color:#F0F0F0;">${c.cpa != null ? formatCurrency(c.cpa) : '—'}</td>
-      <td style="padding:10px 8px;">${phaseBadge}</td>
       <td style="padding:10px 8px;color:#777777;">${daysLeft}g</td>
       <td style="padding:10px 8px;">
         <div style="display:flex;gap:4px;flex-wrap:wrap;">
@@ -2713,39 +2897,6 @@ function generateBarChart(items) {
       `;
     }).join('')}
   </svg>`;
-}
-
-function renderTotalsRow(campaigns) {
-  if (!campaigns || campaigns.length === 0) return '';
-  const totalBudget = campaigns.reduce((s, c) => s + (c.budget || 0), 0);
-  const totalSpent = campaigns.reduce((s, c) => s + (c.spent || 0), 0);
-  const totalConversions = campaigns.reduce((s, c) => s + (c.conversions || 0), 0);
-  const totalRevenue = campaigns.reduce((s, c) => s + (c.revenue || 0), 0);
-  const avgROAS = totalSpent > 0 ? totalRevenue / totalSpent : 0;
-  const roasColor = avgROAS >= 3 ? '#AAFF00' : avgROAS >= 1 ? '#FFB800' : '#FF4444';
-  // Columns: expand, Nome, Piattaforma, Stato, Speso, Impressioni, Click, CTR, CPC, Conv., CPA, ROAS, Reach, Freq., CPA(ext), Fase, Giorni, Azioni
-  return `
-    <tr style="border-top:2px solid #2A2A2A;background:#111111;font-weight:700;">
-      <td style="padding:10px 8px;"></td>
-      <td style="padding:10px 8px;color:#777777;font-size:11px;white-space:nowrap;">TOTALI<br><span style="color:#555555;font-size:10px;font-weight:400;">Budget: ${formatCurrency(totalBudget)}</span></td>
-      <td style="padding:10px 8px;"></td>
-      <td style="padding:10px 8px;"></td>
-      <td style="padding:10px 8px;color:#F0F0F0;">${formatCurrency(totalSpent)}</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;color:#F0F0F0;">${formatNumber(totalConversions)}</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;color:${roasColor};">${avgROAS.toFixed(2)}x</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;"></td>
-      <td style="padding:10px 8px;color:#777777;">—</td>
-      <td style="padding:10px 8px;"></td>
-    </tr>
-  `;
 }
 
 function toggleExpandRow(campaignId) {
@@ -3571,73 +3722,9 @@ Dati attuali: Spesa €${campaign.spent || 0}, Click ${campaign.clicks || 0}, Co
   }
 }
 
-function renderAllPlatformsBenchmarkTable() {
-  const platforms = [
-    { key: 'meta', label: 'Meta Ads' },
-    { key: 'google_search', label: 'Google Search' },
-    { key: 'google_display', label: 'Google Display' },
-    { key: 'youtube', label: 'YouTube Ads' },
-    { key: 'tiktok', label: 'TikTok Ads' },
-    { key: 'linkedin', label: 'LinkedIn Ads' },
-    { key: 'pinterest', label: 'Pinterest Ads' },
-    { key: 'snapchat', label: 'Snapchat Ads' },
-    { key: 'x_ads', label: 'X Ads' },
-    { key: 'email', label: 'Email Marketing' },
-    { key: 'seo', label: 'SEO/SEM' },
-    { key: 'programmatic', label: 'Programmatic/DSP' },
-  ];
-  // Find best CTR platform
-  let bestCTRKey = platforms[0].key;
-  let bestCTR = 0;
-  platforms.forEach(p => {
-    const b = platformBenchmarks[p.key];
-    if (b && b.ctr > bestCTR) { bestCTR = b.ctr; bestCTRKey = p.key; }
-  });
-  const rows = platforms.map(p => {
-    const b = platformBenchmarks[p.key] || {};
-    const cpm = b.cpm != null ? b.cpm : 0;
-    const difficolta = cpm < 5 ? '<span style="color:#AAFF00;font-weight:600;">Facile</span>'
-      : cpm <= 15 ? '<span style="color:#FFB800;font-weight:600;">Media</span>'
-      : '<span style="color:#FF4444;font-weight:600;">Alta</span>';
-    const isBestCTR = p.key === bestCTRKey;
-    const rowStyle = isBestCTR
-      ? 'border-bottom:1px solid #1A1A1A;border-left:3px solid #AAFF00;background:#0d1a00;'
-      : 'border-bottom:1px solid #1A1A1A;';
-    return `
-      <tr style="${rowStyle}">
-        <td style="padding:9px 10px;color:#F0F0F0;font-weight:${isBestCTR ? '600' : '400'};">${p.label}${isBestCTR ? ' <span style="font-size:10px;color:#AAFF00;">★ miglior CTR</span>' : ''}</td>
-        <td style="padding:9px 10px;color:#F0F0F0;text-align:right;">${cpm > 0 ? '€' + cpm.toFixed(2) : '—'}</td>
-        <td style="padding:9px 10px;color:${isBestCTR ? '#AAFF00' : '#F0F0F0'};text-align:right;font-weight:${isBestCTR ? '700' : '400'};">${b.ctr != null ? b.ctr.toFixed(2) + '%' : '—'}</td>
-        <td style="padding:9px 10px;color:#F0F0F0;text-align:right;">${b.cvr != null ? b.cvr.toFixed(2) + '%' : '—'}</td>
-        <td style="padding:9px 10px;color:#F0F0F0;text-align:right;">${b.cpc != null && b.cpc > 0 ? '€' + b.cpc.toFixed(2) : '—'}</td>
-        <td style="padding:9px 10px;text-align:right;">${difficolta}</td>
-      </tr>
-    `;
-  }).join('');
-  return `
-    <div class="card" style="padding:20px;margin-bottom:20px;overflow-x:auto;">
-      <h3 style="color:#F0F0F0;font-size:14px;font-weight:600;margin-bottom:16px;">📊 Confronto tutte le piattaforme</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead>
-          <tr style="color:#777777;border-bottom:1px solid #2A2A2A;text-align:left;">
-            <th style="padding:9px 10px;font-weight:500;">Nome</th>
-            <th style="padding:9px 10px;font-weight:500;text-align:right;">CPM medio</th>
-            <th style="padding:9px 10px;font-weight:500;text-align:right;">CTR medio</th>
-            <th style="padding:9px 10px;font-weight:500;text-align:right;">CVR medio</th>
-            <th style="padding:9px 10px;font-weight:500;text-align:right;">CPC medio</th>
-            <th style="padding:9px 10px;font-weight:500;text-align:right;">Difficoltà</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  `;
-}
-
 function renderBenchmarks() {
   return `
     <div>
-      ${renderAllPlatformsBenchmarkTable()}
       <div class="card" style="padding:20px;margin-bottom:20px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
           <div>
