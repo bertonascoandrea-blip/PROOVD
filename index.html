@@ -532,7 +532,7 @@ function earnTokens(amount, reason) {
 }
 function updateTokenBadge() {
   const el = document.getElementById('token-badge');
-  if (el) el.textContent = '€ ' + Math.round(AppState.tokens) + ' token';
+  if (el) el.textContent = '€ ' + (AppState.tokens || 0).toFixed(2) + ' token';
 }
 function showGameOver() {
   const modal = document.getElementById('gameover-modal');
@@ -930,7 +930,14 @@ function showOnboarding() {
 }
 function renderObStep() {
   const s = OB_STEPS[_obStep];
-  document.getElementById('onboarding-content').innerHTML = `<div style="font-size:56px;margin-bottom:16px">${s.emoji}</div><h2 style="margin-bottom:12px">${s.title}</h2><p style="color:var(--muted);line-height:1.7;font-size:15px">${s.body}</p>`;
+  const extraHtml = _obStep === 0 ? `
+    <div style="margin-top:20px;text-align:left">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px">Come ti chiami?</label>
+      <input id="ob-username-input" type="text" placeholder="Il tuo nome o nickname" value="${AppState.userName !== 'Marketer' ? AppState.userName : ''}"
+        style="width:100%;box-sizing:border-box;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:100px;padding:10px 18px;color:#F0F0F0;font-size:15px;outline:none;font-family:inherit"
+        oninput="AppState.userName=this.value.trim()||'Marketer';saveState();const b=document.getElementById('username-badge');if(b)b.textContent=AppState.userName;">
+    </div>` : '';
+  document.getElementById('onboarding-content').innerHTML = `<div style="font-size:56px;margin-bottom:16px">${s.emoji}</div><h2 style="margin-bottom:12px">${s.title}</h2><p style="color:var(--muted);line-height:1.7;font-size:15px">${s.body}</p>${extraHtml}`;
   document.querySelectorAll('.onboarding-step-dot').forEach((d, i) => d.classList.toggle('active', i === _obStep));
   const backBtn = document.getElementById('ob-back');
   const nextBtn = document.getElementById('ob-next');
@@ -1169,13 +1176,14 @@ function renderPortfolioChart() {
     const w = container.clientWidth || 400;
     const h = 180;
     const pad = 30;
+    const denom = data.length > 1 ? data.length - 1 : 1;
     const pts = data.map((d, i) => {
-      const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+      const x = pad + (i / denom) * (w - pad * 2);
       const y = h - pad - ((d.value / max) * (h - pad * 2));
       return `${x},${y}`;
     }).join(' ');
     const areaPath = `M${pad},${h-pad} ` + data.map((d, i) => {
-      const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+      const x = pad + (i / denom) * (w - pad * 2);
       const y = h - pad - ((d.value / max) * (h - pad * 2));
       return `L${x},${y}`;
     }).join(' ') + ` L${w-pad},${h-pad} Z`;
@@ -1191,7 +1199,7 @@ function renderPortfolioChart() {
         <path d="${areaPath}" fill="url(#areaGrad)"/>
         <polyline points="${pts}" fill="none" stroke="#AAFF00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         ${data.map((d, i) => {
-          const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+          const x = pad + (i / denom) * (w - pad * 2);
           const y = h - pad - ((d.value / max) * (h - pad * 2));
           return `<circle cx="${x}" cy="${y}" r="3" fill="#AAFF00"/>
                   <text x="${x}" y="${h-8}" text-anchor="middle" fill="#555" font-size="10">${d.label}</text>`;
@@ -1213,6 +1221,21 @@ function renderActiveCampaignsList() {
         <h3 style="font-size:16px;font-weight:600;margin:0 0 8px">Nessuna campagna attiva</h3>
         <p style="color:#777;font-size:14px;margin:0 0 20px">Lancia la tua prima campagna per vedere i dati in tempo reale</p>
         <button class="btn-primary" onclick="navigateTo('builder')">🚀 Lancia la tua prima campagna</button>
+        <div style="margin-top:28px;display:flex;flex-direction:column;gap:10px;text-align:left">
+          <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Piattaforme più popolari</div>
+          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
+            <span style="font-size:24px">📘</span>
+            <div><div style="font-size:13px;font-weight:600">Meta Ads</div><div style="font-size:12px;color:#777">Reach enorme su Facebook e Instagram</div></div>
+          </div>
+          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
+            <span style="font-size:24px">🔍</span>
+            <div><div style="font-size:13px;font-weight:600">Google Search</div><div style="font-size:12px;color:#777">Intercetta utenti con alta intenzione d'acquisto</div></div>
+          </div>
+          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
+            <span style="font-size:24px">🎵</span>
+            <div><div style="font-size:13px;font-weight:600">TikTok Ads</div><div style="font-size:12px;color:#777">Video virali per il pubblico giovane e creativo</div></div>
+          </div>
+        </div>
       </div>`;
     return;
   }
