@@ -1017,7 +1017,7 @@ function startSimulation() {
       return next;
     });
     if (updated) { saveState(); if (AppState.currentModule==='dashboard') renderDashboard(); if (AppState.currentModule==='live') renderLiveManager(); }
-  }, 10000);
+  }, 257143); // 1 ora reale = 14 giorni simulati (2 settimane)
 }
 function stopSimulation() {
   if (_simInterval) { clearInterval(_simInterval); _simInterval = null; }
@@ -3270,7 +3270,13 @@ function renderLiveManager() {
 
   view.innerHTML = `
     <div style="padding:24px;">
-      <h1 style="color:#F0F0F0;font-size:24px;font-weight:700;margin-bottom:20px;">Live Campaign Manager</h1>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h1 style="color:#F0F0F0;font-size:24px;font-weight:700;">Live Campaign Manager</h1>
+        <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:100px;padding:6px 14px;font-size:12px;color:#777;display:flex;align-items:center;gap:8px;">
+          <span style="width:7px;height:7px;background:#AAFF00;border-radius:50%;display:inline-block;animation:pulse 1.5s infinite;"></span>
+          ⚡ 1 ora reale = 2 settimane simulate
+        </div>
+      </div>
 
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
         <div class="card" style="padding:20px;">
