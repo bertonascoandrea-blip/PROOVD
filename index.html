@@ -311,10 +311,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .badge-name{font-size:13px;font-weight:600;margin-bottom:4px}
 .badge-desc{font-size:11px;color:var(--muted)}
 /* === MOBILE NAV === */
-#mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200;padding:8px 0;justify-content:space-around}
-.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border:none;background:none;color:var(--muted);font-size:10px;cursor:pointer}
+#mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200;padding:8px 0;padding-bottom:max(8px,env(safe-area-inset-bottom));justify-content:space-around;overflow-x:auto}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 8px;border:none;background:none;color:var(--muted);font-size:9px;cursor:pointer;min-width:44px;min-height:44px;flex-shrink:0;justify-content:center}
 .mobile-nav-item.active{color:var(--lime)}
-.mobile-nav-item svg{width:22px;height:22px}
+.mobile-nav-item svg{width:20px;height:20px}
 /* === ONBOARDING === */
 .onboarding-steps{display:flex;gap:4px;margin-bottom:24px}
 .onboarding-step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background var(--transition)}
@@ -338,13 +338,73 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .tour-btn-skip:hover{color:#888}
 /* === MEDIA === */
 @media(max-width:768px){
+  /* Layout */
   #sidebar{display:none}
   #mobile-nav{display:flex}
-  .view{padding:16px;padding-bottom:80px}
+  #main{width:100vw}
+  .view{padding:12px;padding-bottom:90px}
+
+  /* Header */
+  #header{padding:0 12px;height:auto;min-height:52px}
+  #page-title{font-size:14px}
+  #username-badge{display:none}
+  #theme-toggle{display:none}
+
+  /* Grids */
   .kpi-grid{grid-template-columns:1fr 1fr}
   .platform-grid{grid-template-columns:1fr 1fr}
-  #header{padding:0 16px}
   .score-layout{grid-template-columns:1fr}
+  .cards-grid{grid-template-columns:1fr}
+  .report-builder-layout{grid-template-columns:1fr}
+  .checkbox-grid{grid-template-columns:1fr 1fr}
+
+  /* Cards */
+  .card{border-radius:12px;padding:14px}
+  .kpi-card{padding:14px}
+  .kpi-value{font-size:22px}
+
+  /* Stepper — compact on mobile */
+  .stepper{gap:0;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+  .step-label{display:none}
+  .step-dot{width:24px;height:24px;font-size:11px}
+
+  /* Forms */
+  input,select,textarea{width:100%;box-sizing:border-box}
+  .btn-row{flex-direction:column}
+  .btn-row .btn-primary,.btn-row .btn-secondary,.btn-row .btn-lime{width:100%;text-align:center}
+
+  /* Tables */
+  .campaign-table-wrapper,.data-table{overflow-x:auto;display:block}
+
+  /* Toast - above mobile nav */
+  #toast-container{bottom:90px;right:12px;left:12px;width:auto}
+  .toast{min-width:unset;max-width:100%;width:100%}
+
+  /* Modals - bottom sheet style */
+  .modal-overlay{align-items:flex-end;padding:0}
+  .modal-card{border-radius:20px 20px 0 0;max-width:100%;width:100%;max-height:88vh}
+
+  /* AI Coach panel */
+  #ai-coach-panel{width:calc(100vw - 32px);right:0;max-height:70vh}
+  #ai-coach-bubble{bottom:90px;right:16px}
+
+  /* Journey map */
+  .journey-map{flex-direction:column}
+  .journey-arrow{transform:rotate(90deg)}
+
+  /* Deck */
+  .deck-slide{padding:24px;min-height:220px}
+
+  /* Slider */
+  .slider-row{flex-wrap:wrap}
+  .slider-row label{min-width:unset;width:100%}
+
+  /* Tab bar — scrollable */
+  .tab-bar{width:100%;overflow-x:auto;flex-wrap:nowrap}
+  .tab-btn{flex-shrink:0}
+
+  /* Interview chat */
+  .interview-msg{max-width:90%}
 }
 /* === PREMIUM UI ENHANCEMENTS === */
 /* --- Typography Hierarchy --- */
@@ -539,7 +599,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   </div>
 
   <!-- MOBILE NAV -->
-  <nav id="mobile-nav" id="mobile-nav-bar"></nav>
+  <nav id="mobile-nav"></nav>
 </div>
 
 <script>
@@ -1163,7 +1223,7 @@ function buildSidebar() {
       ${m.icon}<span class="nav-label">${m.label}</span>
     </button>`).join('');
   const mobileNav = document.getElementById('mobile-nav');
-  if (mobileNav) mobileNav.innerHTML = MODULES.slice(0,5).map(m => `
+  if (mobileNav) mobileNav.innerHTML = MODULES.map(m => `
     <button class="mobile-nav-item" data-module="${m.id}" onclick="navigateTo('${m.id}')">
       ${m.icon}<span>${m.label.split(' ')[0]}</span>
     </button>`).join('');
