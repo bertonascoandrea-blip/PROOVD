@@ -428,6 +428,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
       <div id="view-reporting" class="view"></div>
       <div id="view-audience" class="view"></div>
       <div id="view-interview" class="view"></div>
+      <div id="view-academy" class="view"></div>
       <div id="view-score" class="view"></div>
     </div>
   </main>
@@ -1026,10 +1027,11 @@ const MODULES = [
   { id:'analytics', label:'Analytics Lab', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' },
   { id:'reporting', label:'Reporting Studio', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' },
   { id:'audience', label:'Audience Studio', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+  { id:'academy', label:'PROOVD Academy', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>' },
   { id:'interview', label:'Interview Coach', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
   { id:'score', label:'PROOVD Score', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
 ];
-const MODULE_TITLES = { dashboard:'Dashboard', builder:'Campaign Builder', live:'Live Manager', analytics:'Analytics Lab', reporting:'Reporting Studio', audience:'Audience Studio', interview:'Interview Coach', score:'PROOVD Score' };
+const MODULE_TITLES = { dashboard:'Dashboard', builder:'Campaign Builder', live:'Live Manager', analytics:'Analytics Lab', reporting:'Reporting Studio', audience:'Audience Studio', academy:'PROOVD Academy', interview:'Interview Coach', score:'PROOVD Score' };
 const MODULE_RENDERERS = {};
 
 function registerRenderer(id, fn) { MODULE_RENDERERS[id] = fn; }
@@ -1080,6 +1082,7 @@ const PALETTE_COMMANDS = [
   { label:'Analytics Lab', icon:'📈', action:()=>navigateTo('analytics') },
   { label:'Reporting Studio', icon:'📋', action:()=>navigateTo('reporting') },
   { label:'Audience Studio', icon:'👥', action:()=>navigateTo('audience') },
+  { label:'PROOVD Academy', icon:'📚', action:()=>navigateTo('academy') },
   { label:'Interview Coach', icon:'🎤', action:()=>navigateTo('interview') },
   { label:'PROOVD Score', icon:'⭐', action:()=>navigateTo('score') },
   { label:'Cambia tema', icon:'🌙', action:toggleTheme },
@@ -1301,6 +1304,7 @@ function hideAuthScreen() {
     if (typeof renderAnalyticsLab === 'function') registerRenderer('analytics', renderAnalyticsLab);
     if (typeof renderReportingStudio === 'function') registerRenderer('reporting', renderReportingStudio);
     if (typeof renderAudienceStudio === 'function') registerRenderer('audience', renderAudienceStudio);
+    if (typeof renderAcademy === 'function') registerRenderer('academy', renderAcademy);
     if (typeof renderInterviewCoach === 'function') registerRenderer('interview', renderInterviewCoach);
     if (typeof renderProovdScore === 'function') registerRenderer('score', renderProovdScore);
   };
@@ -5641,6 +5645,231 @@ let interviewState = {
   answers: [],
   totalScore: 0,
 };
+
+// === PROOVD ACADEMY ===
+const ACADEMY_MODULES = [
+  {
+    id: 'search',
+    icon: '🔍',
+    title: 'Search Ads',
+    subtitle: 'Google Ads, SEA, keyword strategy',
+    color: '#0055FF',
+    topics: [
+      { title: 'Cos\'è il SEM e la SEA', content: 'SEM (Search Engine Marketing) comprende tutte le attività sui motori di ricerca. SEA (Search Engine Advertising) sono gli annunci a pagamento nella SERP — si distinguono con la dicitura "Sponsorizzato" e si paga per click (CPC). Google ha il 92.8% del mercato italiano.' },
+      { title: 'Come funziona l\'asta di Google Ads', content: 'Le keyword non si comprano: si fa un\'offerta. Ad Rank = Offerta Massima × Quality Score. Il vincitore non paga la sua offerta ma quella dell\'inserzionista successivo +0.01€. Obiettivo: massimo posizionamento al costo più basso.' },
+      { title: 'Quality Score (QS)', content: 'Punteggio 1-10 che misura qualità e pertinenza. Composto da: CTR previsto (probabilità di click) + Pertinenza annuncio (coerenza con la query) + Esperienza landing page (velocità, contenuto, affidabilità). QS alto = CPC più basso: QS 9 può costare 0.50€ vs QS 1 che costa 3€+.' },
+      { title: 'Match Type delle Keyword', content: '[Esatta]: massimo controllo, volumi limitati — annuncio solo per ricerche con stesso significato. "Frase": via di mezzo — include varianti del significato. Generica: volumi massimi, AI gestisce — trova ricerche pertinenti basandosi sull\'intento. Keyword Negative: escludono ricerche non volute.' },
+      { title: 'Annunci RSA', content: 'Responsive Search Ads: fornisci 3-15 titoli (30 car.) + 2-4 descrizioni (90 car.). L\'AI di Google testa migliaia di combinazioni e mostra quella più pertinente per ogni utente in ogni asta. Feedback asset: Basso/Buono/Migliore/In Apprendimento.' },
+      { title: 'Struttura Account Google Ads', content: 'Account → Campagna (obiettivo/budget/geo/lingua) → Ad Group (cluster tematico) → Keyword + Annunci + Landing Page. Approccio AI-based: meno campagne più grandi = più dati per l\'algoritmo = performance migliore.' },
+    ]
+  },
+  {
+    id: 'budget',
+    icon: '💰',
+    title: 'Budget & Media Planning',
+    subtitle: 'Strategia, allocazione budget, funnel',
+    color: '#AAFF00',
+    topics: [
+      { title: 'Il mercato pubblicitario digitale', content: 'Italia 2025: ~7.6 miliardi € di advertising digitale, +7.6% YoY. GAMT (Google, Amazon, Meta, TikTok) = 49% del mercato totale. Distribuzione: Display 37.7%, Video 32.1%, Search 28.2%. Video (+8.4%) e Search (+8.2%) crescono di più.' },
+      { title: 'Gli obiettivi del funnel', content: 'Awareness (parte alta): conoscenza brand → obiettivo Reach, formati video lungo/display impattante. Consideration: l\'utente vuole saperne di più → obiettivo Affinity. Engagement: coinvolgimento emotivo → Involvement. Conversion/Loyalty: vendite e clienti fedeli → Lead/Sales, formati Search/Social conversion.' },
+      { title: 'Come allocare il budget', content: '1) Definisci obiettivo di business. 2) Scegli canali dove il tuo target è presente. 3) Alloca budget in base a funnel: 60-70% su conversion, 20-30% su consideration, 10% awareness (per budget ridotti). 4) Testa, misura, ottimizza, scala.' },
+      { title: 'KPI fondamentali', content: 'CPM = costo per 1000 impressioni (awareness). CPC = costo per click (traffico). CPA = costo per acquisizione = Budget/Conversioni. ROAS = ricavi/spesa × 100 (es. ROAS 300% = recuperi 3€ per ogni €1 speso). CTR = click/impressioni × 100. CVR = conversioni/click × 100.' },
+      { title: 'Benchmark di mercato', content: 'Google Search: CTR 3-5%, CPC 0.5-3€, CVR 2-5%. Meta Ads: CTR 0.9-1.5%, CPM 8-12€, CVR 1-3%. TikTok: CTR 1-3%, CPM 5-10€. LinkedIn: CTR 0.3-0.6%, CPM 30-50€. YouTube: View Rate 25-40%, CPV 0.02-0.05€. ROAS buono >3x, ottimo >5x, eccellente >8x.' },
+    ]
+  },
+  {
+    id: 'meta',
+    icon: '📘',
+    title: 'Meta Ads',
+    subtitle: 'Facebook, Instagram, Audience Network',
+    color: '#0055FF',
+    topics: [
+      { title: 'Struttura campagne Meta', content: 'Campagna (obiettivo: Awareness/Traffico/Engagement/Lead/Vendite) → Adset (audience, budget giornaliero/totale, posizionamento, scheduling) → Annuncio (creativo: immagine/video/carosello + copy + CTA). Ogni livello ha un ruolo preciso.' },
+      { title: 'Targeting Meta Ads', content: 'Interessi e comportamenti: persone interessate a topic specifici. Custom Audience: da CRM, pixel, video views. Lookalike: 1-3% simili ai tuoi migliori clienti (il più potente). Remarketing: chi ha visitato il sito o interagito. Advantage+: AI di Meta gestisce targeting automaticamente.' },
+      { title: 'Meta Pixel', content: 'Codice JS da installare sul sito. Traccia eventi: PageView, ViewContent, AddToCart, InitiateCheckout, Purchase. Permette: ottimizzazione per conversioni, creazione custom audience, remarketing dinamico. Fondamentale per campagne di conversione efficaci.' },
+      { title: 'Best Practice Creative', content: 'Video performa meglio delle immagini statiche del 20-30%. Hook nei primi 3 secondi. Testo breve sopra il video (125 caratteri visibili). A/B test: testa sempre 3+ creatività. Frequency: tienila sotto 3-4/settimana per evitare ad fatigue. Rinnovare le creative ogni 2-3 settimane.' },
+      { title: 'Ottimizzazione budget Meta', content: 'CBO (Campaign Budget Optimization): budget a livello campagna, Meta lo distribuisce automaticamente. ABO (Adset Budget Optimization): controllo manuale per adset. Regola: inizia con €20-30/giorno per adset in test, scala i vincitori del 20% ogni 2-3 giorni.' },
+    ]
+  },
+  {
+    id: 'tiktok',
+    icon: '🎵',
+    title: 'TikTok Ads',
+    subtitle: 'Short video, giovani, UGC',
+    color: '#AAFF00',
+    topics: [
+      { title: 'Perché TikTok Ads', content: 'CPM più basso di Meta (~5-12€ vs 8-15€). Audience 18-34 anni molto coinvolta. L\'algoritmo premia i contenuti di qualità indipendentemente dai follower. Ideale per: ecommerce giovani, beauty, food, gaming, moda, entertainment.' },
+      { title: 'Formati TikTok Ads', content: 'In-Feed Ads: nel feed "Per Te", skippabili dopo 5s. TopView: primo annuncio all\'apertura app, max visibilità. Branded Hashtag Challenge: sfida virale con hashtag sponsor. Spark Ads: boost di contenuti organici esistenti (il più nativo). Branded Effects: filtri AR personalizzati.' },
+      { title: 'Best Practice Creative TikTok', content: 'Formato verticale 9:16 obbligatorio. Durata ottimale: 15-30 secondi. Hook nei PRIMI 3 SECONDI: domanda, scena d\'azione, testo provocatorio. Il contenuto deve sembrare UGC (User Generated Content), non pubblicità classica. Usa audio trend della piattaforma. CTA chiara a fine video.' },
+      { title: 'Targeting TikTok', content: 'Demografico: età, genere, localizzazione. Interessi: categorie ampie (Beauty, Gaming, Food...). Comportamento: interazioni con video/creator specifici. Custom Audience: da pixel, CRM, engagement. Lookalike. Automatic Targeting: AI di TikTok gestisce tutto (consigliato per iniziare).' },
+    ]
+  },
+  {
+    id: 'linkedin',
+    icon: '💼',
+    title: 'LinkedIn Ads',
+    subtitle: 'B2B, lead generation, professional',
+    color: '#0055FF',
+    topics: [
+      { title: 'Quando usare LinkedIn Ads', content: 'LinkedIn è il canale #1 per B2B. CPM alto (30-60€) ma qualità lead superiore. Ideale per: SaaS, consulenza, HR/recruiting, education, finance, servizi professionali. Se il tuo cliente è un\'azienda o un professionista, LinkedIn è imprescindibile.' },
+      { title: 'Targeting B2B unico', content: 'Job Title: ruolo esatto (es. "Marketing Manager"). Seniority: Junior/Senior/Director/VP/C-Level. Azienda: nome specifico o dimensione (1-10, 11-50, 51-200...). Settore: Finance, Technology, Healthcare... Competenze: skill dichiarate nel profilo. Degree: livello istruzione.' },
+      { title: 'Formati LinkedIn', content: 'Sponsored Content: post sponsorizzati nel feed (immagine/video/carosello). Message Ads: messaggi diretti in InMail (alta visibilità, open rate 50%+). Lead Gen Forms: form precompilati dentro LinkedIn, riducono CPA del 30-50%. Dynamic Ads: personalizzati con foto profilo dell\'utente.' },
+      { title: 'Ottimizzare campagne LinkedIn', content: 'Budget minimo consigliato: €50/giorno. Usa Lead Gen Forms invece di mandare al sito (CVR 3-5x migliore). Testa targeting per Job Title vs Seniority+Settore. Rotazione creative ogni 2 settimane. Retargeting su chi ha visitato il sito è molto efficace. Document Ads per contenuti educativi hanno alto engagement.' },
+    ]
+  },
+  {
+    id: 'youtube',
+    icon: '▶️',
+    title: 'YouTube & Display',
+    subtitle: 'Video advertising, GDN, awareness',
+    color: '#AAFF00',
+    topics: [
+      { title: 'YouTube Ads formati', content: 'Skippable In-Stream: skippabili dopo 5s, si paga solo se visto 30s+ (CPV 0.02-0.05€). Non-Skippable: 15-20s, non si può saltare, pagamento CPM. Bumper Ads: 6 secondi non skippabili, ideali per brand recall. Discovery Ads: appaiono nei risultati di ricerca YouTube. Shorts Ads: nel feed Shorts.' },
+      { title: 'Google Display Network (GDN)', content: 'Reach di oltre il 90% degli utenti internet. Banner su milioni di siti e app partner di Google. CPM molto basso (1-5€). Targeting: contesto (argomento pagina), interessi, remarketing, placement specifici, audience personalizzate. Ideale per: awareness, remarketing, branding a basso costo.' },
+      { title: 'Strategia Video Funnel', content: 'Awareness: YouTube bumper/non-skippable per massima reach. Consideration: video 15-30s con storytelling del prodotto. Conversion: remarketing su chi ha visto il video + landing page ottimizzata. Sequencing: mostra prima video lungo poi bumper di recall a chi ha visto il precedente.' },
+    ]
+  },
+  {
+    id: 'analytics',
+    icon: '📊',
+    title: 'Analytics & Misurazione',
+    subtitle: 'KPI, attribution, reporting',
+    color: '#0055FF',
+    topics: [
+      { title: 'Le metriche che contano', content: 'Non tutte le metriche sono uguali. Vanity metrics (like, impressioni) vs Business metrics (CPA, ROAS, revenue). Focus su: ROAS (ritorno sulla spesa), CPA (costo acquisizione), CVR (tasso conversione), LTV (lifetime value cliente). Il CTR alto con CVR basso indica problema di landing page o targeting sbagliato.' },
+      { title: 'Attribution Models', content: 'Last Click: tutto il credito all\'ultimo touchpoint (default, ma limitante). First Click: credito al primo contatto. Linear: distribuito uguale su tutti i touchpoint. Time Decay: più peso ai touchpoint recenti. Data-Driven: AI assegna credito in base ai dati reali. Il customer journey è raramente lineare: considera sempre l\'assisted conversion.' },
+      { title: 'Come creare un report professionale', content: 'Struttura: Executive Summary (1 pagina) → Performance overview KPI → Analisi per canale → Top/Bottom performer → Insights e anomalie → Raccomandazioni priorità → Next steps. Usa grafici semplici. Parla sempre di business impact, non solo di metriche digitali. Confronta con periodo precedente e benchmark.' },
+      { title: 'Ottimizzazione continua', content: 'Il ciclo del digital marketer: Analizza (cosa sta succedendo?) → Ipotesi (perché?) → Test (cosa cambio?) → Misura (ha funzionato?) → Scala (replica il successo) o Itera (prova altro). Non cambiare mai più di una variabile alla volta nei test. Aspetta sempre dati statisticamente significativi prima di decidere.' },
+    ]
+  },
+];
+
+function renderAcademy() {
+  document.getElementById('page-title').textContent = 'PROOVD Academy';
+  const main = document.getElementById('view-academy');
+  if (!main) return;
+
+  const openTopic = AppState.academyOpenTopic || null;
+  const openModule = AppState.academyOpenModule || null;
+  const chatHistory = AppState.academyChatHistory || {};
+
+  main.innerHTML = `
+    <div style="padding:24px">
+      <div style="margin-bottom:24px">
+        <h2 style="font-size:22px;font-weight:700;margin:0 0 8px">📚 PROOVD Academy</h2>
+        <p style="color:var(--muted);font-size:14px;margin:0">Studia i fondamentali del digital marketing. Approfondisci ogni argomento e chiedi all'AI tutto quello che non è chiaro.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:32px">
+        ${ACADEMY_MODULES.map(m => `
+          <div class="card" style="cursor:pointer;border:1px solid ${openModule===m.id?m.color:'var(--border)'};transition:all .2s" onclick="openAcademyModule('${m.id}')">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+              <div style="font-size:28px">${m.icon}</div>
+              <div>
+                <div style="font-weight:700;font-size:15px">${m.title}</div>
+                <div style="color:var(--muted);font-size:12px">${m.subtitle}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              ${m.topics.map(t=>`<span style="background:var(--surface-inner);border:1px solid var(--border);border-radius:100px;padding:2px 10px;font-size:11px;color:var(--muted)">${t.title}</span>`).join('')}
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:${m.color};font-weight:600">${m.topics.length} argomenti →</div>
+          </div>
+        `).join('')}
+      </div>
+
+      ${openModule ? renderAcademyModuleDetail(openModule, openTopic, chatHistory) : ''}
+    </div>
+  `;
+}
+
+function openAcademyModule(moduleId) {
+  AppState.academyOpenModule = moduleId;
+  AppState.academyOpenTopic = null;
+  renderAcademy();
+}
+
+function openAcademyTopic(moduleId, topicIndex) {
+  AppState.academyOpenModule = moduleId;
+  AppState.academyOpenTopic = topicIndex;
+  renderAcademy();
+}
+
+function renderAcademyModuleDetail(moduleId, openTopic, chatHistory) {
+  const mod = ACADEMY_MODULES.find(m => m.id === moduleId);
+  if (!mod) return '';
+  const topicIdx = openTopic !== null ? parseInt(openTopic) : 0;
+  const topic = mod.topics[topicIdx];
+  const topicKey = moduleId + '_' + topicIdx;
+  const messages = chatHistory[topicKey] || [];
+
+  return `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+      <div style="background:var(--surface-inner);padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+        <span style="font-size:22px">${mod.icon}</span>
+        <div>
+          <div style="font-weight:700">${mod.title}</div>
+          <div style="color:var(--muted);font-size:12px">${mod.subtitle}</div>
+        </div>
+        <button onclick="AppState.academyOpenModule=null;renderAcademy()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:220px 1fr;min-height:500px">
+        <div style="border-right:1px solid var(--border);padding:12px">
+          ${mod.topics.map((t,i) => `
+            <div onclick="openAcademyTopic('${moduleId}',${i})" style="padding:10px 12px;border-radius:10px;cursor:pointer;margin-bottom:4px;background:${i===topicIdx?mod.color:'transparent'};color:${i===topicIdx?'#000':'var(--text)'};font-size:13px;font-weight:${i===topicIdx?'600':'400'};transition:all .15s">
+              ${t.title}
+            </div>
+          `).join('')}
+        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:20px">
+          <div>
+            <h3 style="font-size:18px;font-weight:700;margin:0 0 12px">${topic.title}</h3>
+            <div style="background:var(--surface-inner);border-radius:12px;padding:16px;font-size:14px;line-height:1.8;color:var(--text)">${topic.content}</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+            <div style="background:var(--surface-inner);padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">💬 Chiedi all'AI su questo argomento</div>
+            <div id="academy-chat-${topicKey}" style="padding:16px;min-height:80px;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
+              ${messages.length === 0 ? `<p style="color:var(--muted);font-size:13px;margin:0">Hai dubbi? Scrivi una domanda su "${topic.title}" e ti rispondo subito.</p>` : ''}
+              ${messages.map(m=>`<div style="padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;max-width:85%;${m.role==='user'?'background:var(--blue);color:#fff;align-self:flex-end':'background:var(--surface-inner);border:1px solid var(--border);align-self:flex-start'}">${m.text.replace(/\n/g,'<br>')}</div>`).join('')}
+            </div>
+            <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+              <input id="academy-input-${topicKey}" type="text" placeholder="Es: Come calcolo il CPC effettivo?" style="flex:1;background:var(--surface-inner);border:1px solid var(--border);border-radius:100px;padding:8px 16px;color:var(--text);font-size:13px" onkeydown="if(event.key==='Enter')sendAcademyMessage('${moduleId}',${topicIdx})">
+              <button onclick="sendAcademyMessage('${moduleId}',${topicIdx})" style="background:var(--blue);color:#fff;border:none;border-radius:100px;padding:8px 18px;font-size:13px;cursor:pointer;font-weight:600">Invia</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function sendAcademyMessage(moduleId, topicIdx) {
+  const mod = ACADEMY_MODULES.find(m => m.id === moduleId);
+  const topic = mod.topics[topicIdx];
+  const topicKey = moduleId + '_' + topicIdx;
+  const input = document.getElementById('academy-input-' + topicKey);
+  const msg = input?.value?.trim();
+  if (!msg) return;
+  input.value = '';
+
+  if (!AppState.academyChatHistory) AppState.academyChatHistory = {};
+  if (!AppState.academyChatHistory[topicKey]) AppState.academyChatHistory[topicKey] = [];
+  AppState.academyChatHistory[topicKey].push({ role: 'user', text: msg });
+  renderAcademy();
+
+  const systemPrompt = `Sei PROOVD AI Coach, esperto di digital marketing. L'utente sta studiando il modulo "${mod.title}", argomento "${topic.title}". Contesto dell'argomento: ${topic.content}. Rispondi in italiano, in modo chiaro e pratico come un formatore esperto. Max 120 parole.`;
+  const response = await callClaude(systemPrompt, msg, null);
+  const text = typeof response === 'string' ? response : 'Errore nella risposta AI.';
+
+  if (!AppState.academyChatHistory[topicKey]) AppState.academyChatHistory[topicKey] = [];
+  AppState.academyChatHistory[topicKey].push({ role: 'ai', text });
+  renderAcademy();
+
+  setTimeout(() => {
+    const chat = document.getElementById('academy-chat-' + topicKey);
+    if (chat) chat.scrollTop = chat.scrollHeight;
+  }, 100);
+}
 
 function renderInterviewCoach() {
   const view = document.getElementById('view-interview');
