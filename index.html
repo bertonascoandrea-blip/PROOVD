@@ -86,7 +86,7 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 #page-title{font-size:16px;font-weight:700;color:var(--text)}
 #menu-toggle{background:none;border:none;color:var(--muted);padding:8px;border-radius:8px}
 #menu-toggle:hover{background:var(--surface2);color:var(--text)}
-#token-badge{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 14px;font-size:13px;font-weight:600;color:var(--lime)}
+#token-display{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 14px;font-size:13px;font-weight:600;color:var(--lime)}
 #score-badge{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 14px;font-size:13px;font-weight:600;color:var(--blue)}
 #username-badge{font-size:13px;color:var(--muted)}
 #theme-toggle{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted)}
@@ -319,6 +319,23 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .onboarding-steps{display:flex;gap:4px;margin-bottom:24px}
 .onboarding-step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background var(--transition)}
 .onboarding-step-dot.active{background:var(--lime)}
+/* === ONBOARDING TOUR === */
+.tour-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);z-index:9000;pointer-events:all}
+.tour-spotlight{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,0.82);z-index:9001;pointer-events:none;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);border:2px solid rgba(0,85,255,0.6)}
+.tour-card{position:fixed;background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:24px;width:320px;z-index:9002;box-shadow:0 24px 64px rgba(0,0,0,0.8);animation:tourCardIn 0.3s ease;transition:all 0.4s cubic-bezier(0.4,0,0.2,1)}
+@keyframes tourCardIn{from{opacity:0;transform:translateY(12px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.tour-step-badge{display:inline-flex;align-items:center;background:rgba(0,85,255,0.15);color:#4488FF;border:1px solid rgba(0,85,255,0.3);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;margin-bottom:12px}
+.tour-title{font-size:18px;font-weight:700;margin-bottom:8px;letter-spacing:-0.3px}
+.tour-desc{font-size:13px;line-height:1.7;color:#AAA;margin-bottom:20px}
+.tour-progress{display:flex;gap:4px;margin-bottom:16px}
+.tour-dot{height:3px;flex:1;border-radius:2px;background:#2A2A2A;transition:background 0.3s}
+.tour-dot.active{background:#0055FF}
+.tour-dot.done{background:#0055FF;opacity:0.4}
+.tour-actions{display:flex;gap:8px;align-items:center}
+.tour-btn-next{flex:1;background:#0055FF;color:#fff;border:none;border-radius:100px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s}
+.tour-btn-next:hover{background:#0044DD;transform:translateY(-1px)}
+.tour-btn-skip{background:transparent;color:#555;border:none;font-size:12px;cursor:pointer;padding:4px 8px;transition:color 0.2s}
+.tour-btn-skip:hover{color:#888}
 /* === MEDIA === */
 @media(max-width:768px){
   #sidebar{display:none}
@@ -485,9 +502,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
         <h1 id="page-title">Dashboard</h1>
       </div>
       <div class="header-right">
-        <span id="token-badge" data-tooltip="I tuoi token virtuali — il tuo budget per simulare campagne">€ 500 token</span>
+        <span id="token-display" data-tooltip="I tuoi token virtuali — il tuo budget per simulare campagne">€ 500 token</span>
         <span id="score-badge" data-tooltip="Il tuo PROOVD Score — misura le tue competenze">0/100</span>
         <span id="username-badge">Marketer</span>
+        <button onclick="startTour()" style="background:transparent;border:1px solid #2A2A2A;border-radius:100px;padding:5px 12px;color:#777;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='#555';this.style.color='#F0F0F0'" onmouseout="this.style.borderColor='#2A2A2A';this.style.color='#777'">📍 Tour</button>
         <button id="theme-toggle" onclick="toggleTheme()" aria-label="Cambia tema">🌙</button>
       </div>
     </header>
@@ -517,7 +535,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
         <button class="btn-primary btn-sm" onclick="sendCoachMessage()">→</button>
       </div>
     </div>
-    <button class="coach-btn" onclick="toggleCoach()" aria-label="AI Coach">🤖</button>
+    <button id="coach-bubble" class="coach-btn" onclick="toggleCoach()" aria-label="AI Coach">🤖</button>
   </div>
 
   <!-- MOBILE NAV -->
@@ -659,7 +677,7 @@ function earnTokens(amount, reason) {
   if (reason) AppState.history.push({ type:'earn', amount, reason, date: Date.now() });
 }
 function updateTokenBadge() {
-  const el = document.getElementById('token-badge');
+  const el = document.getElementById('token-display');
   if (el) el.textContent = '€ ' + (AppState.tokens || 0).toFixed(2) + ' token';
 }
 function showGameOver() {
@@ -1127,7 +1145,7 @@ function navigateTo(module) {
 function buildSidebar() {
   const nav = document.getElementById('sidebar-nav');
   nav.innerHTML = MODULES.map(m => `
-    <button class="nav-item" data-module="${m.id}" onclick="navigateTo('${m.id}')" aria-label="${m.label}">
+    <button class="nav-item" id="nav-${m.id}" data-module="${m.id}" onclick="navigateTo('${m.id}')" aria-label="${m.label}">
       ${m.icon}<span class="nav-label">${m.label}</span>
     </button>`).join('');
   const mobileNav = document.getElementById('mobile-nav');
@@ -1342,6 +1360,7 @@ async function doAuth() {
 async function guestLogin() {
   _authSession = null;
   hideAuthScreen();
+  maybeStartTour();
 }
 async function afterLogin(username) {
   const cloudState = await supabaseLoadProfile();
@@ -1354,6 +1373,7 @@ async function afterLogin(username) {
     if (username && username !== 'Marketer') AppState.userName = username;
   }
   hideAuthScreen();
+  maybeStartTour();
 }
 function hideAuthScreen() {
   const el = document.getElementById('auth-screen');
@@ -6953,6 +6973,168 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
   initApp();
+}
+
+// === ONBOARDING TOUR ===
+const TOUR_STEPS = [
+  {
+    title: '👋 Benvenuto in PROOVD!',
+    desc: 'Sei il nuovo Junior Digital Marketer. Hai €500 di budget virtuale e 3 mesi per dimostrare di saper gestire campagne reali. Iniziamo con un tour veloce.',
+    target: null,
+    position: 'center'
+  },
+  {
+    title: '📊 Dashboard',
+    desc: 'La tua centrale operativa. Qui vedi le performance delle campagne attive, i token rimanenti e i KPI principali. Controlla ogni giorno come vanno le tue simulazioni.',
+    target: '#nav-dashboard',
+    position: 'right'
+  },
+  {
+    title: '🚀 Campaign Builder',
+    desc: 'Qui crei le tue campagne in 7 passaggi: definisci il prodotto, scegli la piattaforma (Meta, Google, TikTok...), imposta il brief, le creatività, il targeting e il budget.',
+    target: '#nav-builder',
+    position: 'right'
+  },
+  {
+    title: '📡 Live Manager',
+    desc: 'Monitora le campagne attive in tempo reale. Ogni ora passano 2 settimane simulate — in 3 giorni avrai dati su 3 mesi di campagna. Ricevi alert se qualcosa non va.',
+    target: '#nav-live',
+    position: 'right'
+  },
+  {
+    title: '🔬 Analytics Lab',
+    desc: 'Calcola ROAS, CPA, CTR e altri KPI con i calcolatori integrati. Confronta le tue performance con i benchmark di mercato reali.',
+    target: '#nav-analytics',
+    position: 'right'
+  },
+  {
+    title: '📚 PROOVD Academy',
+    desc: 'La tua biblioteca di digital marketing. Studia Search Ads, Meta, TikTok, LinkedIn e molto altro. Chiedi all\'AI qualsiasi dubbio su ogni argomento.',
+    target: '#nav-academy',
+    position: 'right'
+  },
+  {
+    title: '🎯 Intervista Coach',
+    desc: 'Preparati ai colloqui con domande reali di agenzie e aziende. Rispondi, ricevi feedback dall\'AI e guadagna token extra per ogni colloquio superato.',
+    target: '#nav-interview',
+    position: 'right'
+  },
+  {
+    title: '💰 I tuoi Token',
+    desc: 'Parti con €500. Ogni campagna scala il budget scelto. Se il ROAS supera 3x guadagni bonus. Se la campagna perde, perdi il budget. Arriva a 0 = Game Over.',
+    target: '#token-display',
+    position: 'bottom'
+  },
+  {
+    title: '🤖 AI Coach',
+    desc: 'Il tuo mentore sempre disponibile. Clicca sulla bolla in basso a destra per chiedergli consigli sulle campagne, interpretare i dati o prepararti al colloquio.',
+    target: '#coach-bubble',
+    position: 'top'
+  },
+  {
+    title: '✅ Sei pronto!',
+    desc: 'Inizia creando la tua prima campagna. Ricorda: analizza i dati, ottimizza ogni settimana e scala ciò che funziona. Buona fortuna, Marketer! 🚀',
+    target: null,
+    position: 'center'
+  }
+];
+
+let _tourActive = false;
+let _tourStep = 0;
+
+function startTour() {
+  if (_tourActive) return;
+  _tourActive = true;
+  _tourStep = 0;
+  createTourDOM();
+  showTourStep(0);
+}
+
+function createTourDOM() {
+  document.getElementById('tour-overlay')?.remove();
+  document.getElementById('tour-spotlight')?.remove();
+  document.getElementById('tour-card')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'tour-overlay';
+  overlay.className = 'tour-overlay';
+  overlay.onclick = function() {};
+  const spotlight = document.createElement('div');
+  spotlight.id = 'tour-spotlight';
+  spotlight.className = 'tour-spotlight';
+  const card = document.createElement('div');
+  card.id = 'tour-card';
+  card.className = 'tour-card';
+  document.body.appendChild(overlay);
+  document.body.appendChild(spotlight);
+  document.body.appendChild(card);
+}
+
+function showTourStep(idx) {
+  const step = TOUR_STEPS[idx];
+  const total = TOUR_STEPS.length;
+  const isLast = idx === total - 1;
+  const spotlight = document.getElementById('tour-spotlight');
+  const card = document.getElementById('tour-card');
+  if (step.target) {
+    const el = document.querySelector(step.target);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const pad = 8;
+      spotlight.style.cssText = 'position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.82);z-index:9001;pointer-events:none;border:2px solid rgba(0,85,255,0.6);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);top:'+(r.top-pad)+'px;left:'+(r.left-pad)+'px;width:'+(r.width+pad*2)+'px;height:'+(r.height+pad*2)+'px;';
+    } else {
+      spotlight.style.cssText = 'display:none';
+    }
+  } else {
+    spotlight.style.cssText = 'display:none';
+  }
+  const dots = Array.from({length: total}, function(_,i) {
+    return '<div class="tour-dot '+(i<idx?'done':i===idx?'active':'')+'"></div>';
+  }).join('');
+  let cardStyle = '';
+  if (step.position === 'center' || !step.target) {
+    cardStyle = 'top:50%;left:50%;transform:translate(-50%,-50%)';
+  } else if (step.target) {
+    const el = document.querySelector(step.target);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      if (step.position === 'right') {
+        cardStyle = 'top:'+Math.max(20,r.top-20)+'px;left:'+(r.right+24)+'px';
+      } else if (step.position === 'bottom') {
+        cardStyle = 'top:'+(r.bottom+16)+'px;left:'+Math.max(16,r.left-100)+'px';
+      } else if (step.position === 'top') {
+        cardStyle = 'bottom:'+(window.innerHeight-r.top+16)+'px;right:80px';
+      }
+    }
+  }
+  card.style.cssText = 'position:fixed;background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:24px;width:320px;z-index:9002;box-shadow:0 24px 64px rgba(0,0,0,0.8);'+cardStyle;
+  card.innerHTML = '<div class="tour-step-badge">Passo '+(idx+1)+' di '+total+'</div>'
+    +'<div class="tour-title">'+step.title+'</div>'
+    +'<div class="tour-desc">'+step.desc+'</div>'
+    +'<div class="tour-progress">'+dots+'</div>'
+    +'<div class="tour-actions">'
+    +(!isLast ? '<button class="tour-btn-skip" onclick="endTour()">Salta tour</button>' : '')
+    +'<button class="tour-btn-next" onclick="'+(isLast?'endTour()':'nextTourStep()')+'">'+( isLast?'🚀 Inizia!':'Avanti →')+'</button>'
+    +'</div>';
+}
+
+function nextTourStep() {
+  _tourStep++;
+  if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  showTourStep(_tourStep);
+}
+
+function endTour() {
+  _tourActive = false;
+  document.getElementById('tour-overlay')?.remove();
+  document.getElementById('tour-spotlight')?.remove();
+  document.getElementById('tour-card')?.remove();
+  localStorage.setItem('proovd_tour_done', '1');
+}
+
+function maybeStartTour() {
+  if (!localStorage.getItem('proovd_tour_done')) {
+    setTimeout(startTour, 800);
+  }
 }
 
 </script>
