@@ -649,7 +649,15 @@ function hideSkeleton(containerId) {
   // Content is replaced by actual response
 }
 async function callClaude(systemPrompt, userMessage, containerId) {
-  const apiKey = AppState.apiKey || localStorage.getItem('proovd_api_key') || '';
+  let apiKey = AppState.apiKey || localStorage.getItem('proovd_api_key') || '';
+  // Prova a caricare la key dall'admin Supabase se non disponibile localmente
+  if (!apiKey) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.groq_api_key&select=value`, { headers: { 'apikey': SUPABASE_KEY } });
+      const d = await r.json();
+      if (d?.[0]?.value) { apiKey = d[0].value; localStorage.setItem('proovd_api_key', apiKey); }
+    } catch(e) {}
+  }
   if (!apiKey) { showApiKeyModal(); return null; }
   if (containerId) showSkeleton(containerId);
   AppState.aiCallCount = (AppState.aiCallCount||0) + 1;
