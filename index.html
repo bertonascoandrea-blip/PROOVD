@@ -755,6 +755,8 @@ function simulateCampaignDay(campaign) {
   const bench = platformBenchmarks[campaign.platform] || platformBenchmarks.meta;
   const mod = calculateModifiers(campaign);
   const variance = 0.85 + Math.random() * 0.30;
+  // Se l'AI ha generato una previsione, usa quei target come base
+  const aiForecast = campaign.aiAnalysis?.forecast;
 
   // Curva di performance realistica: learning → ottimizzazione → regime
   const dayCount = (campaign.dayCount || 0) + 1;
@@ -771,7 +773,16 @@ function simulateCampaignDay(campaign) {
   const dailyBudget = campaign.budget / campaign.days * (0.8 + Math.random() * 0.4);
 
   let impressions = 0, clicks = 0, conversions = 0;
-  if (bench.cpm > 0) {
+  if (aiForecast) {
+    // Usa previsioni AI come target giornaliero, con variance realistica
+    const totalDays = campaign.duration || campaign.days || 14;
+    const dailyTargetImpressions = Math.round((aiForecast.impressions || 0) / totalDays);
+    const dailyTargetClicks = Math.round((aiForecast.clicks || 0) / totalDays);
+    const dailyTargetConversions = Math.round((aiForecast.conversions || 0) / totalDays);
+    impressions = Math.round(dailyTargetImpressions * performanceMultiplier * variance);
+    clicks = Math.round(dailyTargetClicks * performanceMultiplier * variance);
+    conversions = Math.round(dailyTargetConversions * performanceMultiplier * variance);
+  } else if (bench.cpm > 0) {
     impressions = Math.round((dailyBudget / bench.cpm) * 1000 * mod * variance * performanceMultiplier);
     clicks = Math.round(impressions * (bench.ctr / 100) * mod * variance);
   } else {
@@ -785,8 +796,8 @@ function simulateCampaignDay(campaign) {
     clicks = Math.round(clicks * 0.85); // audience saturation
   }
 
-  conversions = Math.round(clicks * (bench.cvr / 100) * mod * variance);
-  const aov = campaign.aov || 45;
+  if (!aiForecast) conversions = Math.round(clicks * (bench.cvr / 100) * mod * variance);
+  const aov = campaign.aov || campaign.product?.price || 45;
   const revenue = conversions * aov;
   const spent = Math.min(dailyBudget, campaign.budget - (campaign.spent||0));
   const newImpressions = (campaign.impressions||0) + impressions;
@@ -833,6 +844,10 @@ function startSimulation() {
         if (next.roas > 3) earnTokens(c.budget * 0.2, `Bonus ROI — ${c.name}`);
         if (next.roas < 1) showToast(`⚠️ "${c.name}" ha avuto un ROI negativo`, 'warning');
         checkBadges();
+      }
+      // AI daily insight ogni 5 giorni simulati
+      if ((next.dayCount || 0) > 0 && (next.dayCount % 5 === 0) && next.dayCount !== (c.insightDay || -1)) {
+        generateDailyInsight(next).catch(()=>{});
       }
       updated = true;
       return next;
@@ -2655,10 +2670,89 @@ function launchCampaign() {
   AppState.activeCampaign = null;
 
   if (typeof showToast === 'function') {
-    showToast('Campagna "' + newCampaign.name + '" lanciata con successo! 🚀', 'success');
+    showToast('Campagna "' + newCampaign.name + '" lanciata! 🚀 L\'AI sta analizzando...', 'success');
   }
 
   if (typeof navigateTo === 'function') navigateTo('live');
+
+  // Avvia analisi AI in background
+  generateCampaignWithAI(newCampaign);
+}
+
+// === AI CAMPAIGN ENGINE ===
+async function generateCampaignWithAI(campaign) {
+  const bench = platformBenchmarks?.[campaign.platform] || { cpm: 5, ctr: 1.2, cvr: 2, cpc: 0.5 };
+  const systemPrompt = `Sei un esperto di performance marketing digitale. Analizza la campagna e rispondi SOLO con JSON valido, nessun testo extra.`;
+  const userMessage = `Analizza questa campagna paid marketing e genera una previsione realistica.
+
+Campagna:
+- Piattaforma: ${campaign.platform}
+- Obiettivo: ${campaign.objective || 'conversioni'}
+- Budget totale: €${campaign.budget}
+- Durata: ${campaign.duration || campaign.days || 14} giorni
+- Settore: ${campaign.sector || 'generale'}
+- Targeting età: ${campaign.ageMin || 18}-${campaign.ageMax || 65} anni
+- Geo: ${campaign.geo || 'Italia'}
+- Benchmark piattaforma: CPM €${bench.cpm}, CTR ${bench.ctr}%, CVR ${bench.cvr}%
+
+Rispondi SOLO con questo JSON:
+{
+  "forecast": {
+    "impressions": <numero intero>,
+    "clicks": <numero intero>,
+    "conversions": <numero intero>,
+    "ctr": <percentuale es. 1.8>,
+    "cpc": <euro es. 0.45>,
+    "cpa": <euro es. 12.5>,
+    "roas": <moltiplicatore es. 2.4>
+  },
+  "narrative": "<analisi della campagna in 2 frasi italiane, sii specifico sulla piattaforma e settore>",
+  "risks": ["<rischio 1>", "<rischio 2>"],
+  "tips": ["<tip ottimizzazione 1>", "<tip 2>", "<tip 3>"],
+  "phase_forecast": [
+    {"phase": "Learning (gg 1-3)", "performance": "60%", "note": "<cosa aspettarsi>"},
+    {"phase": "Ottimizzazione (gg 4-7)", "performance": "80%", "note": "<cosa aspettarsi>"},
+    {"phase": "Regime (gg 8+)", "performance": "100%", "note": "<cosa aspettarsi>"}
+  ]
+}`;
+
+  try {
+    const text = await callClaude(systemPrompt, userMessage, null);
+    if (!text) return;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return;
+    const analysis = JSON.parse(jsonMatch[0]);
+    const idx = AppState.campaigns.findIndex(c => c.id === campaign.id);
+    if (idx === -1) return;
+    AppState.campaigns[idx].aiAnalysis = analysis;
+    AppState.campaigns[idx].aiGeneratedAt = new Date().toISOString();
+    saveState();
+    showToast('✨ Analisi AI completata per "' + campaign.name + '"', 'success');
+    if (document.getElementById('view-live')?.style.display !== 'none') renderLiveManager?.();
+  } catch(e) {
+    console.warn('[PROOVD AI Engine]', e);
+  }
+}
+
+async function generateDailyInsight(campaign) {
+  const systemPrompt = `Sei un AI coach di performance marketing. Rispondi in italiano con massimo 2 frasi concise.`;
+  const roas = campaign.roas?.toFixed(2) || '0';
+  const ctr = campaign.ctr?.toFixed(2) || '0';
+  const bench = platformBenchmarks?.[campaign.platform] || { ctr: 1.2 };
+  const userMessage = `Campagna "${campaign.name}" su ${campaign.platform}, giorno ${campaign.dayCount || 0}.
+Performance attuale: ROAS ${roas}x, CTR ${ctr}% (benchmark: ${bench.ctr}%), speso €${(campaign.spent||0).toFixed(0)} di €${campaign.budget}.
+Dai un insight breve e pratico su cosa sta succedendo e una azione concreta da fare.`;
+  try {
+    const text = await callClaude(systemPrompt, userMessage, null);
+    if (text) {
+      const idx = AppState.campaigns.findIndex(c => c.id === campaign.id);
+      if (idx !== -1) {
+        AppState.campaigns[idx].latestInsight = text.trim();
+        AppState.campaigns[idx].insightDay = campaign.dayCount;
+        saveState();
+      }
+    }
+  } catch(e) {}
 }
 
 function shakeElement(elementId) {
@@ -2815,8 +2909,68 @@ function renderLiveManager() {
       <div id="campaign-table-container">
         ${renderCampaignTableHTML()}
       </div>
+
+      ${renderAICampaignIntelligence(campaigns)}
     </div>
   `;
+}
+
+function renderAICampaignIntelligence(campaigns) {
+  const withAI = campaigns.filter(c => c.aiAnalysis || c.latestInsight);
+  if (withAI.length === 0) return '';
+  return `
+    <div style="margin-top:32px">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        ✨ AI Campaign Intelligence
+      </h2>
+      <div style="display:grid;gap:16px">
+        ${withAI.map(c => {
+          const a = c.aiAnalysis;
+          return `
+          <div class="card" style="border-left:3px solid #0055FF">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div>
+                <span style="font-weight:700">${getPlatformEmoji(c.platform)} ${c.name}</span>
+                <span style="margin-left:8px;font-size:11px;color:#777;background:#1A1A1A;padding:2px 8px;border-radius:100px">${c.platform}</span>
+              </div>
+              <button onclick="regenerateCampaignAI('${c.id}')" style="font-size:11px;padding:4px 12px;border:1px solid #2A2A2A;background:transparent;color:#777;border-radius:100px;cursor:pointer">↻ Rigenera</button>
+            </div>
+            ${c.latestInsight ? `
+              <div style="background:rgba(0,85,255,0.08);border:1px solid rgba(0,85,255,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#B0C4FF">
+                💡 <strong>Insight Giorno ${c.insightDay}:</strong> ${c.latestInsight}
+              </div>` : ''}
+            ${a ? `
+              <div style="font-size:13px;color:#B0B0B0;line-height:1.6;margin-bottom:12px">${a.narrative || ''}</div>
+              ${a.forecast ? `
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+                ${[['Impressioni previste',formatNumber(a.forecast.impressions),'#F0F0F0'],['Click previsti',formatNumber(a.forecast.clicks),'#0055FF'],['Conversioni previste',formatNumber(a.forecast.conversions),'#AAFF00'],['ROAS previsto',a.forecast.roas?.toFixed(2)+'x',a.forecast.roas>=2?'#AAFF00':'#FFB800']].map(([k,v,col])=>`
+                  <div style="background:#1A1A1A;border-radius:8px;padding:10px">
+                    <div style="font-size:10px;color:#777;margin-bottom:4px">${k}</div>
+                    <div style="font-size:16px;font-weight:700;color:${col}">${v}</div>
+                  </div>`).join('')}
+              </div>` : ''}
+              ${a.risks?.length ? `
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;font-weight:600;color:#FF6B6B;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">⚠️ Rischi</div>
+                ${a.risks.map(r=>`<div style="font-size:12px;color:#999;padding:2px 0">• ${r}</div>`).join('')}
+              </div>` : ''}
+              ${a.tips?.length ? `
+              <div>
+                <div style="font-size:11px;font-weight:600;color:#AAFF00;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">💡 Ottimizzazioni</div>
+                ${a.tips.map(t=>`<div style="font-size:12px;color:#999;padding:2px 0">• ${t}</div>`).join('')}
+              </div>` : ''}
+            ` : '<div style="color:#555;font-size:13px">Analisi AI in corso...</div>'}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function regenerateCampaignAI(campaignId) {
+  const c = AppState.campaigns.find(c => c.id === campaignId);
+  if (!c) return;
+  showToast('Rigenerando analisi AI...', 'info');
+  generateCampaignWithAI(c);
 }
 
 function renderCampaignTable() {
