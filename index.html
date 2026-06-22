@@ -96,6 +96,7 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .view{display:none;padding:24px;min-height:100%}
 .view.active{display:block;animation:fadeIn 200ms ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}}
 /* === CARDS === */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:transform var(--transition),border-color var(--transition);box-shadow:0 2px 12px rgba(0,0,0,0.3)}
 .card:hover:not(.no-hover){border-color:#3a3a3a}
@@ -1504,21 +1505,46 @@ function renderStep1() {
 
   const selected = AppState.activeCampaign.platform;
 
+  const categoryColors = {
+    'Social': '#0055FF',
+    'Search': '#00AA44',
+    'Video': '#FF0033',
+    'B2B': '#9933FF',
+    'Discovery': '#FFAA00',
+    'Email & Organic': '#00CCCC',
+    'Programmatic': '#FF6600'
+  };
+
+  const categoryMap = {
+    meta: 'Social', tiktok: 'Social', snapchat: 'Social', x_ads: 'Social',
+    google_search: 'Search', google_display: 'Search',
+    youtube: 'Video',
+    linkedin: 'B2B',
+    pinterest: 'Discovery',
+    email: 'Email & Organic', seo: 'Email & Organic',
+    programmatic: 'Programmatic'
+  };
+
   container.innerHTML = `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
       <div>
-        <h2 style="font-size:18px;font-weight:600;margin:0 0 16px">Scegli la piattaforma</h2>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <h2 style="font-size:18px;font-weight:600;margin:0 0 20px">Scegli la piattaforma</h2>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
           ${PLATFORMS.map(p => {
             const isSelected = selected === p.id;
+            const benchData = PLATFORM_BENCHMARKS[p.id];
+            const cpmDisplay = benchData?.cpm > 0 ? `€${benchData.cpm.toFixed(1)}` : (benchData?.cpc ? `€${benchData.cpc.toFixed(1)} CPC` : '—');
+            const category = categoryMap[p.id] || 'Other';
+            const catColor = categoryColors[category] || '#0055FF';
+
             return `
-              <div class="card" onclick="selectPlatform('${p.id}')" style="cursor:pointer;border:2px solid ${isSelected ? '#0055FF' : '#2A2A2A'};padding:14px;transition:all .2s;background:${isSelected ? '#0055FF11' : '#111'}" onmouseover="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#444'" onmouseout="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#2A2A2A'">
-                <div style="font-size:24px;margin-bottom:6px">${p.emoji}</div>
-                <div style="font-size:13px;font-weight:600;margin-bottom:3px">${p.name}</div>
-                <div style="font-size:11px;color:#777">${p.desc}</div>
-                <div style="margin-top:8px;display:flex;gap:3px;flex-wrap:wrap">
-                  ${'★'.repeat(p.difficulty) + '☆'.repeat(4-p.difficulty)} <span style="font-size:10px;color:#777;margin-left:2px">difficoltà</span>
-                </div>
+              <div class="card" onclick="selectPlatform('${p.id}')" style="cursor:pointer;border:2px solid ${isSelected ? '#AAFF00' : '#2A2A2A'};padding:16px;transition:all .2s;background:${isSelected ? '#AAFF0011' : '#111'};display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;min-height:160px" onmouseover="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#444'" onmouseout="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#2A2A2A'">
+                ${isSelected ? '<div style="position:absolute;top:8px;right:8px;background:#AAFF00;color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">✓</div>' : ''}
+                <div style="font-size:48px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;height:52px">${p.emoji}</div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#F0F0F0">${p.name}</div>
+                <div style="background:${catColor}33;border:1px solid ${catColor}66;color:${catColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">${category}</div>
+                <div style="font-size:10px;color:#777;margin-bottom:8px;flex:1;display:flex;align-items:center">${p.desc}</div>
+                <div style="font-size:11px;color:#AAFF00;font-weight:600;margin-top:auto;padding-top:8px;border-top:1px solid #2A2A2A;width:100%">CPM: ${cpmDisplay}</div>
               </div>`;
           }).join('')}
         </div>
@@ -1593,11 +1619,21 @@ function renderStep2() {
         </div>
 
         <div style="margin-bottom:14px">
-          <label style="font-size:12px;color:#777;display:block;margin-bottom:8px">Obiettivo principale</label>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${['Awareness','Traffico','Lead','Vendite','App Install','Engagement'].map(obj => {
-              const isActive = c.objective === obj.toLowerCase();
-              return `<button onclick="selectObjective('${obj.toLowerCase()}')" style="padding:6px 14px;border-radius:100px;border:1px solid ${isActive ? '#0055FF' : '#2A2A2A'};background:${isActive ? '#0055FF22' : 'transparent'};color:${isActive ? '#F0F0F0' : '#777'};font-size:12px;cursor:pointer">${obj}</button>`;
+          <label style="font-size:12px;color:#777;display:block;margin-bottom:12px;font-weight:600">Obiettivo principale</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            ${[
+              { id: 'awareness', emoji: '🎯', label: 'Brand Awareness', desc: 'Massimizza visibilità e riconoscimento' },
+              { id: 'vendite', emoji: '🛒', label: 'Conversioni', desc: 'Genera vendite e lead qualificati' },
+              { id: 'traffico', emoji: '📣', label: 'Traffico', desc: 'Porta utenti sul tuo sito' },
+              { id: 'engagement', emoji: '👥', label: 'Engagement', desc: 'Aumenta interazioni e follower' }
+            ].map(obj => {
+              const isActive = c.objective === obj.id;
+              return `
+                <div onclick="selectObjective('${obj.id}')" style="cursor:pointer;border:2px solid ${isActive ? '#AAFF00' : '#2A2A2A'};background:${isActive ? 'rgba(170,255,0,0.05)' : 'transparent'};padding:12px;border-radius:12px;transition:all .2s;display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:24px">${obj.emoji}</div>
+                  <div style="font-size:12px;font-weight:600;color:#F0F0F0">${obj.label}</div>
+                  <div style="font-size:10px;color:#777">${obj.desc}</div>
+                </div>`;
             }).join('')}
           </div>
         </div>
@@ -1897,12 +1933,52 @@ async function analyzeCreativeAI() {
   }
 }
 
+function calculateTargetingScore(campaign) {
+  let score = 0;
+  const c = campaign;
+  const platform = c.platform;
+
+  // Base: age range configured
+  if (c.ageMin && c.ageMax && c.ageMax > c.ageMin) score += 20;
+
+  // Base: geo specified
+  if (c.geo && c.geo !== 'Mondo') score += 20;
+
+  // Platform-specific
+  if (platform === 'google_search' || platform === 'seo') {
+    const kwCount = (c.targeting?.keywords || []).length;
+    if (kwCount > 0) score += Math.min(60, kwCount * 12); // Max 60 from keywords
+  } else if (platform === 'linkedin') {
+    if (c.targeting?.jobTitle) score += 20;
+    if (c.targeting?.companySize) score += 20;
+    if (c.targeting?.industry) score += 20;
+    if ((c.targeting?.seniority || []).length > 0) score += 15;
+  } else {
+    // Meta/other platforms
+    const interestCount = (c.targeting?.interests || []).length;
+    if (interestCount > 0) score += Math.min(60, interestCount * 12); // Max 60 from interests
+    if (c.targeting?.audienceType) score += 20;
+  }
+
+  return Math.min(100, score);
+}
+
+function getTargetingLabel(score) {
+  if (score < 20) return 'Generico';
+  if (score < 40) return 'Base';
+  if (score < 70) return 'Buono';
+  if (score < 90) return 'Ottimo';
+  return 'Preciso';
+}
+
 function renderStep4() {
   const container = document.getElementById('step-content');
   if (!container) return;
 
   const c = AppState.activeCampaign;
   const platform = c.platform;
+  const targetingScore = calculateTargetingScore(c);
+  const targetingLabel = getTargetingLabel(targetingScore);
 
   let platformTargeting = '';
 
@@ -1999,8 +2075,27 @@ function renderStep4() {
       </div>`;
   }
 
+  const scoreColor = targetingScore < 40 ? '#FF6600' : targetingScore < 70 ? '#FFB800' : '#AAFF00';
+
   container.innerHTML = `
     <h2 style="font-size:18px;font-weight:600;margin:0 0 20px">Targeting — ${getPlatformName(platform)}</h2>
+
+    <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,${scoreColor}11,${scoreColor}11);border:1px solid ${scoreColor}33">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:12px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Targeting Score</div>
+          <div style="font-size:28px;font-weight:800;color:${scoreColor}">${targetingScore}/100</div>
+          <div style="font-size:12px;color:${scoreColor};font-weight:600">${targetingLabel}</div>
+        </div>
+        <div style="flex:1;margin-left:24px">
+          <div style="height:12px;background:#1A1A1A;border-radius:100px;overflow:hidden;margin-bottom:6px">
+            <div style="width:${targetingScore}%;height:100%;background:${scoreColor};transition:width .3s ease"></div>
+          </div>
+          <div style="font-size:10px;color:#777">Specificity del targeting</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">${platformTargeting}</div>`;
 }
 
@@ -2377,24 +2472,64 @@ function launchCampaign() {
   if (typeof navigateTo === 'function') navigateTo('live');
 }
 
+function shakeElement(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.style.animation = 'none';
+  setTimeout(() => {
+    el.style.animation = 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both';
+  }, 10);
+  setTimeout(() => {
+    el.style.animation = 'none';
+  }, 450);
+}
+
 function nextStep() {
   const c = AppState.activeCampaign;
   if (!c) return;
 
   const step = c.step || 1;
 
-  // Validazione per step
-  if (step === 1 && !c.platform) {
-    showToast && showToast('Seleziona una piattaforma per continuare', 'error');
-    return;
-  }
-  if (step === 2) {
-    if (!c.name || c.name.trim() === '') {
-      showToast && showToast('Inserisci il nome della campagna', 'error');
+  // Validazione per step con shake animation
+  if (step === 1) {
+    if (!c.platform) {
+      shakeElement('step-content');
+      showToast && showToast('🔴 Seleziona una piattaforma per continuare', 'error');
       return;
     }
+  }
+
+  if (step === 2) {
+    const errors = [];
+    if (!c.name || c.name.trim() === '') {
+      errors.push('nome della campagna');
+    }
+    if (!c.objective) {
+      errors.push('obiettivo principale');
+    }
+    if (c.budget <= 0 || !c.budget) {
+      errors.push('budget valido');
+    }
     if (c.budget > (AppState.tokens || 0)) {
-      showToast && showToast('Budget superiore ai token disponibili', 'error');
+      errors.push('budget (superiore ai token disponibili)');
+    }
+
+    if (errors.length > 0) {
+      shakeElement('step-content');
+      const msg = errors.length === 1
+        ? `Inserisci ${errors[0]}`
+        : `Completa: ${errors.join(', ')}`;
+      showToast && showToast(`🔴 ${msg}`, 'error');
+      return;
+    }
+  }
+
+  if (step === 3) {
+    // Creative validation
+    const c = AppState.activeCampaign;
+    if (!c.creative || Object.keys(c.creative).length === 0) {
+      shakeElement('step-content');
+      showToast && showToast('🔴 Aggiungi almeno un elemento creativo', 'error');
       return;
     }
   }
