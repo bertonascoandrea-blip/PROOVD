@@ -507,6 +507,7 @@ const DEFAULT_STATE = {
   proovdDimensions: { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 },
   aiCallCount: 0, reportsGenerated: 0, flashcardXP: 0,
   coachHistory: [], currentModule: 'dashboard',
+  activityLog: [],
 };
 let AppState = { ...DEFAULT_STATE };
 
@@ -585,6 +586,7 @@ function earnTokens(amount, reason) {
   updateTokenBadge();
   if (amount > 0) showToast(`+€${amount} token — ${reason}`, 'success');
   if (reason) AppState.history.push({ type:'earn', amount, reason, date: Date.now() });
+  if (amount > 0) logActivity('💰', `+€${amount.toFixed(0)} token — ${reason}`);
 }
 function updateTokenBadge() {
   const el = document.getElementById('token-badge');
@@ -851,6 +853,7 @@ function startSimulation() {
       if (next.status === 'completed' && c.status === 'active') {
         if (next.roas > 3) earnTokens(c.budget * 0.2, `Bonus ROI — ${c.name}`);
         if (next.roas < 1) showToast(`⚠️ "${c.name}" ha avuto un ROI negativo`, 'warning');
+        logActivity('✅', `Campagna "${next.name}" completata — ROAS: ${(next.roas||0).toFixed(2)}x`);
         checkBadges();
       }
       // AI daily insight ogni 5 giorni simulati
@@ -1085,6 +1088,7 @@ function checkBadges() {
     if (!AppState.badges.includes(badge.id) && badge.condition(AppState)) {
       AppState.badges.push(badge.id);
       showToast(`🏅 Badge sbloccato: ${badge.name}!`, 'success');
+      logActivity('🏅', `Badge sbloccato: ${badge.name}`);
       newBadge = true;
     }
   });
@@ -1270,19 +1274,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // === MODULE: DASHBOARD ===
 
+// === ACTIVITY LOG ===
+function logActivity(icon, text) {
+  if (!AppState.activityLog) AppState.activityLog = [];
+  AppState.activityLog.unshift({ icon, text, ts: Date.now() });
+  if (AppState.activityLog.length > 50) AppState.activityLog = AppState.activityLog.slice(0, 50);
+  saveState();
+}
+
+function relativeTime(ts) {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return 'Ora';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm fa';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h fa';
+  return Math.floor(diff / 86400) + 'g fa';
+}
+
+// === DASHBOARD ===
 function renderDashboard() {
   const view = document.getElementById('view-dashboard');
   if (!view) return;
 
   const campaigns = (AppState.campaigns || []).filter(c => c.status !== 'completed');
-  const avgRoas = campaigns.length
-    ? campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length
+  const today = new Date().toDateString();
+  const lastVisit = localStorage.getItem('proovd_last_visit');
+  const isNewDay = lastVisit !== today;
+  const activeCampaigns = (AppState.campaigns || []).filter(c => c.status === 'active');
+  const hoursSinceLaunch = activeCampaigns.length > 0 && activeCampaigns[0].startDate
+    ? Math.floor((Date.now() - new Date(activeCampaigns[0].startDate).getTime()) / 3600000)
     : 0;
 
   view.innerHTML = `
     <div class="dashboard-header">
       <div>
-        <h1 style="font-size:28px;font-weight:700;margin:0 0 4px">Benvenuto, Marketer 👋</h1>
+        <h1 style="font-size:28px;font-weight:700;margin:0 0 4px">Ciao, ${AppState.userName || 'Marketer'} 👋</h1>
         <p style="color:#777;margin:0">Il tuo studio di digital marketing virtuale</p>
       </div>
       <button class="btn-primary" onclick="navigateTo('builder')" style="display:flex;align-items:center;gap:8px">
@@ -1290,15 +1315,40 @@ function renderDashboard() {
       </button>
     </div>
 
+    ${isNewDay ? `
+    <div id="welcome-banner" style="background:linear-gradient(135deg,#0055FF15,#AAFF0010);border:1px solid #0055FF44;border-radius:16px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
+      <div style="font-size:32px;flex-shrink:0">🌅</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px">Bentornato!</div>
+        <div style="font-size:13px;color:#ccc">
+          ${activeCampaigns.length > 0
+            ? `Le tue ${activeCampaigns.length} campagne hanno girato per ${hoursSinceLaunch}h. <span style="color:#AAFF00;cursor:pointer" onclick="navigateTo('live')">Vai al Live Manager →</span>`
+            : 'Non hai campagne attive. <span style="color:#AAFF00;cursor:pointer" onclick="navigateTo(\'builder\')">Lancia la tua prima campagna →</span>'}
+        </div>
+      </div>
+      <button onclick="document.getElementById('welcome-banner').style.display='none';localStorage.setItem('proovd_last_visit','${today}')" style="background:none;border:none;color:#555;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">×</button>
+    </div>` : ''}
+
     <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 style="margin:0;font-size:16px;font-weight:600">Andamento Portfolio</h3>
+        <span style="font-size:12px;color:#777">Ultimi 14 giorni simulati</span>
+      </div>
+      <div id="portfolio-chart" style="width:100%;height:220px"></div>
+      <div id="portfolio-chart-legend" style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap"></div>
+    </div>
+
+    <div id="insights-section" style="margin-top:16px"></div>
 
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:16px">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h3 style="margin:0;font-size:16px;font-weight:600">Andamento Portfolio</h3>
-          <span style="font-size:12px;color:#777">Ultimi 7 giorni</span>
+          <h3 style="margin:0;font-size:16px;font-weight:600">Campagne Attive</h3>
+          <span style="font-size:12px;color:#777">${campaigns.length} campagne</span>
         </div>
-        <div id="portfolio-chart" style="width:100%;height:180px"></div>
+        <div id="active-campaigns-list"></div>
       </div>
 
       <div class="card" id="coach-tip-container" style="display:flex;flex-direction:column">
@@ -1319,10 +1369,10 @@ function renderDashboard() {
 
     <div class="card" style="margin-top:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <h3 style="margin:0;font-size:16px;font-weight:600">Campagne Attive</h3>
-        <span style="font-size:12px;color:#777">${campaigns.length} campagne</span>
+        <h3 style="margin:0;font-size:16px;font-weight:600">Attività Recenti</h3>
+        <span style="font-size:12px;color:#777">Ultime azioni</span>
       </div>
-      <div id="active-campaigns-list"></div>
+      <div id="activity-feed"></div>
     </div>
 
     <div class="card" style="margin-top:16px">
@@ -1333,9 +1383,13 @@ function renderDashboard() {
 
   renderKPICards();
   renderPortfolioChart();
+  renderInsights();
   renderActiveCampaignsList();
+  renderActivityFeed();
   renderQuickActions();
   loadDailyTip();
+
+  if (isNewDay) localStorage.setItem('proovd_last_visit', today);
 }
 
 function renderKPICards() {
@@ -1346,115 +1400,234 @@ function renderKPICards() {
   const maxTokens = 500;
   const tokenPct = Math.min(100, (tokens / maxTokens) * 100);
 
-  const campaigns = (AppState.campaigns || []).filter(c => c.status !== 'completed');
-  const avgRoas = campaigns.length
-    ? (campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length).toFixed(2)
-    : 0;
-  const roasColor = avgRoas >= 1 ? '#AAFF00' : avgRoas > 0 ? '#FF9900' : '#FF4444';
+  const allCampaigns = AppState.campaigns || [];
+  const activeCampaigns = allCampaigns.filter(c => c.status !== 'completed');
 
-  const score = AppState.proovdScore || 0;
+  // Calcola delta token rispetto a ieri (approx via history)
+  const recentEarns = (AppState.history || []).filter(h => h.date && (Date.now() - h.date) < 86400000);
+  const deltaYest = recentEarns.reduce((s, h) => s + (h.type === 'earn' ? h.amount : -h.amount), 0);
+  const deltaSign = deltaYest >= 0 ? '+' : '';
+  const deltaColor = deltaYest >= 0 ? '#AAFF00' : '#FF4444';
+
+  const avgRoasRaw = activeCampaigns.length
+    ? activeCampaigns.reduce((s, c) => s + (c.roas || 0), 0) / activeCampaigns.length
+    : 0;
+  const avgRoas = avgRoasRaw.toFixed(2);
+  const roasColor = avgRoasRaw >= 3 ? '#AAFF00' : avgRoasRaw >= 1 ? '#FF9900' : avgRoasRaw > 0 ? '#FF4444' : '#777';
+  const roasTrend = avgRoasRaw >= 3 ? '↑' : avgRoasRaw >= 1 ? '→' : '↓';
+  const roasTrendColor = avgRoasRaw >= 1 ? '#AAFF00' : '#FF4444';
+
+  const totalSpent = allCampaigns.reduce((s, c) => s + (c.spentBudget || 0), 0);
+  const totalRevenue = allCampaigns.reduce((s, c) => s + (c.revenue || 0), 0);
+  const roiPct = totalSpent > 0 ? ((totalRevenue - totalSpent) / totalSpent * 100).toFixed(0) : 0;
+  const roiColor = roiPct >= 0 ? '#AAFF00' : '#FF4444';
 
   grid.innerHTML = `
     <div class="card kpi-card">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Token Rimasti</div>
-      <div style="font-size:36px;font-weight:700;color:#AAFF00;margin-bottom:10px">${formatCurrency(tokens)}</div>
-      <div style="background:#1A1A1A;border-radius:100px;height:6px;overflow:hidden">
+      <div style="font-size:11px;color:#777;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Token Disponibili</div>
+      <div style="font-size:34px;font-weight:700;color:#AAFF00;line-height:1.1;margin-bottom:8px">${formatCurrency(tokens)}</div>
+      <div style="background:#1A1A1A;border-radius:100px;height:5px;overflow:hidden;margin-bottom:6px">
         <div style="height:100%;width:${tokenPct}%;background:linear-gradient(90deg,#AAFF00,#00FF88);border-radius:100px;transition:width .5s"></div>
       </div>
-      <div style="font-size:11px;color:#777;margin-top:6px">${tokenPct.toFixed(0)}% del budget iniziale</div>
-    </div>
-
-    <div class="card kpi-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;align-self:flex-start">PROOVD Score</div>
-      <div id="score-gauge" style="width:100px;height:100px"></div>
-      <div style="font-size:13px;font-weight:600;margin-top:4px">${score}/100</div>
-    </div>
-
-    <div class="card kpi-card">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Campagne Attive</div>
-      <div style="font-size:36px;font-weight:700;margin-bottom:4px">${campaigns.length}</div>
-      <div style="font-size:13px;color:#777">${campaigns.length === 1 ? '1 campagna in corso' : campaigns.length + ' campagne in corso'}</div>
-      <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-        ${campaigns.slice(0,3).map(c => `<span style="font-size:11px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:100px;padding:2px 8px">${getPlatformEmoji(c.platform)} ${c.name}</span>`).join('')}
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:#777">${tokenPct.toFixed(0)}% del budget iniziale</span>
+        ${Math.abs(deltaYest) > 0 ? `<span style="font-size:11px;color:${deltaColor};font-weight:600">${deltaSign}€${Math.abs(deltaYest).toFixed(0)} oggi</span>` : ''}
       </div>
     </div>
 
     <div class="card kpi-card">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">ROI Medio <span class="tooltip" data-tip="Return On Ad Spend: ricavo generato per ogni euro speso in advertising">ROAS</span></div>
-      <div style="font-size:36px;font-weight:700;color:${roasColor};margin-bottom:4px">${avgRoas > 0 ? avgRoas + 'x' : '—'}</div>
-      <div style="font-size:13px;color:#777">${avgRoas >= 3 ? '🔥 Eccellente' : avgRoas >= 1 ? '✅ Positivo' : avgRoas > 0 ? '⚠️ In perdita' : 'Nessuna campagna attiva'}</div>
+      <div style="font-size:11px;color:#777;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Campagne Attive</div>
+      <div style="font-size:34px;font-weight:700;line-height:1.1;margin-bottom:8px">${activeCampaigns.length}</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${activeCampaigns.length === 0
+          ? `<span style="font-size:12px;color:#555">Nessuna campagna — <span style="color:#0055FF;cursor:pointer" onclick="navigateTo('builder')">crea una</span></span>`
+          : activeCampaigns.slice(0,3).map(c => `<span style="font-size:11px;color:#aaa">${getPlatformEmoji(c.platform)} ${c.name}</span>`).join('')
+        }
+        ${activeCampaigns.length > 3 ? `<span style="font-size:11px;color:#555">+${activeCampaigns.length - 3} altre</span>` : ''}
+      </div>
+    </div>
+
+    <div class="card kpi-card">
+      <div style="font-size:11px;color:#777;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px"><span class="tooltip" data-tip="Return On Ad Spend: ricavo generato per ogni euro speso">ROAS</span> Medio</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+        <div style="font-size:34px;font-weight:700;color:${roasColor};line-height:1.1">${avgRoasRaw > 0 ? avgRoas + 'x' : '—'}</div>
+        ${avgRoasRaw > 0 ? `<span style="font-size:22px;color:${roasTrendColor};font-weight:700">${roasTrend}</span>` : ''}
+      </div>
+      <div style="font-size:12px;color:#777">${avgRoasRaw >= 3 ? '🔥 Eccellente' : avgRoasRaw >= 1 ? '✅ Positivo' : avgRoasRaw > 0 ? '⚠️ In perdita' : 'Avvia campagne per vedere il ROAS'}</div>
+    </div>
+
+    <div class="card kpi-card">
+      <div style="font-size:11px;color:#777;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Spesa Totale</div>
+      <div style="font-size:34px;font-weight:700;line-height:1.1;margin-bottom:6px">${formatCurrency(totalSpent)}</div>
+      <div style="font-size:12px;color:#aaa;margin-bottom:4px">Revenue: <span style="color:#F0F0F0;font-weight:600">${formatCurrency(totalRevenue)}</span></div>
+      ${totalSpent > 0 ? `<div style="font-size:12px;color:${roiColor};font-weight:600">ROI: ${roiPct >= 0 ? '+' : ''}${roiPct}%</div>` : `<div style="font-size:12px;color:#555">Nessuna spesa ancora</div>`}
     </div>
   `;
-
-  // Draw score gauge
-  if (typeof drawGauge === 'function') {
-    drawGauge(score, 100, 'score-gauge');
-  }
 }
 
 function renderPortfolioChart() {
   const container = document.getElementById('portfolio-chart');
+  const legend = document.getElementById('portfolio-chart-legend');
   if (!container) return;
 
   const campaigns = AppState.campaigns || [];
-  let data = [];
+  const DAYS = 14;
 
   if (campaigns.length === 0) {
-    // Trend finto positivo con varianza
-    let base = 480;
-    for (let i = 0; i < 7; i++) {
-      base += Math.random() * 20 - 5;
-      data.push({ label: `Giorno ${i+1}`, value: Math.max(400, base) });
-    }
-  } else {
-    // Genera dati reali da spend campagne
-    for (let i = 0; i < 7; i++) {
-      const daySpend = campaigns.reduce((s, c) => {
-        const history = c.history || [];
-        return s + (history[i] ? history[i].spend : (c.spentBudget || 0) / 7);
-      }, 0);
-      data.push({ label: `G${i+1}`, value: parseFloat(daySpend.toFixed(2)) });
-    }
-  }
-
-  if (typeof drawLineChart === 'function') {
-    drawLineChart(data, 'portfolio-chart', { color: '#AAFF00', fill: true });
-  } else {
-    // Fallback SVG chart
-    const max = Math.max(...data.map(d => d.value)) * 1.1 || 1;
-    const w = container.clientWidth || 400;
-    const h = 180;
-    const pad = 30;
-    const denom = data.length > 1 ? data.length - 1 : 1;
-    const pts = data.map((d, i) => {
-      const x = pad + (i / denom) * (w - pad * 2);
-      const y = h - pad - ((d.value / max) * (h - pad * 2));
-      return `${x},${y}`;
-    }).join(' ');
-    const areaPath = `M${pad},${h-pad} ` + data.map((d, i) => {
-      const x = pad + (i / denom) * (w - pad * 2);
-      const y = h - pad - ((d.value / max) * (h - pad * 2));
-      return `L${x},${y}`;
-    }).join(' ') + ` L${w-pad},${h-pad} Z`;
-
     container.innerHTML = `
-      <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#AAFF00" stop-opacity="0.2"/>
-            <stop offset="100%" stop-color="#AAFF00" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <path d="${areaPath}" fill="url(#areaGrad)"/>
-        <polyline points="${pts}" fill="none" stroke="#AAFF00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        ${data.map((d, i) => {
-          const x = pad + (i / denom) * (w - pad * 2);
-          const y = h - pad - ((d.value / max) * (h - pad * 2));
-          return `<circle cx="${x}" cy="${y}" r="3" fill="#AAFF00"/>
-                  <text x="${x}" y="${h-8}" text-anchor="middle" fill="#555" font-size="10">${d.label}</text>`;
-        }).join('')}
-      </svg>`;
+      <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#555;gap:10px">
+        <div style="font-size:36px">📉</div>
+        <div style="font-size:14px;color:#555">Lancia una campagna per vedere i dati</div>
+        <button class="btn-primary" style="font-size:13px;padding:8px 20px" onclick="navigateTo('builder')">+ Nuova Campagna</button>
+      </div>`;
+    if (legend) legend.innerHTML = '';
+    return;
   }
+
+  // Aggrega per giorno
+  const roasArr = [], spendArr = [], convArr = [];
+  for (let i = 0; i < DAYS; i++) {
+    let daySpend = 0, dayRev = 0, dayConv = 0;
+    campaigns.forEach(c => {
+      const h = (c.history || [])[i];
+      if (h) {
+        daySpend += h.spend || h.spent || 0;
+        dayRev += h.revenue || 0;
+        dayConv += h.conversions || 0;
+      } else if (i === 0) {
+        daySpend += (c.spentBudget || 0) / Math.max(1, c.daysPassed || 1);
+        dayRev += (c.revenue || 0) / Math.max(1, c.daysPassed || 1);
+        dayConv += (c.conversions || 0) / Math.max(1, c.daysPassed || 1);
+      }
+    });
+    const roas = daySpend > 0 ? dayRev / daySpend : 0;
+    roasArr.push(roas);
+    spendArr.push(daySpend);
+    convArr.push(dayConv);
+  }
+
+  const w = Math.max(container.clientWidth || 600, 300);
+  const h = 200;
+  const padL = 44, padR = 16, padT = 12, padB = 28;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const denom = DAYS > 1 ? DAYS - 1 : 1;
+
+  function normLine(arr, color, label, dashArray) {
+    const max = Math.max(...arr) * 1.1 || 1;
+    const pts = arr.map((v, i) => {
+      const x = padL + (i / denom) * innerW;
+      const y = padT + innerH - (v / max) * innerH;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${dashArray ? ` stroke-dasharray="${dashArray}"` : ''}/>`;
+  }
+
+  function xLabels() {
+    const labels = [];
+    [0,3,6,9,12,13].forEach(i => {
+      if (i < DAYS) {
+        const x = padL + (i / denom) * innerW;
+        labels.push(`<text x="${x.toFixed(1)}" y="${h-6}" text-anchor="middle" fill="#444" font-size="10">G${i+1}</text>`);
+      }
+    });
+    return labels.join('');
+  }
+
+  // Y grid lines
+  const gridLines = [0,25,50,75,100].map(pct => {
+    const y = padT + innerH - (pct / 100) * innerH;
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="#1E1E1E" stroke-width="1"/>`;
+  }).join('');
+
+  container.innerHTML = `
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      ${gridLines}
+      ${normLine(roasArr, '#AAFF00', 'ROAS')}
+      ${normLine(spendArr, '#0055FF', 'Spesa', '4,2')}
+      ${normLine(convArr, '#FF6B6B', 'Conversioni', '2,3')}
+      ${xLabels()}
+    </svg>`;
+
+  if (legend) {
+    legend.innerHTML = [
+      { color: '#AAFF00', label: 'ROAS (normalizzato)' },
+      { color: '#0055FF', label: 'Spesa giornaliera' },
+      { color: '#FF6B6B', label: 'Conversioni' },
+    ].map(l => `<div style="display:flex;align-items:center;gap:6px"><div style="width:20px;height:2px;background:${l.color};border-radius:2px"></div><span style="font-size:11px;color:#777">${l.label}</span></div>`).join('');
+  }
+}
+
+function renderInsights() {
+  const section = document.getElementById('insights-section');
+  if (!section) return;
+
+  const campaigns = (AppState.campaigns || []).filter(c => c.status !== 'completed');
+
+  if (campaigns.length === 0) {
+    section.innerHTML = '';
+    return;
+  }
+
+  const sorted = [...campaigns].sort((a, b) => (b.roas || 0) - (a.roas || 0));
+  const best = sorted[0];
+  const worst = sorted[sorted.length - 1];
+
+  const worstTip = (worst.ctr || 0) < 1 ? 'CTR basso — prova una nuova creatività'
+    : (worst.roas || 0) < 0.5 ? 'ROAS critico — riduci il budget o metti in pausa'
+    : 'Ottimizza il targeting per migliorare le performance';
+
+  const nextStep = campaigns.length >= 3
+    ? `Hai ${campaigns.length} campagne — analizzale nell'<span style="color:#AAFF00;cursor:pointer" onclick="navigateTo('analytics')">Analytics Lab</span>`
+    : campaigns.length === 1
+    ? 'Una sola campagna attiva — prova a diversificare su un\'altra piattaforma'
+    : 'Stai crescendo — considera di esportare un report nel <span style="color:#AAFF00;cursor:pointer" onclick="navigateTo(\'reporting\')">Reporting Studio</span>';
+
+  section.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="card" style="border:1px solid #AAFF0030;background:linear-gradient(135deg,#111,#AAFF0008)">
+        <div style="font-size:18px;margin-bottom:8px">🏆</div>
+        <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Campagna Migliore</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">${best.name}</div>
+        <div style="font-size:13px;color:#AAFF00;font-weight:700">${(best.roas || 0).toFixed(2)}x ROAS</div>
+      </div>
+      <div class="card" style="border:1px solid #FF990030;background:linear-gradient(135deg,#111,#FF990008)">
+        <div style="font-size:18px;margin-bottom:8px">⚠️</div>
+        <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Da Ottimizzare</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">${worst.name}</div>
+        <div style="font-size:12px;color:#FF9900">${worstTip}</div>
+      </div>
+      <div class="card" style="border:1px solid #0055FF30;background:linear-gradient(135deg,#111,#0055FF08)">
+        <div style="font-size:18px;margin-bottom:8px">💡</div>
+        <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Prossimo Step</div>
+        <div style="font-size:13px;color:#ccc;line-height:1.5">${nextStep}</div>
+      </div>
+    </div>`;
+}
+
+function renderActivityFeed() {
+  const container = document.getElementById('activity-feed');
+  if (!container) return;
+
+  const log = AppState.activityLog || [];
+
+  if (log.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:24px;color:#555">
+        <div style="font-size:32px;margin-bottom:8px">📋</div>
+        <div style="font-size:13px">Nessuna attività ancora — inizia dal <span style="color:#AAFF00;cursor:pointer" onclick="navigateTo('builder')">Campaign Builder</span></div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = log.slice(0, 10).map(entry => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1A1A1A">
+      <div style="width:34px;height:34px;background:#1A1A1A;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${entry.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:#F0F0F0">${entry.text}</div>
+      </div>
+      <div style="font-size:11px;color:#555;flex-shrink:0">${relativeTime(entry.ts)}</div>
+    </div>`).join('');
 }
 
 function renderActiveCampaignsList() {
@@ -1465,26 +1638,11 @@ function renderActiveCampaignsList() {
 
   if (campaigns.length === 0) {
     container.innerHTML = `
-      <div style="text-align:center;padding:40px 20px">
-        <div style="font-size:48px;margin-bottom:12px">📊</div>
-        <h3 style="font-size:16px;font-weight:600;margin:0 0 8px">Nessuna campagna attiva</h3>
-        <p style="color:#777;font-size:14px;margin:0 0 20px">Lancia la tua prima campagna per vedere i dati in tempo reale</p>
+      <div style="text-align:center;padding:32px 20px">
+        <div style="font-size:40px;margin-bottom:10px">📊</div>
+        <h3 style="font-size:15px;font-weight:600;margin:0 0 6px">Nessuna campagna attiva</h3>
+        <p style="color:#777;font-size:13px;margin:0 0 16px">Lancia la tua prima campagna per vedere i dati in tempo reale</p>
         <button class="btn-primary" onclick="navigateTo('builder')">🚀 Lancia la tua prima campagna</button>
-        <div style="margin-top:28px;display:flex;flex-direction:column;gap:10px;text-align:left">
-          <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Piattaforme più popolari</div>
-          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
-            <span style="font-size:24px">📘</span>
-            <div><div style="font-size:13px;font-weight:600">Meta Ads</div><div style="font-size:12px;color:#777">Reach enorme su Facebook e Instagram</div></div>
-          </div>
-          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
-            <span style="font-size:24px">🔍</span>
-            <div><div style="font-size:13px;font-weight:600">Google Search</div><div style="font-size:12px;color:#777">Intercetta utenti con alta intenzione d'acquisto</div></div>
-          </div>
-          <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
-            <span style="font-size:24px">🎵</span>
-            <div><div style="font-size:13px;font-weight:600">TikTok Ads</div><div style="font-size:12px;color:#777">Video virali per il pubblico giovane e creativo</div></div>
-          </div>
-        </div>
       </div>`;
     return;
   }
@@ -2879,6 +3037,8 @@ function launchCampaign() {
   if (typeof showToast === 'function') {
     showToast('Campagna "' + newCampaign.name + '" lanciata! 🚀 L\'AI sta analizzando...', 'success');
   }
+
+  logActivity('🚀', `Campagna "${newCampaign.name}" lanciata su ${getPlatformName(newCampaign.platform)}`);
 
   if (typeof navigateTo === 'function') navigateTo('live');
 
@@ -5633,6 +5793,7 @@ async function endInterview() {
 
   if (avgScore >= 8) earnTokens(10, 'Colloquio eccellente! +10 token');
   else if (avgScore >= 6) earnTokens(5, 'Buon colloquio! +5 token');
+  logActivity('🎤', `Colloquio completato — punteggio: ${avgScore.toFixed(1)}/10`);
 
   const interviewDelta = Math.round(avgScore * 10);
   updateProovdScore('interview', interviewDelta);
