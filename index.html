@@ -1610,7 +1610,7 @@ const PLATFORM_BENCHMARKS = {
   programmatic:   { cpm: 1.5, ctr: 0.2, cvr: 0.8 },
 };
 
-const STEP_LABELS = ['Prodotto', 'Piattaforma', 'Brief', 'Creatività', 'Targeting', 'Budget', 'Revisione'];
+const STEP_LABELS = ['Prodotto', 'Piattaforma', 'Brief', 'Creatività', 'Targeting', 'Budget & Bidding', 'Revisione'];
 
 function renderCampaignBuilder() {
   const view = document.getElementById('view-builder');
@@ -1619,6 +1619,7 @@ function renderCampaignBuilder() {
   if (!AppState.activeCampaign) {
     AppState.activeCampaign = {
       step: 1,
+      product: {},
       platform: null,
       name: '',
       sector: '',
@@ -1626,6 +1627,9 @@ function renderCampaignBuilder() {
       ageMin: 18,
       ageMax: 55,
       gender: 'all',
+      devices: ['desktop','mobile'],
+      language: 'it',
+      retargeting: false,
       interests: [],
       geo: 'Italia',
       budget: 100,
@@ -1641,7 +1645,7 @@ function renderCampaignBuilder() {
     <div style="max-width:900px;margin:0 auto">
       <div style="margin-bottom:24px">
         <h1 style="font-size:24px;font-weight:700;margin:0 0 4px">Campaign Builder</h1>
-        <p style="color:#777;margin:0">Costruisci la tua campagna in 6 step guidati</p>
+        <p style="color:#777;margin:0">Costruisci la tua campagna in 7 step guidati</p>
       </div>
       <div id="stepper-container"></div>
       <div id="step-content" style="margin-top:24px"></div>
@@ -1696,7 +1700,7 @@ function renderStepNav(step) {
   if (!nav) return;
 
   const isFirst = step === 1;
-  const isLast = step === 6;
+  const isLast = step === 7;
 
   nav.innerHTML = `
     <button class="btn-secondary" onclick="prevStep()" ${isFirst ? 'disabled style="opacity:.4"' : ''}>← Indietro</button>
@@ -1706,57 +1710,131 @@ function renderStepNav(step) {
 function renderStepProduct() {
   const container = document.getElementById('step-content');
   if (!container) return;
-  const p = AppState.activeCampaign.product || {};
-  const types = [
-    { id:'ecommerce', emoji:'🛍️', label:'E-commerce', desc:'Vendi prodotti online' },
-    { id:'leadgen', emoji:'🎯', label:'Lead Generation', desc:'Raccogli contatti qualificati' },
-    { id:'app', emoji:'📱', label:'App Mobile', desc:'Aumenta download e iscrizioni' },
-    { id:'brand', emoji:'✨', label:'Brand Awareness', desc:'Aumenta notorietà del brand' },
-    { id:'local', emoji:'📍', label:'Locale / Fisico', desc:'Porta clienti in negozio' },
-    { id:'saas', emoji:'💻', label:'SaaS / Software', desc:'Trial, demo, abbonamenti' },
+  const prod = AppState.activeCampaign.product || {};
+
+  const productTypes = [
+    { id: 'ecommerce', emoji: '🛒', label: 'E-commerce', desc: 'Vendita prodotti online' },
+    { id: 'leadgen', emoji: '📋', label: 'Lead Gen', desc: 'Raccolta contatti e richieste' },
+    { id: 'app', emoji: '📱', label: 'App Mobile', desc: 'Download e attivazioni app' },
+    { id: 'awareness', emoji: '📣', label: 'Brand Awareness', desc: 'Notorietà e visibilità brand' },
+    { id: 'locale', emoji: '📍', label: 'Locale/Fisico', desc: 'Traffico in negozio o locale' },
+    { id: 'saas', emoji: '💻', label: 'SaaS', desc: 'Abbonamenti software B2B/B2C' },
   ];
-  const sectors = ['Fashion & Beauty','Food & Beverage','Tech & Software','Finance & Insurance','Health & Wellness','Travel & Tourism','Education & Training','Real Estate','Automotive','Entertainment','Retail & GDO','Altro'];
+
+  const sectors = ['Fashion', 'Food & Beverage', 'Tech', 'Finance', 'Health & Wellness', 'Travel', 'Education', 'Altro'];
+
   container.innerHTML = `
     <h2 style="font-size:18px;font-weight:600;margin:0 0 8px">Cosa stai promuovendo?</h2>
-    <p style="color:#777;font-size:13px;margin:0 0 20px">Configura il prodotto o servizio da pubblicizzare</p>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
-      ${types.map(t => `
-        <div onclick="selectProductType('${t.id}')" style="cursor:pointer;padding:16px;border-radius:12px;border:2px solid ${p.type===t.id?'#AAFF00':'#2A2A2A'};background:${p.type===t.id?'rgba(170,255,0,0.05)':'#111'};transition:all .2s;text-align:center">
-          <div style="font-size:28px;margin-bottom:8px">${t.emoji}</div>
-          <div style="font-weight:600;font-size:13px;margin-bottom:4px">${t.label}</div>
-          <div style="font-size:11px;color:#777">${t.desc}</div>
-          ${p.type===t.id?'<div style="margin-top:8px;color:#AAFF00;font-size:16px">✓</div>':''}
-        </div>`).join('')}
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div>
-        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Nome prodotto / servizio</label>
-        <input type="text" placeholder="es. Nike Air Max 2024" value="${p.name||''}" oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,name:this.value}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
-      </div>
-      <div>
-        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Valore conversione (€)</label>
-        <input type="number" placeholder="es. 89" value="${p.price||''}" min="1" oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,price:parseFloat(this.value)||0}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+    <p style="color:#777;font-size:14px;margin:0 0 24px">Definisci il prodotto o servizio per ricevere suggerimenti personalizzati</p>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="font-size:13px;font-weight:600;color:#777;text-transform:uppercase;letter-spacing:.5px;margin:0 0 14px">Tipo di promozione</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${productTypes.map(pt => {
+          const isSelected = prod.type === pt.id;
+          return `
+            <div onclick="selectProductType('${pt.id}')" style="cursor:pointer;border:2px solid ${isSelected ? '#AAFF00' : '#2A2A2A'};background:${isSelected ? '#AAFF0011' : '#1A1A1A'};padding:16px 12px;border-radius:16px;text-align:center;transition:all .2s;position:relative" onmouseover="if('${pt.id}'!==AppState.activeCampaign.product.type)this.style.borderColor='#444'" onmouseout="if('${pt.id}'!==AppState.activeCampaign.product.type)this.style.borderColor='#2A2A2A'">
+              ${isSelected ? '<div style="position:absolute;top:8px;right:8px;background:#AAFF00;color:#000;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">✓</div>' : ''}
+              <div style="font-size:32px;margin-bottom:8px">${pt.emoji}</div>
+              <div style="font-size:13px;font-weight:700;color:#F0F0F0;margin-bottom:4px">${pt.label}</div>
+              <div style="font-size:11px;color:#777">${pt.desc}</div>
+            </div>`;
+        }).join('')}
       </div>
     </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div>
-        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Settore</label>
-        <select oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,sector:this.value}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
-          <option value="">Seleziona settore...</option>
-          ${sectors.map(s=>`<option value="${s}" ${p.sector===s?'selected':''}>${s}</option>`).join('')}
-        </select>
+      <div class="card">
+        <h3 style="font-size:13px;font-weight:600;color:#777;text-transform:uppercase;letter-spacing:.5px;margin:0 0 14px">Dettagli prodotto/servizio</h3>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Nome prodotto/servizio *</label>
+          <input type="text" id="prod-name" value="${(prod.name||'').replace(/"/g,'&quot;')}" placeholder="Es. Scarpe Running Pro, App Fitness, Corso SEO..." style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:14px;outline:none;box-sizing:border-box" oninput="if(!AppState.activeCampaign.product)AppState.activeCampaign.product={};AppState.activeCampaign.product.name=this.value" onfocus="this.style.borderColor='#0055FF'" onblur="this.style.borderColor='#2A2A2A'"/>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Landing page URL</label>
+          <input type="text" id="prod-url" value="${(prod.url||'').replace(/"/g,'&quot;')}" placeholder="https://tuodominio.it/landing" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:14px;outline:none;box-sizing:border-box" oninput="if(!AppState.activeCampaign.product)AppState.activeCampaign.product={};AppState.activeCampaign.product.url=this.value" onfocus="this.style.borderColor='#0055FF'" onblur="this.style.borderColor='#2A2A2A'"/>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Valore di conversione / Prezzo (€)</label>
+          <input type="number" id="prod-price" value="${prod.price||''}" placeholder="Es. 49.90" min="0" step="0.01" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:14px;outline:none;box-sizing:border-box" oninput="if(!AppState.activeCampaign.product)AppState.activeCampaign.product={};AppState.activeCampaign.product.price=+this.value" onfocus="this.style.borderColor='#0055FF'" onblur="this.style.borderColor='#2A2A2A'"/>
+        </div>
+
+        <div>
+          <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Settore</label>
+          <select onchange="if(!AppState.activeCampaign.product)AppState.activeCampaign.product={};AppState.activeCampaign.product.sector=this.value;AppState.activeCampaign.sector=this.value" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:14px;outline:none;-webkit-appearance:none;box-sizing:border-box">
+            <option value="">Seleziona settore...</option>
+            ${sectors.map(s => `<option value="${s.toLowerCase()}" ${(prod.sector||'') === s.toLowerCase() ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
       </div>
-      <div>
-        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">URL landing page</label>
-        <input type="text" placeholder="https://tuosito.com/landing" value="${p.url||''}" oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,url:this.value}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+
+      <div class="card" style="background:linear-gradient(135deg,#0055FF0A,#AAFF000A);border:1px solid #2A2A2A">
+        <h3 style="font-size:13px;font-weight:600;color:#777;text-transform:uppercase;letter-spacing:.5px;margin:0 0 14px">💡 Piattaforme consigliate</h3>
+        <div id="platform-hints">
+          ${renderPlatformHints(prod.type)}
+        </div>
       </div>
     </div>`;
-  renderStepNav(1);
 }
-function selectProductType(type) {
+
+function selectProductType(typeId) {
   if (!AppState.activeCampaign.product) AppState.activeCampaign.product = {};
-  AppState.activeCampaign.product.type = type;
-  renderStepProduct();
+  AppState.activeCampaign.product.type = typeId;
+  renderBuilderStep();
+}
+
+function renderPlatformHints(productType) {
+  const hints = {
+    ecommerce: [
+      { platform: 'Meta Ads', why: 'Ottimo per retargeting e lookalike su acquisti', highlight: true },
+      { platform: 'Google Search', why: 'Cattura domanda esistente ad alta intenzione', highlight: true },
+      { platform: 'TikTok Ads', why: 'Shopping UGC per prodotti visivi e trend', highlight: true },
+      { platform: 'Pinterest Ads', why: 'Scoperta visiva per moda, casa, lifestyle', highlight: false },
+    ],
+    leadgen: [
+      { platform: 'LinkedIn Ads', why: 'B2B lead gen con targeting professionale', highlight: true },
+      { platform: 'Google Search', why: 'Intercetta chi cerca attivamente soluzioni', highlight: true },
+      { platform: 'Meta Ads', why: 'Lead form nativi con CPL competitivo', highlight: false },
+    ],
+    app: [
+      { platform: 'Meta Ads', why: 'App Install campaigns con ottimizzazione auto', highlight: true },
+      { platform: 'TikTok Ads', why: 'Giovane audience mobile-first', highlight: true },
+      { platform: 'Google Display', why: 'Ampia reach su app Android/iOS', highlight: false },
+    ],
+    awareness: [
+      { platform: 'YouTube Ads', why: 'Storytelling video su scala massiva', highlight: true },
+      { platform: 'Meta Ads', why: 'Reach + frequency control', highlight: true },
+      { platform: 'Programmatic/DSP', why: 'Display su inventario premium', highlight: false },
+    ],
+    locale: [
+      { platform: 'Google Search', why: 'Local SEA con targeting geografico preciso', highlight: true },
+      { platform: 'Meta Ads', why: 'Radius targeting intorno al negozio', highlight: true },
+      { platform: 'Snapchat Ads', why: 'Geofilter per eventi e luoghi fisici', highlight: false },
+    ],
+    saas: [
+      { platform: 'LinkedIn Ads', why: 'Decision maker e ruoli tecnici B2B', highlight: true },
+      { platform: 'Google Search', why: 'Intent alto su keyword prodotto/competitor', highlight: true },
+      { platform: 'YouTube Ads', why: 'Demo e tutorial per awareness B2B', highlight: false },
+    ],
+  };
+
+  const list = hints[productType] || [];
+  if (!list.length) {
+    return '<p style="font-size:13px;color:#777">Seleziona il tipo di promozione per vedere i suggerimenti.</p>';
+  }
+
+  return list.map(h => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;background:${h.highlight ? '#AAFF0008' : 'transparent'};border:1px solid ${h.highlight ? '#AAFF0033' : 'transparent'};margin-bottom:8px">
+      <div style="width:6px;height:6px;border-radius:50%;background:${h.highlight ? '#AAFF00' : '#444'};margin-top:5px;flex-shrink:0"></div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:${h.highlight ? '#F0F0F0' : '#999'}">${h.platform}</div>
+        <div style="font-size:11px;color:#777;margin-top:2px">${h.why}</div>
+      </div>
+      ${h.highlight ? '<span style="margin-left:auto;font-size:10px;background:#AAFF0022;color:#AAFF00;border:1px solid #AAFF0044;border-radius:100px;padding:2px 8px;white-space:nowrap;flex-shrink:0">Consigliato</span>' : ''}
+    </div>`).join('');
 }
 
 function renderStep1() {
@@ -1788,7 +1866,8 @@ function renderStep1() {
   container.innerHTML = `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
       <div>
-        <h2 style="font-size:18px;font-weight:600;margin:0 0 20px">Scegli la piattaforma</h2>
+        <h2 style="font-size:18px;font-weight:600;margin:0 0 4px">Scegli la piattaforma</h2>
+        <p style="color:#777;font-size:13px;margin:0 0 20px">${AppState.activeCampaign.product?.type ? 'Le piattaforme consigliate per il tuo obiettivo sono evidenziate in blu' : 'Seleziona una piattaforma per continuare'}</p>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
           ${PLATFORMS.map(p => {
             const isSelected = selected === p.id;
@@ -1797,14 +1876,31 @@ function renderStep1() {
             const category = categoryMap[p.id] || 'Other';
             const catColor = categoryColors[category] || '#0055FF';
 
+            const productType = AppState.activeCampaign.product?.type;
+            const recommendedPlatforms = {
+              ecommerce: ['meta','google_search','tiktok','pinterest'],
+              leadgen: ['linkedin','google_search','meta'],
+              app: ['meta','tiktok','google_display'],
+              awareness: ['youtube','meta','programmatic'],
+              locale: ['google_search','meta','snapchat'],
+              saas: ['linkedin','google_search','youtube'],
+            };
+            const recommended = productType && recommendedPlatforms[productType] || [];
+            const isRecommended = recommended.includes(p.id);
+            const bench = PLATFORM_BENCHMARKS[p.id] || {};
+            const ctrDisplay = bench.ctr ? bench.ctr.toFixed(1)+'%' : (bench.vtr ? bench.vtr+'%' : '—');
+
             return `
-              <div class="card" onclick="selectPlatform('${p.id}')" style="cursor:pointer;border:2px solid ${isSelected ? '#AAFF00' : '#2A2A2A'};padding:16px;transition:all .2s;background:${isSelected ? '#AAFF0011' : '#111'};display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;min-height:160px" onmouseover="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#444'" onmouseout="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#2A2A2A'">
-                ${isSelected ? '<div style="position:absolute;top:8px;right:8px;background:#AAFF00;color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">✓</div>' : ''}
-                <div style="font-size:48px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;height:52px">${p.emoji}</div>
-                <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#F0F0F0">${p.name}</div>
-                <div style="background:${catColor}33;border:1px solid ${catColor}66;color:${catColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">${category}</div>
-                <div style="font-size:10px;color:#777;margin-bottom:8px;flex:1;display:flex;align-items:center">${p.desc}</div>
-                <div style="font-size:11px;color:#AAFF00;font-weight:600;margin-top:auto;padding-top:8px;border-top:1px solid #2A2A2A;width:100%">CPM: ${cpmDisplay}</div>
+              <div class="card" onclick="selectPlatform('${p.id}')" style="cursor:pointer;border:2px solid ${isSelected ? '#AAFF00' : isRecommended ? '#0055FF55' : '#2A2A2A'};padding:16px;transition:all .2s;background:${isSelected ? '#AAFF0011' : '#111'};display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;min-height:180px" onmouseover="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#444'" onmouseout="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='${isSelected ? '#AAFF00' : isRecommended ? '#0055FF55' : '#2A2A2A'}'">
+                ${isSelected ? '<div style="position:absolute;top:8px;right:8px;background:#AAFF00;color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">✓</div>' : isRecommended ? '<div style="position:absolute;top:6px;right:6px;background:#0055FF22;color:#0055FF;font-size:9px;font-weight:700;border:1px solid #0055FF44;border-radius:100px;padding:2px 6px">⭐ Top</div>' : ''}
+                <div style="font-size:40px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;height:44px">${p.emoji}</div>
+                <div style="font-size:12px;font-weight:700;margin-bottom:4px;color:#F0F0F0">${p.name}</div>
+                <div style="background:${catColor}33;border:1px solid ${catColor}66;color:${catColor};font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">${category}</div>
+                <div style="font-size:10px;color:#777;margin-bottom:8px;flex:1">${p.desc}</div>
+                <div style="font-size:10px;color:#555;margin-top:auto;padding-top:8px;border-top:1px solid #2A2A2A;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:4px;text-align:left">
+                  <div><span style="color:#777">CPM</span><br><span style="color:#AAFF00;font-weight:600">${cpmDisplay}</span></div>
+                  <div><span style="color:#777">CTR</span><br><span style="color:#0055FF;font-weight:600">${ctrDisplay}</span></div>
+                </div>
               </div>`;
           }).join('')}
         </div>
@@ -1882,10 +1978,10 @@ function renderStep2() {
           <label style="font-size:12px;color:#777;display:block;margin-bottom:12px;font-weight:600">Obiettivo principale</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             ${[
-              { id: 'awareness', emoji: '🎯', label: 'Brand Awareness', desc: 'Massimizza visibilità e riconoscimento' },
-              { id: 'vendite', emoji: '🛒', label: 'Conversioni', desc: 'Genera vendite e lead qualificati' },
-              { id: 'traffico', emoji: '📣', label: 'Traffico', desc: 'Porta utenti sul tuo sito' },
-              { id: 'engagement', emoji: '👥', label: 'Engagement', desc: 'Aumenta interazioni e follower' }
+              { id: 'awareness', emoji: '📣', label: 'Awareness', desc: 'CPM ottimizzato, massimizza visibilità' },
+              { id: 'traffico', emoji: '🖱️', label: 'Traffico', desc: 'CPC ottimizzato, porta click al sito' },
+              { id: 'vendite', emoji: '🎯', label: 'Conversioni', desc: 'CPA ottimizzato, genera vendite' },
+              { id: 'lead', emoji: '📋', label: 'Lead Gen', desc: 'CPL ottimizzato, raccoglie contatti' }
             ].map(obj => {
               const isActive = c.objective === obj.id;
               return `
@@ -1933,15 +2029,21 @@ function renderStep2() {
             oninput="updateBudget(+this.value)"
             style="width:100%;accent-color:#0055FF" />
           <div id="budget-error" style="font-size:11px;color:#FF4444;margin-top:4px;display:none">Budget supera i token disponibili (${formatCurrency(tokens)})</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            ${[[50,'Starter'],[200,'Standard'],[500,'Pro']].map(([amt,label]) => `<button onclick="updateBudget(${amt});document.querySelector('[oninput*=updateBudget]').value=${amt}" style="padding:4px 12px;border-radius:100px;border:1px solid ${c.budget===amt?'#AAFF00':'#2A2A2A'};background:${c.budget===amt?'#AAFF0011':'transparent'};color:${c.budget===amt?'#AAFF00':'#777'};font-size:11px;cursor:pointer">${label} €${amt}</button>`).join('')}
+          </div>
           <div style="font-size:11px;color:#777;margin-top:4px">Token disponibili: <strong style="color:#AAFF00">${formatCurrency(tokens)}</strong></div>
+          <div style="margin-top:8px;padding:10px;background:#1A1A1A;border-radius:10px;font-size:12px">
+            <span style="color:#777">Budget giornaliero: </span><strong style="color:#AAFF00">${formatCurrency(c.budget / (c.duration||7))}/giorno</strong>
+          </div>
         </div>
 
         <div style="margin-bottom:14px">
           <label style="font-size:12px;color:#777;display:block;margin-bottom:8px">Durata campagna</label>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${[3,7,14,30].map(d => {
+            ${[7,14,30].map(d => {
               const isActive = c.duration === d;
-              return `<button onclick="AppState.activeCampaign.duration=${d};renderBuilderStep()" style="padding:6px 14px;border-radius:100px;border:1px solid ${isActive ? '#0055FF' : '#2A2A2A'};background:${isActive ? '#0055FF22' : 'transparent'};color:${isActive ? '#F0F0F0' : '#777'};font-size:12px;cursor:pointer">${d} giorni</button>`;
+              return `<button onclick="AppState.activeCampaign.duration=${d};renderBuilderStep()" style="flex:1;padding:10px;border-radius:12px;border:2px solid ${isActive ? '#0055FF' : '#2A2A2A'};background:${isActive ? '#0055FF22' : '#1A1A1A'};color:${isActive ? '#F0F0F0' : '#777'};font-size:13px;font-weight:${isActive?'700':'400'};cursor:pointer;text-align:center"><div style="font-size:16px;font-weight:700;color:${isActive?'#0055FF':'#555'}">${d}</div><div style="font-size:10px">giorni</div></button>`;
             }).join('')}
           </div>
         </div>
@@ -2328,6 +2430,32 @@ function renderStep4() {
           ${interestsList.map(i => `<span style="background:#0055FF22;border:1px solid #0055FF44;color:#ccc;padding:4px 10px;border-radius:100px;font-size:12px">${i} <span onclick="removeInterest('${i}')" style="cursor:pointer;color:#FF4444">×</span></span>`).join('')}
         </div>
       </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:#777;display:block;margin-bottom:8px">Dispositivi</label>
+        <div style="display:flex;gap:8px">
+          ${[['desktop','🖥️ Desktop'],['mobile','📱 Mobile'],['tablet','📟 Tablet']].map(([val,label]) => {
+            const devs = c.devices||['desktop','mobile'];
+            const isActive = devs.includes(val);
+            return `<button onclick="toggleDevice('${val}')" style="flex:1;padding:8px 6px;border-radius:10px;border:1px solid ${isActive?'#0055FF':'#2A2A2A'};background:${isActive?'#0055FF22':'transparent'};color:${isActive?'#F0F0F0':'#777'};font-size:11px;cursor:pointer;text-align:center">${label}</button>`;
+          }).join('')}
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Lingua</label>
+        <select onchange="AppState.activeCampaign.language=this.value" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:14px;outline:none;-webkit-appearance:none;box-sizing:border-box">
+          ${[['it','Italiano'],['en','Inglese'],['es','Spagnolo'],['fr','Francese'],['de','Tedesco']].map(([val,lbl]) => `<option value="${val}" ${(c.language||'it')===val?'selected':''}>${lbl}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:#1A1A1A;border-radius:12px;border:1px solid ${c.retargeting?'#AAFF00':'#2A2A2A'}">
+          <input type="checkbox" ${c.retargeting?'checked':''} onchange="AppState.activeCampaign.retargeting=this.checked;renderBuilderStep()" style="width:16px;height:16px;accent-color:#AAFF00;cursor:pointer"/>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#F0F0F0">Includi retargeting (warm audience)</div>
+            <div style="font-size:11px;color:#777;margin-top:2px">+40% CVR stimato su audience già esposta al brand</div>
+          </div>
+          ${c.retargeting ? '<span style="margin-left:auto;font-size:10px;background:#AAFF0022;color:#AAFF00;border:1px solid #AAFF0044;border-radius:100px;padding:2px 8px">+40% CVR</span>' : ''}
+        </label>
+      </div>
       <div style="background:#1A1A1A;border-radius:12px;padding:12px;margin-top:8px">
         <div style="font-size:12px;color:#777;margin-bottom:4px">Reach stimato con budget attuale</div>
         <div style="font-size:24px;font-weight:700;color:#AAFF00">${formatNumber(estimatedReach)}</div>
@@ -2407,6 +2535,18 @@ function toggleSeniority(s) {
   const arr = AppState.activeCampaign.targeting.seniority;
   const idx = arr.indexOf(s);
   if (idx > -1) arr.splice(idx, 1); else arr.push(s);
+  renderBuilderStep();
+}
+
+function toggleDevice(device) {
+  if (!AppState.activeCampaign.devices) AppState.activeCampaign.devices = ['desktop','mobile'];
+  const devs = AppState.activeCampaign.devices;
+  const idx = devs.indexOf(device);
+  if (idx > -1) {
+    if (devs.length > 1) devs.splice(idx, 1); // Keep at least one device
+  } else {
+    devs.push(device);
+  }
   renderBuilderStep();
 }
 
@@ -2499,6 +2639,7 @@ function calculateEstimates(campaign) {
   if (campaign.objective === 'awareness') { reachMod = 1.3; ctrMod = 0.7; }
   if (campaign.objective === 'vendite') { cvrMod = 1.3; ctrMod = 1.1; }
   if (campaign.objective === 'lead') { cvrMod = 1.2; }
+  if (campaign.retargeting) { cvrMod *= 1.4; }
 
   // Keywords aiutano CTR Google
   if (platform === 'google_search') {
@@ -2521,7 +2662,7 @@ function calculateEstimates(campaign) {
   }
 
   const conversions = Math.floor(clicks * cvr);
-  const avgOrderValue = 50; // Valore medio ordine assunto
+  const avgOrderValue = campaign.product?.price || 50;
   const revenue = conversions * avgOrderValue;
   const cpa = conversions > 0 ? budget / conversions : 0;
   const roas = budget > 0 ? revenue / budget : 0;
@@ -2547,14 +2688,16 @@ function renderStep6() {
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             ${[
+              ['Prodotto', c.product?.name||'—'],
               ['Piattaforma', `${platform?.emoji||''} ${platform?.name||c.platform}`],
-              ['Nome', c.name||'—'],
-              ['Settore', c.sector||'—'],
               ['Obiettivo', c.objective||'—'],
-              ['Audience', `${c.ageMin}-${c.ageMax} anni, ${c.gender==='all'?'Tutti':c.gender==='male'?'Uomini':'Donne'}`],
-              ['Geo', c.geo||'—'],
-              ['Budget', formatCurrency(c.budget)],
+              ['Budget totale', formatCurrency(c.budget)],
+              ['Budget/giorno', formatCurrency(c.budget/(c.duration||7))],
               ['Durata', `${c.duration} giorni`],
+              ['Audience', `${c.ageMin}-${c.ageMax} anni, ${c.gender==='all'?'Tutti':c.gender==='male'?'Uomini':'Donne'}`],
+              ['Dispositivi', (c.devices||['desktop','mobile']).join(', ')],
+              ['Geo', c.geo||'—'],
+              ['Retargeting', c.retargeting ? '✅ Incluso (+40% CVR)' : '—'],
               ['KPI', c.kpiPrimary||'—'],
               ['Bidding', c.bidding?.type?.toUpperCase()||'—'],
             ].map(([k,v]) => `
@@ -2594,13 +2737,13 @@ function renderStep6() {
         </div>
 
         <div class="card" style="background:linear-gradient(135deg,#0055FF11,#AAFF0011);border:1px solid #0055FF44">
-          <div style="font-size:13px;color:#ccc;margin-bottom:4px">Stai per spendere</div>
+          <div style="font-size:13px;color:#ccc;margin-bottom:4px">Costo lancio (token)</div>
           <div style="font-size:32px;font-weight:700;color:#AAFF00;margin-bottom:4px">${formatCurrency(c.budget)}</div>
           <div style="font-size:13px;color:#777;margin-bottom:20px">Token rimasti dopo il lancio: <strong style="color:${(AppState.tokens||0)-c.budget >= 0 ? '#AAFF00' : '#FF4444'}">${formatCurrency((AppState.tokens||0) - c.budget)}</strong></div>
 
           ${(AppState.tokens||0) < c.budget ? `
             <div style="background:#FF444422;border:1px solid #FF444444;border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:#FF4444">
-              ⚠️ Token insufficienti! Riduci il budget al passo 2.
+              ⚠️ Token insufficienti! Riduci il budget al passo 3.
             </div>` : ''}
 
           <button
@@ -2829,9 +2972,17 @@ function nextStep() {
 
   const step = c.step || 1;
 
-  // Validazione per step con shake animation
   if (step === 1) {
-    // step 1 = prodotto (opzionale, passa sempre)
+    if (!c.product || !c.product.type) {
+      shakeElement('step-content');
+      showToast && showToast('🔴 Seleziona cosa stai promuovendo', 'error');
+      return;
+    }
+    if (!c.product.name || c.product.name.trim() === '') {
+      shakeElement('step-content');
+      showToast && showToast('🔴 Inserisci il nome del prodotto/servizio', 'error');
+      return;
+    }
   }
 
   if (step === 2) {
@@ -2856,21 +3007,7 @@ function nextStep() {
     }
   }
 
-  if (false) {
-    const errors = [];
-    if (errors.length > 0) {
-      shakeElement('step-content');
-      const msg = errors.length === 1
-        ? `Inserisci ${errors[0]}`
-        : `Completa: ${errors.join(', ')}`;
-      showToast && showToast(`🔴 ${msg}`, 'error');
-      return;
-    }
-  }
-
   if (step === 4) {
-    // Creative validation (step 4 = creatività)
-    const c = AppState.activeCampaign;
     if (!c.creative || Object.keys(c.creative).length === 0) {
       shakeElement('step-content');
       showToast && showToast('🔴 Aggiungi almeno un elemento creativo', 'error');
@@ -2881,7 +3018,6 @@ function nextStep() {
   if (step < 7) {
     AppState.activeCampaign.step = step + 1;
     renderBuilderStep();
-    // Scroll to top of step
     document.getElementById('step-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
