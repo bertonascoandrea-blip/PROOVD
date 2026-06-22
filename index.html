@@ -1363,6 +1363,8 @@ function renderDashboard() {
     ? campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length
     : 0;
 
+  const welcomed = localStorage.getItem('proovd_welcomed');
+
   view.innerHTML = `
     <div class="dashboard-header">
       <div>
@@ -1373,6 +1375,16 @@ function renderDashboard() {
         <span>+</span> Nuova Campagna
       </button>
     </div>
+
+    ${!welcomed ? `
+    <div id="welcome-banner" style="background:linear-gradient(135deg,#0055FF15,#AAFF0010);border:1px solid #0055FF44;border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:flex-start;gap:16px">
+      <div style="font-size:36px;flex-shrink:0">🚀</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:#F0F0F0">Benvenuto in PROOVD!</div>
+        <div style="font-size:14px;color:#ccc;line-height:1.6">Sei appena entrato come <strong style="color:#AAFF00">Junior Digital Marketer</strong> in un\'agenzia. Il tuo responsabile ti ha dato <strong style="color:#AAFF00">€500 di budget virtuale</strong> per gestire le prime campagne. Dimostra che sai cosa fare!</div>
+      </div>
+      <button onclick="localStorage.setItem(\'proovd_welcomed\',\'1\');document.getElementById(\'welcome-banner\').style.display=\'none\'" style="background:none;border:none;color:#777;font-size:20px;cursor:pointer;flex-shrink:0;padding:0;line-height:1" title="Chiudi">×</button>
+    </div>` : ''}
 
     <div class="kpi-grid" id="kpi-grid"></div>
 
@@ -2008,15 +2020,29 @@ function renderStep1() {
     </div>`;
 }
 
+const PLATFORM_TIPS = {
+  meta: "Per un budget sotto €100, usa Advantage+ Shopping o campagne di conversione con audience lookalike 1-3%. Inizia con un budget di test €20-30/giorno.",
+  google_search: "Inizia con parole chiave a corrispondenza esatta per controllare i costi. Il Quality Score è fondamentale: punta a 7+ per abbassare il CPC.",
+  tiktok: "Il hook nei primi 3 secondi è tutto. Il video deve sembrare nativo, non una pubblicità tradizionale. Budget minimo consigliato: €50/giorno.",
+  linkedin: "CPM alto (€30-60) ma qualità lead superiore per B2B. Usa Lead Gen Forms per ridurre il CPA del 30-50%.",
+  youtube: "Usa TrueView for Action con target intent per massimizzare le conversioni. I primi 5 secondi devono catturare l'attenzione prima dello skip.",
+  pinterest: "Ottimo per discovery e prodotti visuali. Le campagne shopping hanno ROAS medio 2-3x per e-commerce lifestyle.",
+  google_display: "Usa il remarketing per recuperare visitatori. CTR basso è normale (0.1-0.3%) — conta la frequenza di esposizione.",
+  x_ads: "Funziona meglio per brand awareness e engagement. CPC variabile, targeting per keyword conversazione molto efficace.",
+};
+
 function renderPlatformContext(platformId) {
   const p = PLATFORMS.find(pl => pl.id === platformId);
   if (!p) return '';
+
+  const tip = PLATFORM_TIPS[platformId];
 
   return `
     <div class="card" style="position:sticky;top:80px">
       <div style="font-size:32px;margin-bottom:10px">${p.emoji}</div>
       <h3 style="font-size:16px;font-weight:700;margin:0 0 8px">${p.name}</h3>
       <p style="font-size:13px;color:#ccc;line-height:1.6;margin:0 0 16px">${p.when}</p>
+      ${tip ? `<div style="background:#AAFF0008;border:1px solid #AAFF0030;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#AAFF00;line-height:1.6"><strong>💡 Consiglio pro:</strong> ${tip}</div>` : ''}
       <div style="margin-bottom:12px">
         <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">KPI principali</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -3199,9 +3225,52 @@ function renderLiveManager() {
         ${renderCampaignTableHTML()}
       </div>
 
+      ${renderCampaignAlerts(campaigns)}
+
       ${renderAICampaignIntelligence(campaigns)}
     </div>
   `;
+}
+
+function renderCampaignAlerts(campaigns) {
+  const alerts = [];
+  (campaigns || []).forEach(c => {
+    if (c.status !== 'active') return;
+    const impressions = c.impressions || 0;
+    const clicks = c.clicks || 0;
+    const ctr = impressions > 0 ? (clicks / impressions * 100) : 0;
+    const spent = c.spent || 0;
+    const revenue = c.revenue || 0;
+    const roas = spent > 0 ? revenue / spent : 0;
+    const conversions = c.conversions || 0;
+    const dayCount = c.dayCount || ((c.duration || 0) - (c.daysLeft || 0));
+    const name = c.name || c.platform;
+
+    if (impressions > 500 && ctr < 0.5) {
+      alerts.push(`<div style="display:flex;align-items:flex-start;gap:12px;background:#FFB80010;border:1px solid #FFB80040;border-radius:12px;padding:14px 16px">
+        <span style="font-size:18px;flex-shrink:0">⚠️</span>
+        <div><strong style="color:#FFB800">${name}</strong> — CTR basso <strong style="color:#FFB800">${ctr.toFixed(2)}%</strong>: prova a rinnovare le creatività o restringere il targeting.</div>
+      </div>`);
+    }
+    if (spent > 10 && roas < 1) {
+      alerts.push(`<div style="display:flex;align-items:flex-start;gap:12px;background:#FF444410;border:1px solid #FF444440;border-radius:12px;padding:14px 16px">
+        <span style="font-size:18px;flex-shrink:0">🔴</span>
+        <div><strong style="color:#FF4444">${name}</strong> — Campagna in perdita: ROAS <strong style="color:#FF4444">${roas.toFixed(2)}x</strong> sotto soglia. Considera di mettere in pausa e ottimizzare.</div>
+      </div>`);
+    }
+    if (dayCount > 7 && conversions === 0 && spent > 5) {
+      alerts.push(`<div style="display:flex;align-items:flex-start;gap:12px;background:#FFB30010;border:1px solid #FFB30040;border-radius:12px;padding:14px 16px">
+        <span style="font-size:18px;flex-shrink:0">💡</span>
+        <div><strong style="color:#FFB300">${name}</strong> — Nessuna conversione dopo 7 giorni. Verifica la landing page e il pixel di tracciamento.</div>
+      </div>`);
+    }
+  });
+  if (alerts.length === 0) return '';
+  return `
+    <div style="margin-top:24px;margin-bottom:8px">
+      <h2 style="font-size:16px;font-weight:700;margin-bottom:12px;color:#F0F0F0">⚡ Alert campagne</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">${alerts.join('')}</div>
+    </div>`;
 }
 
 function renderAICampaignIntelligence(campaigns) {
@@ -3973,7 +4042,119 @@ function renderKPICalculator() {
         </div>
       </div>
     </div>
+
+    <div style="margin-top:32px">
+      <h3 style="color:#F0F0F0;font-size:16px;font-weight:600;margin-bottom:16px;">Calcolatori rapidi</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+
+        <!-- ROAS Calculator -->
+        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
+          <div style="font-size:13px;font-weight:700;color:#AAFF00;margin-bottom:14px">📊 ROAS</div>
+          <div style="margin-bottom:10px">
+            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Revenue (€)</label>
+            <input type="number" id="qc-roas-revenue" placeholder="es. 1500" oninput="calcQuickROAS()" style="margin-top:4px;padding:8px 10px;font-size:13px">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Budget (€)</label>
+            <input type="number" id="qc-roas-budget" placeholder="es. 500" oninput="calcQuickROAS()" style="margin-top:4px;padding:8px 10px;font-size:13px">
+          </div>
+          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:#777;margin-bottom:4px">ROAS</div>
+            <div id="qc-roas-result" style="font-size:24px;font-weight:700;color:#AAFF00">—</div>
+          </div>
+        </div>
+
+        <!-- CPA Calculator -->
+        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
+          <div style="font-size:13px;font-weight:700;color:#0055FF;margin-bottom:14px">💰 CPA</div>
+          <div style="margin-bottom:10px">
+            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Budget (€)</label>
+            <input type="number" id="qc-cpa-budget" placeholder="es. 500" oninput="calcQuickCPA()" style="margin-top:4px;padding:8px 10px;font-size:13px">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Conversioni</label>
+            <input type="number" id="qc-cpa-conv" placeholder="es. 25" oninput="calcQuickCPA()" style="margin-top:4px;padding:8px 10px;font-size:13px">
+          </div>
+          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:#777;margin-bottom:4px">CPA</div>
+            <div id="qc-cpa-result" style="font-size:24px;font-weight:700;color:#0055FF">—</div>
+          </div>
+        </div>
+
+        <!-- CTR Calculator -->
+        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
+          <div style="font-size:13px;font-weight:700;color:#FFB300;margin-bottom:14px">🖱️ CTR</div>
+          <div style="margin-bottom:10px">
+            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Click</label>
+            <input type="number" id="qc-ctr-clicks" placeholder="es. 300" oninput="calcQuickCTR()" style="margin-top:4px;padding:8px 10px;font-size:13px">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Impressioni</label>
+            <input type="number" id="qc-ctr-imp" placeholder="es. 20000" oninput="calcQuickCTR()" style="margin-top:4px;padding:8px 10px;font-size:13px">
+          </div>
+          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:#777;margin-bottom:4px">CTR</div>
+            <div id="qc-ctr-result" style="font-size:24px;font-weight:700;color:#FFB300">—</div>
+          </div>
+        </div>
+
+        <!-- Break-even ROAS -->
+        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
+          <div style="font-size:13px;font-weight:700;color:#FF6B6B;margin-bottom:14px">⚖️ Break-even ROAS</div>
+          <div style="margin-bottom:12px">
+            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Margine prodotto (%)</label>
+            <input type="number" id="qc-be-margin" placeholder="es. 40" min="1" max="99" oninput="calcQuickBE()" style="margin-top:4px;padding:8px 10px;font-size:13px">
+          </div>
+          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center;margin-top:34px">
+            <div style="font-size:10px;color:#777;margin-bottom:4px">ROAS minimo</div>
+            <div id="qc-be-result" style="font-size:24px;font-weight:700;color:#FF6B6B">—</div>
+            <div style="font-size:10px;color:#555;margin-top:4px">per non perdere soldi</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   `;
+}
+
+function calcQuickROAS() {
+  const rev = parseFloat(document.getElementById('qc-roas-revenue')?.value) || 0;
+  const bud = parseFloat(document.getElementById('qc-roas-budget')?.value) || 0;
+  const el = document.getElementById('qc-roas-result');
+  if (!el) return;
+  if (bud > 0 && rev > 0) {
+    const r = (rev / bud).toFixed(2);
+    el.textContent = r + 'x';
+    el.style.color = parseFloat(r) >= 3 ? '#AAFF00' : parseFloat(r) >= 1 ? '#FFB300' : '#FF4444';
+  } else { el.textContent = '—'; el.style.color = '#AAFF00'; }
+}
+
+function calcQuickCPA() {
+  const bud = parseFloat(document.getElementById('qc-cpa-budget')?.value) || 0;
+  const conv = parseFloat(document.getElementById('qc-cpa-conv')?.value) || 0;
+  const el = document.getElementById('qc-cpa-result');
+  if (!el) return;
+  if (bud > 0 && conv > 0) { el.textContent = '€' + (bud / conv).toFixed(2); }
+  else { el.textContent = '—'; }
+}
+
+function calcQuickCTR() {
+  const clicks = parseFloat(document.getElementById('qc-ctr-clicks')?.value) || 0;
+  const imp = parseFloat(document.getElementById('qc-ctr-imp')?.value) || 0;
+  const el = document.getElementById('qc-ctr-result');
+  if (!el) return;
+  if (imp > 0 && clicks >= 0) { el.textContent = (clicks / imp * 100).toFixed(2) + '%'; }
+  else { el.textContent = '—'; }
+}
+
+function calcQuickBE() {
+  const margin = parseFloat(document.getElementById('qc-be-margin')?.value) || 0;
+  const el = document.getElementById('qc-be-result');
+  if (!el) return;
+  if (margin > 0 && margin < 100) {
+    const be = (100 / margin).toFixed(2);
+    el.textContent = be + 'x';
+  } else { el.textContent = '—'; }
 }
 
 function updateKPICalculator() {
@@ -5434,6 +5615,19 @@ const COMPANY_TYPES = [
   { id: 'corporate', name: 'Corporate', context: 'una grande azienda con team marketing strutturato' },
 ];
 
+const INTERVIEW_QUESTION_BANK = [
+  "Cos'è il ROAS e come si calcola?",
+  "Differenza tra CPM, CPC e CPV?",
+  "Cos'è il Quality Score di Google Ads e da cosa è composto?",
+  "Come struttureresti una campagna Meta Ads per un e-commerce di moda?",
+  "Cosa sono le keyword negative e quando si usano?",
+  "Cos'è il remarketing e perché converte meglio del cold traffic?",
+  "Come misuri il successo di una campagna awareness vs una conversion?",
+  "Cos'è il funnel di marketing e come si scelgono i canali per ogni fase?",
+  "Spiega la differenza tra targeting per interesse e lookalike audience",
+  "Cos'è l'A/B test e come lo applicheresti a una campagna Meta?",
+];
+
 let interviewState = {
   active: false,
   role: null,
@@ -5580,6 +5774,7 @@ async function startInterview() {
   interviewState.answers = [];
   interviewState.totalScore = 0;
   interviewState.currentQuestion = '';
+  interviewState.shuffledBank = null;
 
   renderInterviewSession();
   await askNextQuestion();
@@ -5626,6 +5821,18 @@ async function askNextQuestion() {
   const role = INTERVIEW_ROLES.find(r => r.id === interviewState.role);
   const company = COMPANY_TYPES.find(c => c.id === interviewState.company);
   if (!role || !company) return;
+
+  // Use predefined question bank for 'base' difficulty to ensure realistic questions
+  if (interviewState.difficulty === 'base' && interviewState.questionIndex < INTERVIEW_QUESTION_BANK.length) {
+    // Shuffle bank once at start (stored on state)
+    if (!interviewState.shuffledBank) {
+      interviewState.shuffledBank = [...INTERVIEW_QUESTION_BANK].sort(() => Math.random() - 0.5);
+    }
+    const question = interviewState.shuffledBank[interviewState.questionIndex];
+    addInterviewMessage('recruiter', question);
+    interviewState.currentQuestion = question;
+    return;
+  }
 
   const systemPrompt = `Sei un recruiter/responsabile marketing che sta intervistando un candidato per il ruolo di ${role.name} in ${company.context}.
 Difficoltà: ${interviewState.difficulty}.
