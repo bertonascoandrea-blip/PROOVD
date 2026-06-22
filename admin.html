@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROOVD Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0A0A0A;
+    --surface: #111111;
+    --surface2: #1A1A1A;
+    --border: #2A2A2A;
+    --blue: #0055FF;
+    --lime: #AAFF00;
+    --text: #F0F0F0;
+    --muted: #777777;
+    --red: #FF3B30;
+    --green: #34C759;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ===== LOGIN ===== */
+  #login-screen {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .login-logo {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--lime);
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .login-subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 36px;
+  }
+
+  .login-box input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 14px 20px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .login-box input:focus { border-color: var(--blue); }
+
+  .login-box input.error { border-color: var(--red); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    text-decoration: none;
+  }
+
+  .btn:hover { opacity: 0.85; }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-lime { background: var(--lime); color: #000; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--muted); }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  .login-error {
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  /* ===== ADMIN LAYOUT ===== */
+  #admin-app {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    flex-direction: row;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--lime);
+    letter-spacing: -0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo span {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    letter-spacing: 0;
+    margin-top: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--surface2); color: var(--text); }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 3px;
+    height: 20px;
+    background: var(--lime);
+    border-radius: 0 4px 4px 0;
+    margin-left: -14px;
+  }
+  .nav-item { position: relative; }
+
+  .sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .logout-btn:hover { color: var(--red); }
+
+  /* Main content */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .header {
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .header-title {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .badge-admin {
+    background: var(--lime);
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+  }
+
+  /* ===== SECTIONS ===== */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--lime);
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Form */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--muted);
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: var(--blue); }
+
+  .toggle-vis {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .toggle-vis:hover { color: var(--text); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  /* Status */
+  .status-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .status-box.show { display: block; }
+  .status-box.success { border-color: var(--green); color: var(--green); }
+  .status-box.error { border-color: var(--red); color: var(--red); }
+  .status-box.info { border-color: var(--blue); color: #6B9FFF; }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    background: var(--surface2);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .pill-green { background: rgba(52,199,89,0.15); color: var(--green); }
+  .pill-blue { background: rgba(0,85,255,0.15); color: #6B9FFF; }
+  .pill-red { background: rgba(255,59,48,0.15); color: var(--red); }
+
+  /* SVG chart */
+  .chart-wrap {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+
+  .chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  /* Loading */
+  .loading {
+    color: var(--muted);
+    font-size: 14px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .form-row { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Toast */
+  #toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    animation: slideIn 0.3s ease;
+    max-width: 320px;
+  }
+
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Section header */
+  .section-header {
+    margin-bottom: 24px;
+  }
+
+  .section-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .section-header p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">PROOVD</div>
+    <div class="login-subtitle">Pannello Amministrazione</div>
+    <input type="password" id="login-pw" placeholder="Password admin" autocomplete="current-password">
+    <button class="btn btn-full" onclick="doLogin()">Accedi</button>
+    <div class="login-error" id="login-error">Password errata. Riprova.</div>
+  </div>
+</div>
+
+<!-- ===== ADMIN APP ===== -->
+<div id="admin-app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      PROOVD
+      <span>Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="goTo('dashboard')">📊 Dashboard</div>
+      <div class="nav-item" onclick="goTo('apikey')">🔑 API Key</div>
+      <div class="nav-item" onclick="goTo('users')">👥 Utenti</div>
+      <div class="nav-item" onclick="goTo('config')">⚙️ Config Simulatore</div>
+      <div class="nav-item" onclick="goTo('stats')">📈 Statistiche</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="logout-btn" onclick="doLogout()">🚪 Esci</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="header">
+      <div class="header-title" id="header-title">Dashboard</div>
+      <span class="badge-admin">Admin</span>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== SECTION: DASHBOARD ===== -->
+      <div class="section active" id="section-dashboard">
+        <div class="section-header">
+          <h1>Overview Piattaforma</h1>
+          <p>Statistiche aggregate di tutti gli utenti PROOVD</p>
+        </div>
+
+        <div class="stats-grid" id="dash-stats">
+          <div class="stat-card">
+            <div class="stat-label">Caricamento...</div>
+            <div class="stat-value">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Stato sistema</div>
+          <div class="card-desc">Connessione ai servizi</div>
+          <div id="system-status" class="loading">Verifica connessione...</div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION: API KEY ===== -->
+      <div class="section" id="section-apikey">
+        <div class="section-header">
+          <h1>Gestione API Key</h1>
+          <p>Configura la Groq API Key usata dalla piattaforma per le funzionalità AI</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Key attuale</div>
+          <div class="card-desc">API key salvata su Supabase (mascherata)</div>
+          <div id="current-key-display" class="status-box show info">Caricamento key da Supabase...</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Imposta nuova API Key</div>
+          <div class="card-desc">La key verrà salvata nella tabella <code style="color:var(--lime)">settings</code> su Supabase</div>
+
+          <div class="form-group">
+            <label class="form-label">Groq API Key</label>
+            <div class="input-wrap">
+              <input type="password" class="form-input" id="groq-key-input" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx" style="padding-right: 44px;">
+              <button class="toggle-vis" onclick="toggleVis('groq-key-input', this)" title="Mostra/nascondi">👁</button>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" onclick="saveGroqKey()">💾 Salva Key</button>
+            <button class="btn btn-outline" onclick="testGroqKey()">🔌 Testa Connessione</button>
+          </div>
+
+          <div class="status-box" id="key-status"></div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION: USERS ===== -->
+      <div class="section" id="section-users">
+        <div class="section-header">
+          <h1>Gestione Utenti</h1>
+          <p>Lista profili registrati su PROOVD</p>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+              <div class="card-title">Tutti gli utenti</div>
+              <div class="card-desc" style="margin-bottom:0" id="users-count">Caricamento...</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="loadUsers()">🔄 Ricarica</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Token</th>
+                  <th>Campagne</th>
+                  <th>Score</th>
+                  <th>Ultima attività</th>
+                  <th>Stato</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="6" class="loading">Caricamento utenti...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION: CONFIG SIMULATORE ===== -->
+      <div class="section" id="section-config">
+        <div class="section-header">
+          <h1>Config Simulatore</h1>
+          <p>Benchmark CPM/CTR/CVR per le principali piattaforme pubblicitarie</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Parametri piattaforme</div>
+          <div class="card-desc">I valori vengono salvati in tabella <code style="color:var(--lime)">platform_config</code> e usati dal motore di simulazione</div>
+
+          <div id="platform-form"></div>
+
+          <div class="form-actions">
+            <button class="btn" onclick="savePlatformConfig()">💾 Salva Config</button>
+            <button class="btn btn-outline" onclick="loadPlatformConfig()">🔄 Ricarica da DB</button>
+          </div>
+
+          <div class="status-box" id="config-status"></div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION: STATISTICHE ===== -->
+      <div class="section" id="section-stats">
+        <div class="section-header">
+          <h1>Statistiche Avanzate</h1>
+          <p>Top campagne per ROAS e distribuzione per piattaforma</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🏆 Top campagne per ROAS</div>
+          <div class="card-desc">Estratte dai game_state di tutti gli utenti</div>
+          <div class="table-wrap" style="margin-top:12px">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Utente</th>
+                  <th>Campagna</th>
+                  <th>Piattaforma</th>
+                  <th>Budget</th>
+                  <th>Revenue</th>
+                  <th>ROAS</th>
+                </tr>
+              </thead>
+              <tbody id="stats-campaigns-tbody">
+                <tr><td colspan="7" class="loading">Caricamento...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Piattaforme più usate</div>
+          <div class="card-desc">Distribuzione campagne per piattaforma</div>
+          <div class="chart-wrap">
+            <svg id="platform-chart" width="100%" height="200" style="display:block;"></svg>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+</div><!-- /admin-app -->
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// === CONSTANTS ===
+const SUPABASE_URL = 'https://mzbguicvbeitlukhxbqk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16Ymd1aWN2YmVpdGx1a2h4YnFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzM0NDAsImV4cCI6MjA5NzcwOTQ0MH0._VMZYdCCXn-OsgWRALTZ0PJsmKm6ryl-Ux-jy709u0I';
+const ADMIN_PW = 'proovd2024';
+
+const PLATFORMS_DEFAULT = [
+  { id: 'meta', name: 'Meta Ads', cpm: 8.5, ctr: 1.2, cvr: 2.5 },
+  { id: 'google_search', name: 'Google Search', cpm: 15.0, ctr: 3.5, cvr: 4.2 },
+  { id: 'youtube', name: 'YouTube Ads', cpm: 6.0, ctr: 0.5, cvr: 1.8 },
+  { id: 'tiktok', name: 'TikTok Ads', cpm: 5.5, ctr: 1.8, cvr: 2.0 },
+  { id: 'linkedin', name: 'LinkedIn Ads', cpm: 28.0, ctr: 0.8, cvr: 3.1 },
+];
+
+// === SUPABASE HELPER ===
+async function sbAdmin(path, opts = {}) {
+  try {
+    const res = await fetch(SUPABASE_URL + path, {
+      ...opts,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': opts.prefer || '',
+        ...(opts.extraHeaders || {})
+      }
+    });
+    if (res.status === 204) return { ok: true };
+    const data = await res.json();
+    return res.ok ? data : null;
+  } catch (e) {
+    console.error('Supabase error:', e);
+    return null;
+  }
+}
+
+// === LOGIN ===
+function doLogin() {
+  const pw = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-error');
+  const input = document.getElementById('login-pw');
+
+  if (pw === ADMIN_PW) {
+    sessionStorage.setItem('proovd_admin', '1');
+    input.classList.remove('error');
+    errEl.style.display = 'none';
+    showAdmin();
+  } else {
+    input.classList.add('error');
+    errEl.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.getElementById('login-pw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+  sessionStorage.removeItem('proovd_admin');
+  document.getElementById('admin-app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pw').value = '';
+}
+
+function showAdmin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-app').style.display = 'flex';
+  goTo('dashboard');
+}
+
+// Auto-login if session present
+if (sessionStorage.getItem('proovd_admin') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.body.style.display = 'block';
+  showAdmin();
+} else {
+  document.body.style.display = 'block';
+}
+
+// === ROUTER ===
+const SECTION_TITLES = {
+  dashboard: 'Dashboard',
+  apikey: 'API Key',
+  users: 'Utenti',
+  config: 'Config Simulatore',
+  stats: 'Statistiche',
+};
+
+function goTo(section) {
+  // Nav items
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if (el.getAttribute('onclick').includes(section)) el.classList.add('active');
+  });
+
+  // Sections
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+
+  // Header title
+  document.getElementById('header-title').textContent = SECTION_TITLES[section];
+
+  // Load data
+  if (section === 'dashboard') loadDashboard();
+  if (section === 'apikey') loadCurrentKey();
+  if (section === 'users') loadUsers();
+  if (section === 'config') loadPlatformConfig();
+  if (section === 'stats') loadStats();
+}
+
+// === TOAST ===
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// === UTIL ===
+function toggleVis(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+function maskKey(k) {
+  if (!k || k.length < 8) return '—';
+  return k.slice(0, 6) + '•'.repeat(Math.max(0, k.length - 10)) + k.slice(-4);
+}
+
+function setStatus(elId, msg, type) {
+  const el = document.getElementById(elId);
+  el.textContent = msg;
+  el.className = 'status-box show ' + type;
+}
+
+// === SECTION: DASHBOARD ===
+async function loadDashboard() {
+  const grid = document.getElementById('dash-stats');
+  const sysEl = document.getElementById('system-status');
+  grid.innerHTML = '<div class="stat-card"><div class="stat-label">Caricamento...</div><div class="stat-value">⏳</div></div>';
+
+  const profiles = await sbAdmin('/rest/v1/profiles?select=id,email,game_state');
+
+  if (!profiles) {
+    grid.innerHTML = '<div class="stat-card"><div class="stat-label">Errore</div><div class="stat-value" style="color:var(--red)">—</div><div class="stat-sub">Impossibile caricare profili</div></div>';
+    sysEl.innerHTML = '❌ Connessione Supabase fallita';
+    return;
+  }
+
+  const total = profiles.length;
+  let tokenSum = 0, campaignCount = 0, scoreSum = 0, scoreCount = 0;
+
+  profiles.forEach(p => {
+    const gs = p.game_state || {};
+    if (typeof gs.tokens === 'number') tokenSum += gs.tokens;
+    if (Array.isArray(gs.campaigns)) campaignCount += gs.campaigns.length;
+    if (typeof gs.score === 'number') { scoreSum += gs.score; scoreCount++; }
+  });
+
+  const avgTokens = total ? Math.round(tokenSum / total) : 0;
+  const avgScore = scoreCount ? (scoreSum / scoreCount).toFixed(1) : '—';
+
+  grid.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Utenti totali</div>
+      <div class="stat-value">${total}</div>
+      <div class="stat-sub">profili registrati</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Token medi</div>
+      <div class="stat-value">€${avgTokens}</div>
+      <div class="stat-sub">per utente</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Campagne totali</div>
+      <div class="stat-value">${campaignCount}</div>
+      <div class="stat-sub">lanciate sulla piattaforma</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Score medio</div>
+      <div class="stat-value">${avgScore}</div>
+      <div class="stat-sub">PROOVD Score</div>
+    </div>
+  `;
+
+  sysEl.innerHTML = `✅ Supabase connesso &nbsp;·&nbsp; ${total} profili caricati &nbsp;·&nbsp; DB risponde correttamente`;
+  sysEl.style.color = 'var(--green)';
+  sysEl.style.padding = '0';
+  sysEl.style.fontSize = '14px';
+}
+
+// === SECTION: API KEY ===
+async function loadCurrentKey() {
+  const el = document.getElementById('current-key-display');
+  el.className = 'status-box show info';
+  el.textContent = 'Caricamento da Supabase...';
+
+  const data = await sbAdmin('/rest/v1/settings?key=eq.groq_api_key&select=value');
+  if (data && data.length > 0) {
+    const val = data[0].value;
+    el.className = 'status-box show success';
+    el.textContent = '✅ Key attuale: ' + maskKey(val);
+  } else {
+    el.className = 'status-box show error';
+    el.textContent = '⚠️ Nessuna API key trovata su Supabase. Inseriscila qui sotto.';
+  }
+}
+
+async function saveGroqKey() {
+  const key = document.getElementById('groq-key-input').value.trim();
+  if (!key) { setStatus('key-status', '⚠️ Inserisci una API key valida.', 'error'); return; }
+
+  setStatus('key-status', '⏳ Salvataggio in corso...', 'info');
+
+  const body = JSON.stringify({ key: 'groq_api_key', value: key });
+  const res = await sbAdmin('/rest/v1/settings', {
+    method: 'POST',
+    body,
+    prefer: 'resolution=merge-duplicates',
+    extraHeaders: { 'Prefer': 'resolution=merge-duplicates' }
+  });
+
+  if (res !== null) {
+    setStatus('key-status', '✅ API key salvata correttamente su Supabase!', 'success');
+    toast('API key salvata!', 'success');
+    document.getElementById('groq-key-input').value = '';
+    loadCurrentKey();
+  } else {
+    setStatus('key-status', '❌ Errore nel salvataggio. Verifica che la tabella "settings" esista su Supabase.', 'error');
+    toast('Errore salvataggio key', 'error');
+  }
+}
+
+async function testGroqKey() {
+  setStatus('key-status', '⏳ Recupero key e test connessione...', 'info');
+
+  // Get key from Supabase
+  const data = await sbAdmin('/rest/v1/settings?key=eq.groq_api_key&select=value');
+  const inputKey = document.getElementById('groq-key-input').value.trim();
+  const key = inputKey || (data && data.length > 0 ? data[0].value : null);
+
+  if (!key) {
+    setStatus('key-status', '❌ Nessuna key trovata. Inserisci e salva prima una API key.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { 'Authorization': `Bearer ${key}` }
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      const count = json.data ? json.data.length : '?';
+      setStatus('key-status', `✅ Connessione Groq riuscita! ${count} modelli disponibili.`, 'success');
+      toast('Connessione Groq OK!', 'success');
+    } else {
+      const err = await res.json();
+      setStatus('key-status', `❌ Errore Groq: ${err.error?.message || res.status}`, 'error');
+    }
+  } catch (e) {
+    setStatus('key-status', `❌ Impossibile raggiungere Groq: ${e.message}`, 'error');
+  }
+}
+
+// === SECTION: USERS ===
+async function loadUsers() {
+  document.getElementById('users-count').textContent = 'Caricamento...';
+  document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" class="loading">Caricamento utenti...</td></tr>';
+
+  const profiles = await sbAdmin('/rest/v1/profiles?select=id,email,game_state,updated_at');
+
+  if (!profiles) {
+    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" style="color:var(--red);padding:16px">Errore nel caricamento profili. Verifica che la tabella "profiles" esista.</td></tr>';
+    document.getElementById('users-count').textContent = 'Errore caricamento';
+    return;
+  }
+
+  document.getElementById('users-count').textContent = `${profiles.length} utenti registrati`;
+
+  if (profiles.length === 0) {
+    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:16px;text-align:center">Nessun utente ancora registrato</td></tr>';
+    return;
+  }
+
+  const rows = profiles.map(p => {
+    const gs = p.game_state || {};
+    const tokens = typeof gs.tokens === 'number' ? gs.tokens : 500;
+    const campaigns = Array.isArray(gs.campaigns) ? gs.campaigns.length : 0;
+    const score = typeof gs.score === 'number' ? gs.score : 0;
+    const lastActivity = p.updated_at ? new Date(p.updated_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+    const email = p.email || p.id?.slice(0, 8) + '...';
+
+    let statusPill;
+    if (tokens <= 0) statusPill = '<span class="pill pill-red">Game Over</span>';
+    else if (tokens >= 1000) statusPill = '<span class="pill pill-green">Attivo</span>';
+    else statusPill = '<span class="pill pill-blue">In gioco</span>';
+
+    return `<tr>
+      <td>${email}</td>
+      <td>€${tokens.toFixed(0)}</td>
+      <td>${campaigns}</td>
+      <td>${score > 0 ? score.toFixed(1) : '—'}</td>
+      <td>${lastActivity}</td>
+      <td>${statusPill}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('users-tbody').innerHTML = rows;
+}
+
+// === SECTION: CONFIG SIMULATORE ===
+async function loadPlatformConfig() {
+  const formEl = document.getElementById('platform-form');
+  setStatus('config-status', '⏳ Caricamento config da Supabase...', 'info');
+
+  const data = await sbAdmin('/rest/v1/platform_config?select=platform_id,cpm,ctr,cvr');
+  const existing = {};
+  if (data && Array.isArray(data)) {
+    data.forEach(row => existing[row.platform_id] = row);
+  }
+
+  const platforms = PLATFORMS_DEFAULT.map(p => ({
+    ...p,
+    ...(existing[p.id] ? { cpm: existing[p.id].cpm, ctr: existing[p.id].ctr, cvr: existing[p.id].cvr } : {})
+  }));
+
+  formEl.innerHTML = platforms.map(p => `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text);">${p.name}</div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">CPM (€)</label>
+          <input type="number" class="form-input" id="cfg-${p.id}-cpm" value="${p.cpm}" step="0.1" min="0">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">CTR (%)</label>
+          <input type="number" class="form-input" id="cfg-${p.id}-ctr" value="${p.ctr}" step="0.1" min="0">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">CVR (%)</label>
+          <input type="number" class="form-input" id="cfg-${p.id}-cvr" value="${p.cvr}" step="0.1" min="0">
+        </div>
+      </div>
+    </div>
+    <div class="divider" style="margin:16px 0;"></div>
+  `).join('');
+
+  const statusMsg = data && Array.isArray(data) && data.length > 0
+    ? `✅ Config caricata da Supabase (${data.length} piattaforme)`
+    : '⚠️ Nessuna config trovata su DB, usando valori di default';
+  const statusType = data && Array.isArray(data) && data.length > 0 ? 'success' : 'info';
+  setStatus('config-status', statusMsg, statusType);
+}
+
+async function savePlatformConfig() {
+  setStatus('config-status', '⏳ Salvataggio in corso...', 'info');
+
+  const rows = PLATFORMS_DEFAULT.map(p => ({
+    platform_id: p.id,
+    platform_name: p.name,
+    cpm: parseFloat(document.getElementById(`cfg-${p.id}-cpm`)?.value) || p.cpm,
+    ctr: parseFloat(document.getElementById(`cfg-${p.id}-ctr`)?.value) || p.ctr,
+    cvr: parseFloat(document.getElementById(`cfg-${p.id}-cvr`)?.value) || p.cvr,
+  }));
+
+  const res = await sbAdmin('/rest/v1/platform_config', {
+    method: 'POST',
+    body: JSON.stringify(rows),
+    prefer: 'resolution=merge-duplicates',
+    extraHeaders: { 'Prefer': 'resolution=merge-duplicates' }
+  });
+
+  if (res !== null) {
+    setStatus('config-status', `✅ Config salvata per ${rows.length} piattaforme!`, 'success');
+    toast('Config simulatore salvata!', 'success');
+  } else {
+    setStatus('config-status', '❌ Errore nel salvataggio. Verifica che la tabella "platform_config" esista su Supabase.', 'error');
+    toast('Errore salvataggio config', 'error');
+  }
+}
+
+// === SECTION: STATISTICHE ===
+async function loadStats() {
+  document.getElementById('stats-campaigns-tbody').innerHTML = '<tr><td colspan="7" class="loading">Caricamento...</td></tr>';
+
+  const profiles = await sbAdmin('/rest/v1/profiles?select=email,game_state');
+
+  if (!profiles) {
+    document.getElementById('stats-campaigns-tbody').innerHTML = '<tr><td colspan="7" style="color:var(--red);padding:16px">Errore caricamento dati</td></tr>';
+    return;
+  }
+
+  // Collect all campaigns
+  const allCampaigns = [];
+  const platformCounts = {};
+
+  profiles.forEach(p => {
+    const gs = p.game_state || {};
+    const email = p.email || 'Utente anonimo';
+    if (Array.isArray(gs.campaigns)) {
+      gs.campaigns.forEach(c => {
+        const revenue = c.revenue || 0;
+        const budget = c.budget || 1;
+        const roas = revenue / budget;
+        allCampaigns.push({ email, campaign: c, roas });
+
+        const platform = c.platform || 'Sconosciuta';
+        platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+      });
+    }
+  });
+
+  // Sort by ROAS desc
+  allCampaigns.sort((a, b) => b.roas - a.roas);
+
+  const top20 = allCampaigns.slice(0, 20);
+
+  if (top20.length === 0) {
+    document.getElementById('stats-campaigns-tbody').innerHTML = '<tr><td colspan="7" style="color:var(--muted);padding:16px;text-align:center">Nessuna campagna trovata</td></tr>';
+  } else {
+    document.getElementById('stats-campaigns-tbody').innerHTML = top20.map((item, i) => {
+      const c = item.campaign;
+      const roasColor = item.roas >= 3 ? 'var(--green)' : item.roas >= 1 ? 'var(--lime)' : 'var(--red)';
+      return `<tr>
+        <td>${i + 1}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.email}</td>
+        <td>${c.name || c.id || '—'}</td>
+        <td>${c.platform || '—'}</td>
+        <td>€${(c.budget || 0).toFixed(0)}</td>
+        <td>€${(c.revenue || 0).toFixed(0)}</td>
+        <td style="color:${roasColor};font-weight:700">${item.roas.toFixed(2)}x</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Draw SVG chart
+  drawPlatformChart(platformCounts);
+}
+
+function drawPlatformChart(platformCounts) {
+  const svg = document.getElementById('platform-chart');
+  const entries = Object.entries(platformCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  if (entries.length === 0) {
+    svg.innerHTML = '<text x="50%" y="50%" fill="#777" text-anchor="middle" font-family="Inter">Nessun dato campagne</text>';
+    return;
+  }
+
+  const max = Math.max(...entries.map(e => e[1]));
+  const W = 700;
+  const H = 180;
+  const barW = Math.min(60, Math.floor((W - 60) / entries.length) - 12);
+  const gap = Math.floor((W - 40) / entries.length);
+  const colors = ['#AAFF00', '#0055FF', '#FF6B35', '#A855F7', '#EC4899', '#14B8A6', '#F59E0B', '#6366F1'];
+
+  const bars = entries.map((entry, i) => {
+    const [name, count] = entry;
+    const x = 30 + i * gap;
+    const barH = Math.max(4, Math.round((count / max) * 130));
+    const y = H - barH - 28;
+    const color = colors[i % colors.length];
+    const label = name.length > 10 ? name.slice(0, 9) + '…' : name;
+    return `
+      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="${color}" opacity="0.85"/>
+      <text x="${x + barW / 2}" y="${y - 6}" fill="${color}" font-size="12" font-weight="700" text-anchor="middle" font-family="Inter">${count}</text>
+      <text x="${x + barW / 2}" y="${H - 10}" fill="#777" font-size="10" text-anchor="middle" font-family="Inter">${label}</text>
+    `;
+  }).join('');
+
+  svg.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${bars}</svg>`;
+}
+</script>
+</body>
+</html>
