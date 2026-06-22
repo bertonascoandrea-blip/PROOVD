@@ -692,15 +692,99 @@ async function callClaude(systemPrompt, userMessage, containerId) {
     return { error: e.message };
   }
 }
+const MARKETING_KB = `KNOWLEDGE BASE - DIGITAL MARKETING MASTER (Talent Garden / WPP Media):
+
+## SEARCH ADS (Google Ads)
+- SEM = tutte le attività sui motori di ricerca per generare traffico qualificato
+- SEA = annunci a pagamento (sponsorizzati) nella SERP, si paga per clic (CPC)
+- SEO = risultati organici, non a pagamento
+- Google detiene 92.8% market share in Italia, 89.8% mondiale
+- Ad Rank = Offerta Massima × Quality Score → determina posizione e CPC effettivo
+- Quality Score (1-10) = CTR previsto + Pertinenza annuncio + Esperienza landing page
+- QS alto = costi più bassi: QS=9 costa ~0.5€/click, QS=1 può costare 3€+
+- Match Type keyword: [Esatta]=controllo max/volumi limitati, "Frase"=via di mezzo, Generica=volumi max/AI gestisce
+- Keyword negative: escludono ricerche non pertinenti, fondamentali per ROI
+- RSA (Responsive Search Ads): 3-15 titoli (30 car.) + 2-4 descrizioni (90 car.), AI sceglie combo migliore per ogni utente
+- Struttura account: Account → Campagna (obiettivo/budget/geo) → Ad Group (tema) → Keywords+Annunci+LP
+- Approccio AI-based: meno campagne, più dati per singola campagna → migliore performance algoritmo
+- Brand keywords: proteggono da competitor, sempre da attivare
+- Keyword generiche: upper funnel awareness; Brand keywords: lower funnel conversione
+
+## BUDGET & MEDIA PLANNING
+- Mercato pubblicitario digitale Italia 2025: ~7.6 miliardi €, +7.6% YoY
+- GAMT (Google, Amazon, Meta, TikTok) = 49% del mercato totale (con PMI)
+- Distribuzione digital: Display 37.7%, Video 32.1%, Search 28.2%, Classified 2%
+- Video (+8.4% YoY) e Search (+8.2%) sono i canali in maggiore crescita
+- Funnel obiettivi: Awareness (Reach) → Consideration (Affinity) → Engagement (Involvement) → Conversion/Loyalty (Lead/Sales)
+- Formati per obiettivo: Awareness→Video lungo/Display high impact/Audio; Consideration→Social/Search; Conversion→Search/Social/Display
+- Budget allocation: partire dall'obiettivo di business, poi scegliere canali, poi formati
+- ROAS (Return on Ad Spend) = Ricavi da campagna / Spesa pubblicitaria × 100
+- CPA (Cost Per Acquisition) = Budget / Numero conversioni
+- CPM (Cost Per Mille) = costo per 1000 impressioni, tipico per awareness
+- CPC (Cost Per Click) = costo per singolo click, tipico per conversione
+- CTR (Click Through Rate) = Click / Impressioni × 100
+- CVR (Conversion Rate) = Conversioni / Click × 100
+
+## META ADS (Facebook/Instagram)
+- Campagne per obiettivo: Awareness, Traffico, Engagement, Lead, App, Vendite
+- Struttura: Campagna → Adset (audience/budget/posizionamento) → Annuncio (creativo)
+- Targeting: interessi, comportamenti, lookalike (1-3% simili a clienti), custom audience da CRM/pixel
+- Meta Pixel: traccia eventi sul sito (ViewContent, AddToCart, Purchase) per ottimizzare e creare audience
+- CPM medio Meta: €8-15 per awareness, più alto per conversion
+- Frequency: tenerla sotto 3-4 per settimana per evitare ad fatigue
+- A/B test: testare sempre 3+ creatività diverse, vincitore scala budget
+
+## TIKTOK ADS
+- Formato principale: video verticale 9:16, durata ottimale 15-30 secondi
+- Hook nei primi 3 secondi è fondamentale per il CTR
+- CPM TikTok più basso di Meta (~€5-12) ma audience più giovane (18-34)
+- Formati: TopView, In-Feed Ads, Branded Hashtag Challenge, Spark Ads
+- Best practice: contenuto nativo che sembra UGC, non pubblicità classica
+
+## LINKEDIN ADS
+- Targeting B2B: job title, seniority, azienda, settore, competenze
+- CPM più alto (~€25-60) ma qualità lead superiore per B2B
+- Formati: Sponsored Content, Message Ads, Dynamic Ads, Lead Gen Forms
+- Ideale per: SaaS, consulenza, HR, education, finance, servizi B2B
+
+## GOOGLE DISPLAY & YOUTUBE
+- GDN (Google Display Network): 90%+ utenti internet, CPM basso (~€1-5)
+- Targeting: contesto, interessi, remarketing, placement specifici
+- YouTube: pre-roll skippable (paga solo se visto 30s+), bumper 6s non skippabili
+- CPV (Cost Per View) YouTube: €0.01-0.05 per view completata
+
+## KPI E BENCHMARK (valori di riferimento mercato)
+- Google Search: CTR medio 3-5%, CPC €0.5-3, CVR 2-5%
+- Meta Ads: CTR 0.9-1.5%, CPM €8-12, CVR 1-3%
+- Google Display: CTR 0.1-0.5%, CPM €2-5
+- TikTok: CTR 1-3%, CPM €5-10, CVR 0.5-2%
+- LinkedIn: CTR 0.3-0.6%, CPM €30-50, CVR 0.5-2%
+- YouTube: View Rate 25-40%, CPV €0.02-0.05
+- Email Marketing: Open Rate 20-30%, CTR 2-5%, CVR 1-3%
+- ROAS buono: >3x (300%), ottimo: >5x (500%), eccellente: >8x (800%)
+- CAC (Customer Acquisition Cost) deve essere < LTV (Customer Lifetime Value)
+
+## REGOLE D'ORO DEL DIGITAL MARKETING
+1. Inizia sempre dall'obiettivo di business, poi scegli il canale
+2. Budget ridotto? Concentrati su 1-2 canali dove il tuo target è più presente
+3. Test → Misura → Ottimizza → Scala: il ciclo fondamentale
+4. Creative testing: la creatività impatta 70%+ della performance di una campagna
+5. Landing page coerente con l'annuncio = Quality Score alto = costi bassi
+6. Remarketing: converte 3-5x meglio del cold traffic
+7. Full funnel: abbina canali awareness + conversion per risultati ottimali
+8. Attribution: considera sempre il customer journey completo, non solo last click
+9. Stagionalità: Q4 (ottobre-dicembre) è il periodo più competitivo e costoso
+10. Frequenza: troppa esposizione (>5 volte/settimana) crea ad fatigue e abbassa CTR
+`;
 const COACH_SYSTEM = {
-  dashboard: 'Sei PROOVD AI Coach, mentore di digital marketing italiano. Sei nell\'area Dashboard. Guida l\'utente a capire le metriche e migliorare le performance. Max 150 parole.',
-  builder: 'Sei PROOVD AI Coach. Stai aiutando a configurare una campagna ADV. Valuta le scelte fatte e suggerisci miglioramenti specifici. Max 150 parole.',
-  live: 'Sei PROOVD AI Coach. Stai analizzando campagne attive. Dai 3 raccomandazioni pratiche per ottimizzare. Max 150 parole.',
-  analytics: 'Sei PROOVD AI Coach. Sei nel modulo Analytics Lab. Aiuta l\'utente a interpretare i dati e i KPI. Max 150 parole.',
-  reporting: 'Sei PROOVD AI Coach. Stai aiutando a creare un report professionale. Suggerisci come strutturarlo e quali insight evidenziare. Max 150 parole.',
-  audience: 'Sei PROOVD AI Coach. Stai analizzando audience e buyer persona. Dai suggerimenti pratici su targeting e messaggi. Max 150 parole.',
-  interview: 'Sei PROOVD AI Coach. Stai preparando l\'utente a un colloquio di digital marketing. Valuta e dai feedback costruttivi. Max 150 parole.',
-  score: 'Sei PROOVD AI Coach. Stai analizzando il PROOVD Score dell\'utente. Suggerisci come migliorare ogni dimensione. Max 150 parole.',
+  dashboard: MARKETING_KB + '\n\nSei PROOVD AI Coach, mentore esperto di digital marketing. Sei nell\'area Dashboard. Analizza le metriche mostrate, identifica anomalie, suggerisci ottimizzazioni concrete basandoti sui benchmark reali. Parla come un senior marketer in un\'agenzia. Max 180 parole.',
+  builder: MARKETING_KB + '\n\nSei PROOVD AI Coach esperto di digital marketing. Stai aiutando a configurare una campagna ADV. Valuta le scelte di piattaforma, targeting e budget come farebbe un Media Planner senior di WPP. Dai consigli pratici e specifici sul prodotto/settore scelto. Max 180 parole.',
+  live: MARKETING_KB + '\n\nSei PROOVD AI Coach. Stai analizzando campagne attive. Comportati come un Campaign Manager che monitora dashboard in tempo reale. Dai 3 raccomandazioni di ottimizzazione concrete (bid, creative, targeting) con numeri specifici. Max 180 parole.',
+  analytics: MARKETING_KB + '\n\nSei PROOVD AI Coach esperto di analytics e KPI. Aiuta l\'utente a interpretare dati, calcolare metriche (ROAS, CPA, CTR, CVR) e capire cosa ottimizzare. Usa benchmark reali di mercato. Max 180 parole.',
+  reporting: MARKETING_KB + '\n\nSei PROOVD AI Coach. Aiuta a creare report professionali come si fa nelle agenzie. Suggerisci struttura, insight chiave, visualizzazioni e come presentare i risultati al cliente. Max 180 parole.',
+  audience: MARKETING_KB + '\n\nSei PROOVD AI Coach esperto di audience e targeting. Analizza buyer persona, suggerisci segmentazioni, lookalike e messaggi per ogni fase del funnel. Max 180 parole.',
+  interview: MARKETING_KB + '\n\nSei un Senior Digital Marketing Manager che fa colloqui tecnici. Valuta le risposte del candidato (junior marketer) su concetti come ROAS, Quality Score, targeting, funnel. Dai feedback costruttivo e concreto come faresti in un\'agenzia reale. Max 200 parole.',
+  score: MARKETING_KB + '\n\nSei PROOVD AI Coach. Analizza il profilo competenze dell\'utente e suggerisci un piano di miglioramento concreto per diventare un digital marketer competitivo nel mercato attuale. Max 180 parole.',
 };
 function toggleCoach() {
   const panel = document.getElementById('ai-coach-panel');
@@ -2889,7 +2973,7 @@ function launchCampaign() {
 // === AI CAMPAIGN ENGINE ===
 async function generateCampaignWithAI(campaign) {
   const bench = platformBenchmarks?.[campaign.platform] || { cpm: 5, ctr: 1.2, cvr: 2, cpc: 0.5 };
-  const systemPrompt = `Sei un esperto di performance marketing digitale. Analizza la campagna e rispondi SOLO con JSON valido, nessun testo extra.`;
+  const systemPrompt = MARKETING_KB + '\n\nSei un esperto di performance marketing digitale. Analizza la campagna e rispondi SOLO con JSON valido, nessun testo extra.';
   const userMessage = `Analizza questa campagna paid marketing e genera una previsione realistica.
 
 Campagna:
@@ -2942,7 +3026,7 @@ Rispondi SOLO con questo JSON:
 }
 
 async function generateDailyInsight(campaign) {
-  const systemPrompt = `Sei un AI coach di performance marketing. Rispondi in italiano con massimo 2 frasi concise.`;
+  const systemPrompt = MARKETING_KB + '\n\nSei un AI coach di performance marketing. Rispondi in italiano con massimo 2 frasi concise.';
   const roas = campaign.roas?.toFixed(2) || '0';
   const ctr = campaign.ctr?.toFixed(2) || '0';
   const bench = platformBenchmarks?.[campaign.platform] || { ctr: 1.2 };
