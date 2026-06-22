@@ -335,6 +335,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .dimension-bar-track{height:6px;background:var(--surface2);border-radius:3px;margin-top:6px;overflow:hidden}
 .dimension-bar-fill{height:100%;border-radius:3px;background:var(--blue);transition:width 600ms ease}
 /* === BADGE GRID === */
+.badge-negative{background:#FF333322;color:#FF6666;border:1px solid #FF333344;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;white-space:nowrap;}
 .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .badge-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;transition:border-color var(--transition)}
 .badge-item.unlocked{border-color:#AAFF0040}
@@ -984,13 +985,24 @@ function addCoachMessage(role, text) {
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
+function buildCampaignContext() {
+  const active = (AppState.campaigns||[]).filter(c=>c.status==='active');
+  if (!active.length) return '';
+  const lines = active.map(c => {
+    const bench = platformBenchmarks[c.platform] || {};
+    const ctrStatus = c.ctr < (bench.ctr||1)*0.5 ? '⚠️ BASSO' : c.ctr > (bench.ctr||1)*1.2 ? '✅ OK' : '🟡 NELLA MEDIA';
+    const roasStatus = c.roas < 1 ? '🔴 PERDITA' : c.roas < 3 ? '🟡 BREAK-EVEN' : '✅ PROFITTEVOLE';
+    return `- ${c.name} (${c.platform}): Giorno ${c.dayCount||0}, CTR ${(c.ctr||0).toFixed(2)}% ${ctrStatus}, ROAS ${(c.roas||0).toFixed(2)}x ${roasStatus}, CPA €${(c.cpa||0)}, Speso €${(c.spent||0).toFixed(0)}/${c.budget}`;
+  }).join('\n');
+  return `\n\nDATA CAMPAGNE ATTIVE:\n${lines}\n\nFornisci consigli SPECIFICI basati su questi numeri reali.`;
+}
 async function sendCoachMessage() {
   const input = document.getElementById('coach-input');
   const msg = input?.value?.trim();
   if (!msg) return;
   input.value = '';
   addCoachMessage('user', msg);
-  const system = COACH_SYSTEM[AppState.currentModule] || COACH_SYSTEM.dashboard;
+  const system = (COACH_SYSTEM[AppState.currentModule] || COACH_SYSTEM.dashboard) + buildCampaignContext();
   const thinking = document.createElement('div');
   thinking.className = 'coach-message ai skeleton';
   thinking.style.height = '60px';
@@ -1028,7 +1040,14 @@ function simulateCampaignDay(campaign) {
   if (campaign.status !== 'active' || campaign.daysLeft <= 0) return campaign;
   const bench = platformBenchmarks[campaign.platform] || platformBenchmarks.meta;
   const mod = calculateModifiers(campaign);
-  const variance = 0.85 + Math.random() * 0.30;
+  const PLATFORM_VARIANCE = {
+    meta: 0.25, tiktok: 0.30, snapchat: 0.28,
+    linkedin: 0.12, email: 0.10,
+    google_search: 0.15, google_display: 0.20,
+    youtube: 0.22, pinterest: 0.18, x_ads: 0.25,
+  };
+  const pVariance = PLATFORM_VARIANCE[campaign.platform] || 0.20;
+  const variance = (1 - pVariance) + Math.random() * (pVariance * 2);
   // Se l'AI ha generato una previsione, usa quei target come base
   const aiForecast = campaign.aiAnalysis?.forecast;
 
@@ -1084,6 +1103,35 @@ function simulateCampaignDay(campaign) {
     clicks = Math.round(clicks * 0.85); // audience saturation
   }
 
+  // Platform audience decay realistico
+  const audienceSize = campaign.targeting?.audienceSize || 500000;
+  const decayFactor = (campaign.platform === 'meta' || campaign.platform === 'tiktok')
+    ? Math.max(0.5, 1 - (dayCount / (audienceSize / 10000)) * 0.1)
+    : 1.0;
+  clicks = Math.round(clicks * decayFactor);
+  impressions = Math.round(impressions * decayFactor);
+
+  // Negative events (realismo)
+  const negEvent = Math.random();
+  if (!campaign.negativeEvent) {
+    if (negEvent < 0.03 && dayCount > 2) {
+      campaign.negativeEvent = 'disapproval';
+      campaign.negativeEventDay = dayCount;
+    } else if (negEvent < 0.08 && audienceSize < 100000 && dayCount > 5) {
+      campaign.negativeEvent = 'saturation';
+    }
+  }
+  if (campaign.negativeEvent === 'disapproval' && dayCount < (campaign.negativeEventDay||0) + 3) {
+    clicks = 0; impressions = Math.round(impressions * 0.1);
+    if (dayCount === (campaign.negativeEventDay||0) + 1) {
+      showToast(`⛔ "${campaign.name}": Annuncio disapprovato dalla piattaforma! Rivedi le creatività.`, 'error');
+    }
+  }
+  if (campaign.negativeEvent === 'saturation') {
+    clicks = Math.round(clicks * 0.4);
+    impressions = Math.round(impressions * 0.5);
+  }
+
   if (!aiForecast) conversions = Math.round(clicks * (bench.cvr / 100) * mod * variance);
   const aov = campaign.aov || campaign.product?.price || 45;
   const revenue = conversions * aov;
@@ -1116,6 +1164,8 @@ function simulateCampaignDay(campaign) {
     roas: newSpent > 0 ? (newRevenue / newSpent) : 0,
     daysLeft: Math.max(0, (campaign.daysLeft||0) - 1),
     dailyData,
+    negativeEvent: campaign.negativeEvent,
+    negativeEventDay: campaign.negativeEventDay,
     status: (campaign.daysLeft||0) - 1 <= 0 ? 'completed' : campaign.status,
   };
 }
@@ -4084,7 +4134,7 @@ function renderCampaignRow(campaign) {
       <td style="padding:10px 8px;color:#F0F0F0;">${c.reach != null ? formatNumber(c.reach) : '—'}</td>
       <td style="padding:10px 8px;color:#F0F0F0;">${c.frequency != null ? c.frequency.toFixed(1) : '—'}</td>
       <td style="padding:10px 8px;color:#F0F0F0;">${c.cpa != null ? formatCurrency(c.cpa) : '—'}</td>
-      <td style="padding:10px 8px;">${phaseBadge}</td>
+      <td style="padding:10px 8px;">${phaseBadge}${c.negativeEvent === 'disapproval' ? ' <span class="badge-negative">⛔ Disapprovato</span>' : c.negativeEvent === 'saturation' ? ' <span class="badge-negative">😴 Saturazione</span>' : ''}</td>
       <td style="padding:10px 8px;color:#777777;">${daysLeft}g</td>
       <td style="padding:10px 8px;">
         <div style="display:flex;gap:4px;flex-wrap:wrap;">
