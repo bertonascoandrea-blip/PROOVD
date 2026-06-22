@@ -1232,6 +1232,8 @@ async function doAuth() {
   const errEl = document.getElementById('auth-error');
   const btn = document.getElementById('auth-btn');
   if (!email || !password) { errEl.textContent = 'Inserisci email e password'; errEl.style.display = 'block'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = '❌ Inserisci un\'email valida (es. nome@dominio.com)'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = '❌ La password deve essere di almeno 6 caratteri'; errEl.style.display = 'block'; return; }
   btn.textContent = '...'; btn.disabled = true;
   try {
     let r;
@@ -1249,7 +1251,8 @@ async function doAuth() {
       }
     }
     if (!r.ok || r.data?.error) {
-      const msg = r.data?.error_description || r.data?.message || r.data?.error || 'Errore di accesso';
+      const rawMsg = r.data?.error_description || r.data?.message || r.data?.error || '';
+      const msg = rawMsg.includes('Invalid login') ? '❌ Email o password errata. Riprova.' : rawMsg.includes('already registered') ? '❌ Email già registrata. Prova ad accedere.' : rawMsg.includes('invalid') ? '❌ Email non valida. Usa un\'email reale.' : rawMsg || '❌ Errore di accesso. Riprova.';
       errEl.textContent = msg; errEl.style.display = 'block';
       btn.textContent = _authTab === 'login' ? 'Accedi' : 'Crea account'; btn.disabled = false; return;
     }
