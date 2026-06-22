@@ -130,6 +130,9 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 /* === PILLS === */
 .pill{display:inline-flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:4px 12px;font-size:12px;font-weight:500}
 .pill-status{border-radius:var(--radius-pill);padding:4px 10px;font-size:11px;font-weight:600}
+.pill-sel-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 14px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap}
+.pill-sel-btn:hover{border-color:var(--blue);color:var(--text)}
+.pill-sel-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
 .status-good{background:#00C85320;color:#00C853;border:1px solid #00C85340}
 .status-warn{background:#FFB30020;color:#FFB300;border:1px solid #FFB30040}
 .status-bad{background:#FF3B3B20;color:#FF3B3B;border:1px solid #FF3B3B40}
@@ -6599,108 +6602,273 @@ function switchAudienceTab(tab, btn) {
 }
 
 // 6A — BUYER PERSONA
+let _personaWizardStep = 1;
+let _personaDraft = {};
+
 function renderPersonaBuilder() {
   const personas = AppState.personas || [];
+  _personaWizardStep = 1;
+  _personaDraft = {};
   document.getElementById('audience-content').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px">
-      <div class="card">
-        <h3>Crea Buyer Persona</h3>
-        <div class="form-group">
-          <label>Nome persona</label>
-          <input type="text" id="p-name" placeholder="Es. Marco il Manager" />
-        </div>
-        <div class="form-group">
-          <label>Età: <span id="p-age-val">32</span></label>
-          <input type="range" id="p-age" min="18" max="65" value="32" oninput="document.getElementById('p-age-val').textContent=this.value">
-        </div>
-        <div class="form-group">
-          <label>Occupazione</label>
-          <input type="text" id="p-job" placeholder="Es. Marketing Manager" />
-        </div>
-        <div class="form-group">
-          <label>Reddito annuo</label>
-          <select id="p-income">
-            <option>&lt; €20.000</option><option>€20.000 – €40.000</option>
-            <option selected>€40.000 – €70.000</option><option>&gt; €70.000</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Obiettivi (uno per riga)</label>
-          <textarea id="p-goals" rows="3" placeholder="Crescita professionale&#10;Work-life balance&#10;Risparmio"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Pain points (uno per riga)</label>
-          <textarea id="p-pains" rows="3" placeholder="Troppo tempo perso in riunioni&#10;Budget limitato&#10;Tool frammentati"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Canali preferiti</label>
-          <div class="checkbox-grid">
-            ${['Instagram','TikTok','LinkedIn','Google','YouTube','Email','Pinterest'].map(ch =>
-              `<label class="checkbox-row"><input type="checkbox" class="p-channel-cb" value="${ch}"><span>${ch}</span></label>`).join('')}
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Comportamento d'acquisto</label>
-          <select id="p-behavior">
-            <option>Impulsivo</option><option>Ricercatore</option>
-            <option>Brand Loyal</option><option>Price Sensitive</option>
-          </select>
-        </div>
-        <button class="btn-lime" onclick="createPersona()" style="width:100%;margin-top:8px">Genera Persona</button>
+      <div class="card" style="padding:28px">
+        <div id="persona-wizard-container"></div>
       </div>
       <div>
+        <h4 style="color:var(--muted);font-size:12px;letter-spacing:.8px;margin-bottom:12px">GALLERIA PERSONAS (${personas.length})</h4>
         <div id="persona-card-container">
-          ${personas.length === 0 ? '<div class="card empty-state"><div style="font-size:48px">👤</div><p>Crea la tua prima buyer persona</p></div>' :
+          ${personas.length === 0 ? `<div class="card" style="padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:12px">👤</div><p style="color:var(--muted);font-size:14px">Crea la tua prima buyer persona con il wizard</p></div>` :
             personas.map(p => renderPersonaCardHTML(p)).join('')}
         </div>
         <div id="persona-ai-analysis" style="margin-top:16px"></div>
       </div>
     </div>`;
+  renderPersonaWizardStep();
+}
+
+function renderPersonaWizardStep() {
+  const container = document.getElementById('persona-wizard-container');
+  if (!container) return;
+  const steps = ['Demographics','Digitale','Pain & Goals'];
+  const stepsHTML = `<div style="display:flex;gap:0;margin-bottom:28px;border-radius:100px;overflow:hidden;border:1px solid var(--border)">
+    ${steps.map((s,i) => `<div style="flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;
+      background:${_personaWizardStep===i+1?'var(--blue)':'transparent'};
+      color:${_personaWizardStep===i+1?'#fff':'var(--muted)'};transition:all .2s">${i+1}. ${s}</div>`).join('')}
+  </div>`;
+
+  let formHTML = '';
+  if (_personaWizardStep === 1) {
+    formHTML = `
+      <h3 style="margin-bottom:20px;font-size:16px">👤 Demographics</h3>
+      <div class="form-group">
+        <label>Nome persona</label>
+        <input type="text" id="p-name" placeholder="Es. Marco il Manager" value="${(_personaDraft.name||'').replace(/"/g,'&quot;')}" />
+      </div>
+      <div class="form-group">
+        <label>Età: <span id="p-age-val">${_personaDraft.age||32}</span> anni</label>
+        <input type="range" id="p-age" min="18" max="65" value="${_personaDraft.age||32}" oninput="document.getElementById('p-age-val').textContent=this.value" style="width:100%;accent-color:var(--blue);margin-top:6px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:2px"><span>18</span><span>65</span></div>
+      </div>
+      <div class="form-group">
+        <label>Professione</label>
+        <input type="text" id="p-job" placeholder="Es. Marketing Manager" value="${(_personaDraft.occupation||'').replace(/"/g,'&quot;')}" />
+      </div>
+      <div class="form-group">
+        <label>Reddito mensile</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="p-income-pills">
+          ${['< €1.500','€1.500–3.000','€3.000–5.000','> €5.000'].map(v=>`<button class="pill-sel-btn${_personaDraft.income===v?' active':''}" onclick="audioPillSelect('p-income-pills',this)">${v}</button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Area geografica</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="p-area-pills">
+          ${['Nord Italia','Centro','Sud','Estero'].map(v=>`<button class="pill-sel-btn${_personaDraft.area===v?' active':''}" onclick="audioPillSelect('p-area-pills',this)">${v}</button>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <button class="btn-lime" onclick="personaWizardNext()" style="flex:1">Avanti →</button>
+      </div>`;
+  } else if (_personaWizardStep === 2) {
+    formHTML = `
+      <h3 style="margin-bottom:20px;font-size:16px">📱 Comportamento Digitale</h3>
+      <div class="form-group">
+        <label>Social preferiti</label>
+        <div class="checkbox-grid" style="margin-top:6px">
+          ${['Instagram','LinkedIn','TikTok','YouTube','Facebook','X'].map(ch =>
+            `<label class="checkbox-row"><input type="checkbox" class="p-social-cb" value="${ch}"${(_personaDraft.socials||[]).includes(ch)?' checked':''}><span>${ch}</span></label>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Orario online preferito</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="p-time-pills">
+          ${['☀️ Mattina','🍽 Pranzo','🌆 Sera','🌙 Notte'].map(v=>`<button class="pill-sel-btn${_personaDraft.onlineTime===v?' active':''}" onclick="audioPillSelect('p-time-pills',this)">${v}</button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dispositivo principale</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="p-device-pills">
+          ${['📱 Mobile','💻 Desktop','📟 Tablet'].map(v=>`<button class="pill-sel-btn${_personaDraft.device===v?' active':''}" onclick="audioPillSelect('p-device-pills',this)">${v}</button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Frequenza acquisti online</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="p-freq-pills">
+          ${['Raramente','Mensile','Settimanale','Quotidiana'].map(v=>`<button class="pill-sel-btn${_personaDraft.buyFreq===v?' active':''}" onclick="audioPillSelect('p-freq-pills',this)">${v}</button>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <button class="btn-secondary" onclick="personaWizardPrev()" style="padding:12px 20px">← Indietro</button>
+        <button class="btn-lime" onclick="personaWizardNext()" style="flex:1">Avanti →</button>
+      </div>`;
+  } else if (_personaWizardStep === 3) {
+    formHTML = `
+      <h3 style="margin-bottom:20px;font-size:16px">🎯 Pain Points & Goals</h3>
+      <div class="form-group">
+        <label>Problema principale</label>
+        <textarea id="p-pain-main" rows="2" placeholder="Es. Non ha tempo, vuole acquistare velocemente…">${_personaDraft.painMain||''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Motivazioni d'acquisto</label>
+        <div class="checkbox-grid" style="margin-top:6px">
+          ${['💰 Prezzo','⭐ Qualità','⚡ Velocità','👑 Status','🛋 Comodità','🤝 Fiducia'].map(v=>`
+            <label class="checkbox-row"><input type="checkbox" class="p-motivation-cb" value="${v}"${(_personaDraft.motivations||[]).includes(v)?' checked':''}><span>${v}</span></label>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dove scopre nuovi prodotti</label>
+        <div class="checkbox-grid" style="margin-top:6px">
+          ${['📱 Social','🔍 Google','👥 Passaparola','📺 Pubblicità','⭐ Influencer'].map(v=>`
+            <label class="checkbox-row"><input type="checkbox" class="p-discover-cb" value="${v}"${(_personaDraft.discovers||[]).includes(v)?' checked':''}><span>${v}</span></label>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <button class="btn-secondary" onclick="personaWizardPrev()" style="padding:12px 20px">← Indietro</button>
+        <button class="btn-lime" onclick="createPersona()" style="flex:1">✨ Genera Persona</button>
+      </div>`;
+  }
+  container.innerHTML = stepsHTML + formHTML;
+}
+
+function audioPillSelect(containerId, btn) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.pill-sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getActivePill(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return '';
+  const active = container.querySelector('.pill-sel-btn.active');
+  return active ? active.textContent.trim() : '';
+}
+
+function personaWizardNext() {
+  if (_personaWizardStep === 1) {
+    const name = document.getElementById('p-name')?.value?.trim();
+    if (!name) { showToast('Inserisci un nome per la persona', 'error'); return; }
+    _personaDraft.name = name;
+    _personaDraft.age = parseInt(document.getElementById('p-age')?.value || 32);
+    _personaDraft.occupation = document.getElementById('p-job')?.value?.trim() || '';
+    _personaDraft.income = getActivePill('p-income-pills');
+    _personaDraft.area = getActivePill('p-area-pills');
+  } else if (_personaWizardStep === 2) {
+    _personaDraft.socials = [...document.querySelectorAll('.p-social-cb:checked')].map(cb => cb.value);
+    _personaDraft.onlineTime = getActivePill('p-time-pills');
+    _personaDraft.device = getActivePill('p-device-pills');
+    _personaDraft.buyFreq = getActivePill('p-freq-pills');
+  }
+  _personaWizardStep++;
+  renderPersonaWizardStep();
+}
+
+function personaWizardPrev() {
+  if (_personaWizardStep === 2) {
+    _personaDraft.socials = [...document.querySelectorAll('.p-social-cb:checked')].map(cb => cb.value);
+    _personaDraft.onlineTime = getActivePill('p-time-pills');
+    _personaDraft.device = getActivePill('p-device-pills');
+    _personaDraft.buyFreq = getActivePill('p-freq-pills');
+  } else if (_personaWizardStep === 3) {
+    _personaDraft.painMain = document.getElementById('p-pain-main')?.value?.trim() || '';
+    _personaDraft.motivations = [...document.querySelectorAll('.p-motivation-cb:checked')].map(cb => cb.value);
+    _personaDraft.discovers = [...document.querySelectorAll('.p-discover-cb:checked')].map(cb => cb.value);
+  }
+  _personaWizardStep--;
+  renderPersonaWizardStep();
 }
 
 function createPersona() {
-  const name = document.getElementById('p-name')?.value?.trim();
-  if (!name) { showToast('Inserisci un nome per la persona', 'error'); return; }
+  const painMain = document.getElementById('p-pain-main')?.value?.trim() || '';
+  const motivations = [...document.querySelectorAll('.p-motivation-cb:checked')].map(cb => cb.value);
+  const discovers = [...document.querySelectorAll('.p-discover-cb:checked')].map(cb => cb.value);
   const persona = {
     id: generateId(),
-    name,
-    age: parseInt(document.getElementById('p-age')?.value || 32),
-    occupation: document.getElementById('p-job')?.value || '',
-    income: document.getElementById('p-income')?.value || '',
-    goals: (document.getElementById('p-goals')?.value || '').split('\n').filter(Boolean),
-    painPoints: (document.getElementById('p-pains')?.value || '').split('\n').filter(Boolean),
-    channels: [...document.querySelectorAll('.p-channel-cb:checked')].map(cb => cb.value),
-    behavior: document.getElementById('p-behavior')?.value || '',
+    name: _personaDraft.name || 'Persona',
+    age: _personaDraft.age || 32,
+    occupation: _personaDraft.occupation || '',
+    income: _personaDraft.income || '',
+    area: _personaDraft.area || '',
+    socials: _personaDraft.socials || [],
+    onlineTime: _personaDraft.onlineTime || '',
+    device: _personaDraft.device || '',
+    buyFreq: _personaDraft.buyFreq || '',
+    painMain,
+    motivations,
+    discovers,
+    goals: [],
+    painPoints: painMain ? [painMain] : [],
+    channels: _personaDraft.socials || [],
+    behavior: _personaDraft.buyFreq || '',
   };
   if (!AppState.personas) AppState.personas = [];
   AppState.personas.push(persona);
   saveState(); checkBadges();
-  document.getElementById('persona-card-container').innerHTML = AppState.personas.map(p => renderPersonaCardHTML(p)).join('');
+  const container = document.getElementById('persona-card-container');
+  if (container) {
+    container.innerHTML = AppState.personas.map(p => renderPersonaCardHTML(p)).join('');
+  }
   analyzePersonaWithAI(persona);
   updateProovdScore('strategy', 3);
   showToast('Buyer persona creata!', 'success');
+  _personaWizardStep = 1;
+  _personaDraft = {};
+  renderPersonaWizardStep();
+  // Update gallery heading count
+  const h4 = document.querySelector('#view-audience h4');
+  if (h4) h4.textContent = `GALLERIA PERSONAS (${AppState.personas.length})`;
+}
+
+function deletePersona(id) {
+  AppState.personas = (AppState.personas || []).filter(p => p.id !== id);
+  saveState();
+  const container = document.getElementById('persona-card-container');
+  if (container) {
+    container.innerHTML = AppState.personas.length === 0
+      ? `<div class="card" style="padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:12px">👤</div><p style="color:var(--muted);font-size:14px">Crea la tua prima buyer persona con il wizard</p></div>`
+      : AppState.personas.map(p => renderPersonaCardHTML(p)).join('');
+  }
+  showToast('Persona eliminata', 'success');
 }
 
 function renderPersonaCardHTML(p) {
-  const avatars = { '<€20k': '👩‍🎓', '€20k-€40k': '👨‍💼', '€40k-€70k': '👩‍💼', '>€70k': '🧑‍💼' };
-  const avatar = p.age < 25 ? '👦' : p.age < 35 ? '👩‍💼' : p.age < 50 ? '🧑‍💼' : '👴';
-  return `<div class="card" style="margin-bottom:16px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div style="font-size:40px">${avatar}</div>
-      <div><div style="font-weight:700;font-size:18px">${p.name}</div><div style="color:var(--muted);font-size:13px">${p.age} anni · ${p.occupation}</div><div style="color:var(--muted);font-size:12px">${p.income}</div></div>
+  const avatar = (p.age||32) < 25 ? '👦' : (p.age||32) < 35 ? '👩‍💼' : (p.age||32) < 50 ? '🧑‍💼' : '👴';
+  const socials = p.socials || p.channels || [];
+  const motivations = p.motivations || [];
+  return `<div class="card" style="margin-bottom:14px;position:relative">
+    <button onclick="deletePersona('${p.id}')" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;transition:.2s" onmouseover="this.style.color='#f55'" onmouseout="this.style.color='var(--muted)'">×</button>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#0044cc);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${avatar}</div>
+      <div>
+        <div style="font-weight:700;font-size:16px">${p.name}</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px">${p.age} anni${p.occupation?' · '+p.occupation:''}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+          ${p.income?`<span class="pill" style="font-size:10px;padding:2px 8px">${p.income}</span>`:''}
+          ${p.area?`<span class="pill" style="font-size:10px;padding:2px 8px">📍 ${p.area}</span>`:''}
+          ${p.device?`<span class="pill" style="font-size:10px;padding:2px 8px">${p.device}</span>`:''}
+        </div>
+      </div>
     </div>
-    ${p.goals.length ? `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">OBIETTIVI</div>${p.goals.map(g => `<div style="font-size:13px;margin:3px 0">✅ ${g}</div>`).join('')}</div>` : ''}
-    ${p.painPoints.length ? `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">PAIN POINTS</div>${p.painPoints.map(g => `<div style="font-size:13px;margin:3px 0">❌ ${g}</div>`).join('')}</div>` : ''}
-    ${p.channels.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${p.channels.map(ch => `<span class="pill">${ch}</span>`).join('')}</div>` : ''}
+    ${p.onlineTime||p.buyFreq?`<div style="display:flex;gap:10px;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:10px">
+      ${p.onlineTime?`<div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">ONLINE</div><div style="font-size:12px;font-weight:600">${p.onlineTime}</div></div>`:''}
+      ${p.buyFreq?`<div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">ACQUISTI</div><div style="font-size:12px;font-weight:600">${p.buyFreq}</div></div>`:''}
+    </div>`:''}
+    ${p.painMain?`<div style="margin-bottom:10px;padding:10px;background:rgba(255,80,80,.07);border-radius:10px;border-left:3px solid #ff5050">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px;letter-spacing:.5px">PROBLEMA</div>
+      <div style="font-size:12px">${p.painMain}</div>
+    </div>`:''}
+    ${motivations.length?`<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:.5px">MOTIVAZIONI</div><div style="display:flex;flex-wrap:wrap;gap:5px">${motivations.map(m=>`<span class="pill" style="font-size:10px;padding:2px 8px">${m}</span>`).join('')}</div></div>`:''}
+    ${socials.length?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:.5px">SOCIAL</div><div style="display:flex;flex-wrap:wrap;gap:5px">${socials.map(ch=>`<span class="pill" style="font-size:10px;padding:2px 8px">${ch}</span>`).join('')}</div></div>`:''}
   </div>`;
 }
 
 async function analyzePersonaWithAI(persona) {
-  const system = `Sei PROOVD AI Coach. Analizza questa buyer persona e suggerisci: 1) Le 2-3 piattaforme ADV più efficaci, 2) Il formato creativo più adatto, 3) Il messaggio chiave. Max 150 parole.`;
-  const msg = `Persona: ${persona.name}, ${persona.age} anni, ${persona.occupation}. Canali: ${persona.channels.join(', ')}. Comportamento: ${persona.behavior}. Obiettivi: ${persona.goals.join(', ')}. Pain: ${persona.painPoints.join(', ')}.`;
+  const aiEl = document.getElementById('persona-ai-analysis');
+  if (aiEl) aiEl.innerHTML = `<div class="card coach-tip"><div class="coach-tip-header">🤖 AI Coach — Analisi persona in corso…</div><div style="display:flex;gap:6px;margin-top:8px">${[1,2,3].map(()=>'<div style="height:10px;border-radius:5px;background:var(--surface2);flex:1;animation:pulse 1.5s ease-in-out infinite"></div>').join('')}</div></div>`;
+  const system = `Sei PROOVD AI Coach. Analizza questa buyer persona e suggerisci: 1) Le 2-3 piattaforme ADV più efficaci, 2) Il formato creativo più adatto, 3) Il messaggio chiave da usare. Max 150 parole.`;
+  const msg = `Persona: ${persona.name}, ${persona.age} anni, ${persona.occupation||'n/d'}. Social: ${(persona.socials||persona.channels||[]).join(', ')||'n/d'}. Motivazioni: ${(persona.motivations||[]).join(', ')||'n/d'}. Problema: ${persona.painMain||(persona.painPoints||[]).join(', ')||'n/d'}. Frequenza acquisti: ${persona.buyFreq||persona.behavior||'n/d'}.`;
   const result = await callClaude(system, msg, 'persona-ai-analysis');
-  if (result) {
-    document.getElementById('persona-ai-analysis').innerHTML = `<div class="card coach-tip"><div class="coach-tip-header">🤖 AI Coach</div><div class="coach-tip-text">${result.replace(/\n/g,'<br>')}</div></div>`;
+  if (result && aiEl) {
+    aiEl.innerHTML = `<div class="card coach-tip"><div class="coach-tip-header">🤖 AI Coach — Raccomandazioni per ${persona.name}</div><div class="coach-tip-text">${result.replace(/\n/g,'<br>')}</div></div>`;
   }
 }
 
@@ -6718,29 +6886,158 @@ const PRESET_COMPETITORS = {
 
 function renderCompetitorAnalysis() {
   document.getElementById('audience-content').innerHTML = `
-    <div class="card" style="margin-top:24px;max-width:800px">
-      <h3>Competitor Analysis</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px">
+      <div class="card">
+        <h3 style="margin-bottom:20px">🔍 Aggiungi Competitor</h3>
         <div class="form-group">
-          <label>Settore</label>
-          <select id="comp-sector" onchange="loadCompetitorPresets()">
+          <label>Nome competitor</label>
+          <input type="text" id="comp-name-input" placeholder="Es. Nike, Adidas…" />
+        </div>
+        <div class="form-group">
+          <label>URL (solo riferimento)</label>
+          <input type="text" id="comp-url-input" placeholder="https://esempio.com" />
+        </div>
+        <div class="form-group">
+          <label>Piattaforme attive</label>
+          <div class="checkbox-grid" style="margin-top:6px">
+            ${['Meta Ads','Google Ads','TikTok','LinkedIn','YouTube','Pinterest','Email','SEO'].map(p =>
+              `<label class="checkbox-row"><input type="checkbox" class="comp-plat-cb" value="${p}"><span>${p}</span></label>`).join('')}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Budget stimato</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="comp-budget-pills">
+            ${['🟢 Piccolo &lt;€500','🟡 Medio €500-5k','🔴 Grande &gt;€5k'].map(v=>`<button class="pill-sel-btn" onclick="audioPillSelect('comp-budget-pills',this)">${v}</button>`).join('')}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Punti di forza</label>
+          <textarea id="comp-strengths" rows="2" placeholder="Es. Brand riconoscibile, creatività UGC…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Gap da sfruttare</label>
+          <textarea id="comp-gaps" rows="2" placeholder="Es. Prezzi alti, scarsa customer care…"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn-secondary" style="flex:1" onclick="addCompetitorCard()">+ Aggiungi</button>
+          <button class="btn-lime" style="flex:1" onclick="generateCompetitorStrategy()">🤖 Strategia AI</button>
+        </div>
+        <div style="margin-top:16px">
+          <h4 style="color:var(--muted);font-size:12px;letter-spacing:.8px;margin-bottom:10px">OPPURE SELEZIONA DAL SETTORE</h4>
+          <select id="comp-sector" onchange="loadCompetitorPresets()" style="margin-bottom:10px">
             <option value="ecommerce">E-commerce</option><option value="saas">SaaS</option>
             <option value="food">Food & Delivery</option><option value="travel">Travel</option>
             <option value="finance">Finance</option><option value="retail">Retail</option>
             <option value="fashion">Fashion</option><option value="altro">Altro</option>
           </select>
+          <div id="competitor-chips" class="chip-container" style="margin-bottom:10px"></div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="comp-custom-input" placeholder="Aggiungi competitor…" style="flex:1" />
+            <button class="btn-secondary" onclick="addCustomCompetitor()">+</button>
+          </div>
+          <button class="btn-secondary" style="width:100%;margin-top:10px" onclick="analyzeCompetitors()">📊 Analisi Comparativa</button>
         </div>
       </div>
-      <div id="competitor-chips" class="chip-container" style="margin:16px 0"></div>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <input type="text" id="comp-custom-input" placeholder="Aggiungi competitor custom..." style="flex:1" />
-        <button class="btn-secondary" onclick="addCustomCompetitor()">Aggiungi</button>
+      <div>
+        <div id="competitor-cards-container">
+          <div class="card" style="padding:40px;text-align:center">
+            <div style="font-size:48px;margin-bottom:12px">🔍</div>
+            <p style="color:var(--muted);font-size:14px">Aggiungi un competitor per vedere la SWOT analysis</p>
+          </div>
+        </div>
+        <div id="competitor-table" style="margin-top:16px"></div>
+        <div id="competitor-ai" style="margin-top:16px"></div>
       </div>
-      <button class="btn-lime" onclick="analyzeCompetitors()">Analizza</button>
-      <div id="competitor-table" style="margin-top:24px"></div>
-      <div id="competitor-ai" style="margin-top:16px"></div>
     </div>`;
   loadCompetitorPresets();
+}
+
+function addCompetitorCard() {
+  const name = document.getElementById('comp-name-input')?.value?.trim();
+  if (!name) { showToast('Inserisci il nome del competitor', 'error'); return; }
+  const url = document.getElementById('comp-url-input')?.value?.trim() || '';
+  const platforms = [...document.querySelectorAll('.comp-plat-cb:checked')].map(cb => cb.value);
+  const budget = getActivePill('comp-budget-pills');
+  const strengths = document.getElementById('comp-strengths')?.value?.trim() || '';
+  const gaps = document.getElementById('comp-gaps')?.value?.trim() || '';
+  if (!AppState._competitorCards) AppState._competitorCards = [];
+  const card = { id: generateId(), name, url, platforms, budget, strengths, gaps };
+  AppState._competitorCards.push(card);
+  renderCompetitorCards();
+  // Reset form
+  document.getElementById('comp-name-input').value = '';
+  document.getElementById('comp-url-input').value = '';
+  document.querySelectorAll('.comp-plat-cb').forEach(cb => cb.checked = false);
+  document.querySelectorAll('#comp-budget-pills .pill-sel-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('comp-strengths').value = '';
+  document.getElementById('comp-gaps').value = '';
+  showToast('Competitor aggiunto!', 'success');
+}
+
+function renderCompetitorCards() {
+  const cards = AppState._competitorCards || [];
+  const container = document.getElementById('competitor-cards-container');
+  if (!container) return;
+  if (cards.length === 0) {
+    container.innerHTML = `<div class="card" style="padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:12px">🔍</div><p style="color:var(--muted);font-size:14px">Aggiungi un competitor per vedere la SWOT analysis</p></div>`;
+    return;
+  }
+  container.innerHTML = cards.map(c => renderSwotCardHTML(c)).join('');
+}
+
+function renderSwotCardHTML(c) {
+  const swotData = [
+    { label:'Forze', color:'#22c55e', bg:'rgba(34,197,94,.08)', content: c.strengths || 'Non specificato' },
+    { label:'Debolezze', color:'#ef4444', bg:'rgba(239,68,68,.08)', content: c.gaps || 'Non specificato' },
+    { label:'Opportunità', color:'#0055FF', bg:'rgba(0,85,255,.08)', content: 'Sfruttare i gap identificati' },
+    { label:'Minacce', color:'#f97316', bg:'rgba(249,115,22,.08)', content: 'Presidio forte delle piattaforme' },
+  ];
+  return `<div class="card" style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px">
+      <div>
+        <div style="font-weight:700;font-size:16px">${c.name}</div>
+        ${c.url?`<div style="color:var(--muted);font-size:12px;margin-top:2px">${c.url}</div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+          ${c.budget?`<span class="pill" style="font-size:10px;padding:2px 8px">${c.budget}</span>`:''}
+          ${(c.platforms||[]).slice(0,3).map(p=>`<span class="pill" style="font-size:10px;padding:2px 8px">${p}</span>`).join('')}
+          ${(c.platforms||[]).length>3?`<span class="pill" style="font-size:10px;padding:2px 8px">+${c.platforms.length-3}</span>`:''}
+        </div>
+      </div>
+      <button onclick="deleteCompetitorCard('${c.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;transition:.2s" onmouseover="this.style.color='#f55'" onmouseout="this.style.color='var(--muted)'">×</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.8px;margin-bottom:10px">SWOT ANALYSIS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${swotData.map(s=>`<div style="padding:10px;border-radius:10px;background:${s.bg};border:1px solid ${s.color}22">
+        <div style="font-size:10px;font-weight:700;color:${s.color};margin-bottom:5px;letter-spacing:.5px">${s.label.toUpperCase()}</div>
+        <div style="font-size:12px;color:var(--text)">${s.content}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function deleteCompetitorCard(id) {
+  AppState._competitorCards = (AppState._competitorCards || []).filter(c => c.id !== id);
+  renderCompetitorCards();
+  showToast('Competitor rimosso', 'success');
+}
+
+async function generateCompetitorStrategy() {
+  const name = document.getElementById('comp-name-input')?.value?.trim();
+  const strengths = document.getElementById('comp-strengths')?.value?.trim();
+  const gaps = document.getElementById('comp-gaps')?.value?.trim();
+  const platforms = [...document.querySelectorAll('.comp-plat-cb:checked')].map(cb => cb.value);
+  if (!name) { showToast('Inserisci il nome del competitor per la strategia', 'error'); return; }
+  const system = `Sei PROOVD AI Coach. Analizza questo competitor e genera una strategia differenziante per posizionarsi meglio nel mercato. Suggerisci: 1) Posizionamento unico, 2) Piattaforme da presidiare, 3) Messaggio chiave vs competitor. Max 200 parole.`;
+  const msg = `Competitor: ${name}. Attivo su: ${platforms.join(', ')||'n/d'}. Punti di forza: ${strengths||'n/d'}. Gap: ${gaps||'n/d'}.`;
+  const aiContainer = document.getElementById('competitor-ai');
+  if (aiContainer) {
+    aiContainer.innerHTML = `<div class="card coach-tip"><div class="coach-tip-header">🤖 Generazione strategia in corso…</div><div style="display:flex;gap:6px;margin-top:8px">${[1,2,3].map(()=>'<div style="height:10px;border-radius:5px;background:var(--surface2);flex:1;animation:pulse 1.5s ease-in-out infinite"></div>').join('')}</div></div>`;
+  }
+  addCompetitorCard();
+  const result = await callClaude(system, msg, 'competitor-ai');
+  if (result && aiContainer) {
+    aiContainer.innerHTML = `<div class="card coach-tip"><div class="coach-tip-header">🤖 Strategia Differenziante</div><div class="coach-tip-text">${result.replace(/\n/g,'<br>')}</div></div>`;
+  }
 }
 
 function loadCompetitorPresets() {
@@ -6776,7 +7073,6 @@ function analyzeCompetitors() {
   if (!competitors.length) { showToast('Aggiungi almeno un competitor', 'error'); return; }
   const sector = document.getElementById('comp-sector')?.value || 'ecommerce';
   const platforms = ['Meta Ads','Google Search','TikTok','LinkedIn','Email'];
-  const seed = competitors.reduce((a, c) => a + c.charCodeAt(0), 0);
   const fakeSpend = (name) => {
     const h = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
     return Math.round((h % 80 + 20) * 1000);
@@ -6786,99 +7082,131 @@ function analyzeCompetitors() {
     return strengths[name.charCodeAt(0) % strengths.length];
   };
 
-  let html = `<table style="width:100%;border-collapse:collapse;font-size:13px">
+  let html = `<div class="card"><h4 style="margin-bottom:14px;font-size:13px;color:var(--muted)">CONFRONTO COMPETITIVO</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead><tr style="border-bottom:1px solid var(--border)">
-      <th style="text-align:left;padding:8px 12px;color:var(--muted)">Competitor</th>
-      <th style="text-align:right;padding:8px 12px;color:var(--muted)">Spend/mese (est.)</th>
-      <th style="text-align:left;padding:8px 12px;color:var(--muted)">Piattaforme</th>
-      <th style="text-align:left;padding:8px 12px;color:var(--muted)">Punto di forza</th>
+      <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:11px">COMPETITOR</th>
+      <th style="text-align:right;padding:8px 10px;color:var(--muted);font-size:11px">SPEND EST.</th>
+      <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:11px">PIATTAFORME</th>
+      <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:11px">FORZA</th>
     </tr></thead><tbody>`;
 
   competitors.forEach(comp => {
     const h = comp.charCodeAt(0);
     const plats = platforms.filter((_, i) => (h + i) % 3 !== 0).slice(0, 3);
     html += `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:8px 12px;font-weight:600">${comp}</td>
-      <td style="padding:8px 12px;text-align:right">${formatCurrency(fakeSpend(comp))}</td>
-      <td style="padding:8px 12px">${plats.join(', ')}</td>
-      <td style="padding:8px 12px">${fakeStrength(comp)}</td>
+      <td style="padding:8px 10px;font-weight:600">${comp}</td>
+      <td style="padding:8px 10px;text-align:right">${formatCurrency(fakeSpend(comp))}</td>
+      <td style="padding:8px 10px;font-size:12px">${plats.join(', ')}</td>
+      <td style="padding:8px 10px;font-size:12px">${fakeStrength(comp)}</td>
     </tr>`;
   });
 
   const myRoas = AppState.campaigns.reduce((a, c) => a + (c.roas || 0), 0) / (AppState.campaigns.length || 1);
-  html += `<tr style="border-bottom:1px solid var(--border);background:var(--surface2)">
-    <td style="padding:8px 12px;font-weight:600;color:var(--lime)">TU (stimato)</td>
-    <td style="padding:8px 12px;text-align:right">${formatCurrency(AppState.campaigns.reduce((a,c)=>a+(c.spent||0),0))}</td>
-    <td style="padding:8px 12px">${[...new Set(AppState.campaigns.map(c=>getPlatformName(c.platform)))].join(', ') || '-'}</td>
-    <td style="padding:8px 12px">ROAS medio ${myRoas.toFixed(2)}x</td>
-  </tr></tbody></table>`;
+  html += `<tr style="background:var(--surface2)">
+    <td style="padding:8px 10px;font-weight:600;color:var(--lime)">TU</td>
+    <td style="padding:8px 10px;text-align:right">${formatCurrency(AppState.campaigns.reduce((a,c)=>a+(c.spent||0),0))}</td>
+    <td style="padding:8px 10px;font-size:12px">${[...new Set(AppState.campaigns.map(c=>getPlatformName(c.platform)))].join(', ') || '-'}</td>
+    <td style="padding:8px 10px;font-size:12px">ROAS ${myRoas.toFixed(2)}x</td>
+  </tr></tbody></table></div>`;
 
   document.getElementById('competitor-table').innerHTML = html;
 
   const system = `Sei PROOVD AI Coach. Analizza questi competitor nel settore ${sector} e suggerisci 3 modi per differenziare la strategia ADV. Sii specifico e pratico. Max 200 parole.`;
-  const msg = `Competitor analizzati: ${competitors.join(', ')}. Settore: ${sector}. I miei dati: ${AppState.campaigns.length} campagne attive, ROAS medio ${myRoas.toFixed(2)}x.`;
+  const msg = `Competitor: ${competitors.join(', ')}. Settore: ${sector}. Campagne attive: ${AppState.campaigns.length}, ROAS medio ${myRoas.toFixed(2)}x.`;
   callClaude(system, msg, 'competitor-ai');
 }
 
 // 6C — CUSTOMER JOURNEY MAPPER
-const JOURNEY_STAGES = ['Awareness', 'Interest', 'Consideration', 'Purchase', 'Retention'];
+const JOURNEY_STAGES = [
+  { key:'Awareness', label:'AWARENESS', icon:'👁', color:'#6366f1' },
+  { key:'Consideration', label:'CONSIDERATION', icon:'🤔', color:'#0055FF' },
+  { key:'Decision', label:'DECISION', icon:'⚡', color:'#f59e0b' },
+  { key:'Purchase', label:'PURCHASE', icon:'🛒', color:'#22c55e' },
+  { key:'Loyalty', label:'LOYALTY', icon:'❤️', color:'#AAFF00' },
+];
+const JOURNEY_EMOTIONS = ['😤 Frustrato','😐 Neutro','🤔 Curioso','😊 Interessato','🤩 Entusiasta'];
 
 function renderJourneyMapper() {
   if (!AppState.journey) AppState.journey = {};
   document.getElementById('audience-content').innerHTML = `
     <div style="margin-top:24px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h3>Customer Journey Map</h3>
-        <button class="btn-secondary" onclick="analyzeJourneyWithAI()">Analizza con AI</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div>
+          <h3 style="margin-bottom:4px">🗺️ Customer Journey Map</h3>
+          <p style="color:var(--muted);font-size:13px">Mappa i touchpoint per ogni fase del percorso del cliente</p>
+        </div>
+        <button class="btn-secondary" onclick="analyzeJourneyWithAI()">🤖 Analizza con AI</button>
       </div>
-      <div class="journey-map">
-        ${JOURNEY_STAGES.map(stage => `
-          <div class="journey-stage">
-            <div class="journey-stage-header">${stage}</div>
-            <div class="journey-touchpoints" id="journey-${stage}">
-              ${(AppState.journey[stage]||[]).map((tp, i) => renderTouchpointHTML(stage, tp, i)).join('')}
+      <div style="overflow-x:auto;padding-bottom:8px">
+        <div style="display:flex;gap:0;min-width:800px;align-items:stretch">
+          ${JOURNEY_STAGES.map((stage, si) => `
+            <div style="flex:1;min-width:140px;${si>0?'border-left:1px solid var(--border)':''}">
+              <div style="padding:14px 12px;background:${stage.color}18;border-bottom:2px solid ${stage.color};text-align:center">
+                <div style="font-size:20px;margin-bottom:4px">${stage.icon}</div>
+                <div style="font-size:10px;font-weight:700;color:${stage.color};letter-spacing:.8px">${stage.label}</div>
+              </div>
+              <div id="journey-${stage.key}" style="padding:10px;min-height:140px">
+                ${(AppState.journey[stage.key]||[]).map((tp,i) => renderTouchpointHTML(stage.key, tp, i)).join('')}
+              </div>
+              <div style="padding:0 10px 10px">
+                <button class="btn-secondary" style="width:100%;font-size:11px;padding:8px" onclick="showAddTouchpointModal('${stage.key}','${stage.label}','${stage.color}')">+ Aggiungi</button>
+              </div>
             </div>
-            <button class="btn-secondary" style="width:100%;margin-top:8px;font-size:12px" onclick="showAddTouchpointModal('${stage}')">+ Aggiungi</button>
-          </div>`).join('<div class="journey-arrow">→</div>')}
+            ${si < JOURNEY_STAGES.length-1 ? `<div style="display:flex;align-items:center;padding:0 2px;color:var(--muted);font-size:20px;opacity:.4">›</div>` : ''}`
+          ).join('')}
+        </div>
       </div>
       <div id="journey-ai-output" style="margin-top:24px"></div>
     </div>`;
 }
 
-function renderTouchpointHTML(stage, tp, index) {
-  return `<div class="journey-touchpoint">
-    <div style="display:flex;justify-content:space-between;align-items:start">
-      <div>${getPlatformEmoji(tp.platform)} <strong>${tp.platform}</strong></div>
-      <button onclick="removeTouchpoint('${stage}', ${index})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">×</button>
+function renderTouchpointHTML(stageKey, tp, index) {
+  const emotionColors = { '😤 Frustrato':'#ef4444','😐 Neutro':'#777','🤔 Curioso':'#f59e0b','😊 Interessato':'#22c55e','🤩 Entusiasta':'#AAFF00' };
+  const color = emotionColors[tp.emotion] || 'var(--muted)';
+  return `<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-bottom:8px;border-left:3px solid ${color}">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px">
+      <div style="font-size:12px;font-weight:600">${getPlatformEmoji(tp.platform)} ${tp.platform}</div>
+      <button onclick="removeTouchpoint('${stageKey}', ${index})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1">×</button>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-top:4px">${tp.note}</div>
-    <span class="pill" style="font-size:11px;margin-top:4px">${tp.kpi}</span>
+    ${tp.emotion?`<div style="font-size:11px;margin-bottom:4px">${tp.emotion}</div>`:''}
+    ${tp.note?`<div style="font-size:11px;color:var(--muted)">${tp.note}</div>`:''}
+    <span class="pill" style="font-size:10px;padding:2px 7px;margin-top:4px;display:inline-block">${tp.kpi}</span>
   </div>`;
 }
 
-function showAddTouchpointModal(stage) {
+function showAddTouchpointModal(stageKey, stageLabel, stageColor) {
   const platforms = ['Meta Ads','Google Search','Google Display','YouTube','TikTok','LinkedIn','Pinterest','Email','SEO','Programmatic','Snapchat','X Ads'];
   const kpis = ['CPM','CTR','CPC','CPA','ROAS','CPL','OR','CVR'];
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.id = 'journey-modal';
   modal.innerHTML = `
-    <div class="modal-card" style="max-width:400px">
-      <h3>Aggiungi Touchpoint — ${stage}</h3>
-      <div class="form-group" style="margin-top:16px">
-        <label>Canale/Piattaforma</label>
-        <select id="tp-platform"><option value="">Seleziona...</option>${platforms.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
+    <div class="modal-card" style="max-width:420px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <div style="width:4px;height:28px;border-radius:2px;background:${stageColor||'var(--blue)'}"></div>
+        <h3 style="margin:0">Aggiungi Touchpoint — ${stageLabel}</h3>
       </div>
       <div class="form-group">
-        <label>Nota</label>
-        <input type="text" id="tp-note" placeholder="Es. Annuncio video 15s per awareness brand" />
+        <label>Touchpoint principale</label>
+        <select id="tp-platform"><option value="">Seleziona canale…</option>${platforms.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
+      </div>
+      <div class="form-group">
+        <label>Emozione del cliente</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px" id="tp-emotion-pills">
+          ${JOURNEY_EMOTIONS.map(e=>`<button class="pill-sel-btn" onclick="audioPillSelect('tp-emotion-pills',this)" style="font-size:12px">${e}</button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Azione da intraprendere</label>
+        <textarea id="tp-note" rows="2" placeholder="Es. Mostrare video ads emozionali su Instagram…"></textarea>
       </div>
       <div class="form-group">
         <label>KPI principale</label>
         <select id="tp-kpi">${kpis.map(k=>`<option>${k}</option>`).join('')}</select>
       </div>
       <div class="btn-row" style="margin-top:16px">
-        <button class="btn-primary" onclick="addTouchpoint('${stage}')">Aggiungi</button>
+        <button class="btn-lime" onclick="addTouchpoint('${stageKey}')">Aggiungi</button>
         <button class="btn-secondary" onclick="document.getElementById('journey-modal').remove()">Annulla</button>
       </div>
     </div>`;
@@ -6887,12 +7215,13 @@ function showAddTouchpointModal(stage) {
 
 function addTouchpoint(stage) {
   const platform = document.getElementById('tp-platform')?.value;
-  const note = document.getElementById('tp-note')?.value || '';
+  const note = document.getElementById('tp-note')?.value?.trim() || '';
   const kpi = document.getElementById('tp-kpi')?.value || 'CTR';
+  const emotion = getActivePill('tp-emotion-pills');
   if (!platform) { showToast('Seleziona una piattaforma', 'error'); return; }
   if (!AppState.journey) AppState.journey = {};
   if (!AppState.journey[stage]) AppState.journey[stage] = [];
-  AppState.journey[stage].push({ platform, note, kpi });
+  AppState.journey[stage].push({ platform, note, kpi, emotion });
   saveState();
   document.getElementById('journey-modal')?.remove();
   const container = document.getElementById(`journey-${stage}`);
@@ -6901,6 +7230,7 @@ function addTouchpoint(stage) {
 }
 
 function removeTouchpoint(stage, index) {
+  if (!AppState.journey?.[stage]) return;
   AppState.journey[stage].splice(index, 1);
   saveState();
   const container = document.getElementById(`journey-${stage}`);
@@ -6909,8 +7239,8 @@ function removeTouchpoint(stage, index) {
 
 async function analyzeJourneyWithAI() {
   const journey = AppState.journey || {};
-  const desc = JOURNEY_STAGES.map(s => `${s}: ${(journey[s]||[]).map(tp=>`${tp.platform} (${tp.kpi})`).join(', ')||'nessun touchpoint'}`).join('\n');
-  const system = `Sei PROOVD AI Coach. Analizza questo customer journey e identifica: 1) Gap (stage senza touchpoint), 2) Sovrapposizioni ridondanti, 3) 2 miglioramenti specifici. Max 200 parole.`;
+  const desc = JOURNEY_STAGES.map(s => `${s.label}: ${(journey[s.key]||[]).map(tp=>`${tp.platform} [${tp.emotion||''}] (${tp.kpi})`).join(', ')||'nessun touchpoint'}`).join('\n');
+  const system = `Sei PROOVD AI Coach. Analizza questo customer journey e identifica: 1) Gap (stage senza touchpoint), 2) Emozioni negative da gestire, 3) 2 miglioramenti specifici per aumentare le conversioni. Max 200 parole.`;
   const result = await callClaude(system, `Customer Journey:\n${desc}`, 'journey-ai-output');
   if (result) {
     document.getElementById('journey-ai-output').innerHTML = `<div class="card coach-tip"><div class="coach-tip-header">🤖 AI Coach — Analisi Journey</div><div class="coach-tip-text">${result.replace(/\n/g,'<br>')}</div></div>`;
