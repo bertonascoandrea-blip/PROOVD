@@ -1610,7 +1610,7 @@ const PLATFORM_BENCHMARKS = {
   programmatic:   { cpm: 1.5, ctr: 0.2, cvr: 0.8 },
 };
 
-const STEP_LABELS = ['Piattaforma', 'Brief', 'Creatività', 'Targeting', 'Budget & Bidding', 'Revisione'];
+const STEP_LABELS = ['Prodotto', 'Piattaforma', 'Brief', 'Creatività', 'Targeting', 'Budget', 'Revisione'];
 
 function renderCampaignBuilder() {
   const view = document.getElementById('view-builder');
@@ -1655,7 +1655,7 @@ function renderBuilderStep() {
   const step = AppState.activeCampaign.step || 1;
   renderStepper(step);
 
-  const renderers = [null, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, renderStep6];
+  const renderers = [null, renderStepProduct, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, renderStep6];
   if (renderers[step]) renderers[step]();
 
   renderStepNav(step);
@@ -1701,6 +1701,62 @@ function renderStepNav(step) {
   nav.innerHTML = `
     <button class="btn-secondary" onclick="prevStep()" ${isFirst ? 'disabled style="opacity:.4"' : ''}>← Indietro</button>
     ${!isLast ? `<button class="btn-primary" id="next-btn" onclick="nextStep()">Avanti →</button>` : ''}`;
+}
+
+function renderStepProduct() {
+  const container = document.getElementById('step-content');
+  if (!container) return;
+  const p = AppState.activeCampaign.product || {};
+  const types = [
+    { id:'ecommerce', emoji:'🛍️', label:'E-commerce', desc:'Vendi prodotti online' },
+    { id:'leadgen', emoji:'🎯', label:'Lead Generation', desc:'Raccogli contatti qualificati' },
+    { id:'app', emoji:'📱', label:'App Mobile', desc:'Aumenta download e iscrizioni' },
+    { id:'brand', emoji:'✨', label:'Brand Awareness', desc:'Aumenta notorietà del brand' },
+    { id:'local', emoji:'📍', label:'Locale / Fisico', desc:'Porta clienti in negozio' },
+    { id:'saas', emoji:'💻', label:'SaaS / Software', desc:'Trial, demo, abbonamenti' },
+  ];
+  const sectors = ['Fashion & Beauty','Food & Beverage','Tech & Software','Finance & Insurance','Health & Wellness','Travel & Tourism','Education & Training','Real Estate','Automotive','Entertainment','Retail & GDO','Altro'];
+  container.innerHTML = `
+    <h2 style="font-size:18px;font-weight:600;margin:0 0 8px">Cosa stai promuovendo?</h2>
+    <p style="color:#777;font-size:13px;margin:0 0 20px">Configura il prodotto o servizio da pubblicizzare</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+      ${types.map(t => `
+        <div onclick="selectProductType('${t.id}')" style="cursor:pointer;padding:16px;border-radius:12px;border:2px solid ${p.type===t.id?'#AAFF00':'#2A2A2A'};background:${p.type===t.id?'rgba(170,255,0,0.05)':'#111'};transition:all .2s;text-align:center">
+          <div style="font-size:28px;margin-bottom:8px">${t.emoji}</div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px">${t.label}</div>
+          <div style="font-size:11px;color:#777">${t.desc}</div>
+          ${p.type===t.id?'<div style="margin-top:8px;color:#AAFF00;font-size:16px">✓</div>':''}
+        </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div>
+        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Nome prodotto / servizio</label>
+        <input type="text" placeholder="es. Nike Air Max 2024" value="${p.name||''}" oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,name:this.value}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+      </div>
+      <div>
+        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Valore conversione (€)</label>
+        <input type="number" placeholder="es. 89" value="${p.price||''}" min="1" oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,price:parseFloat(this.value)||0}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Settore</label>
+        <select oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,sector:this.value}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+          <option value="">Seleziona settore...</option>
+          ${sectors.map(s=>`<option value="${s}" ${p.sector===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">URL landing page</label>
+        <input type="text" placeholder="https://tuosito.com/landing" value="${p.url||''}" oninput="AppState.activeCampaign.product={...AppState.activeCampaign.product,url:this.value}" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+      </div>
+    </div>`;
+  renderStepNav(1);
+}
+function selectProductType(type) {
+  if (!AppState.activeCampaign.product) AppState.activeCampaign.product = {};
+  AppState.activeCampaign.product.type = type;
+  renderStepProduct();
 }
 
 function renderStep1() {
@@ -2775,6 +2831,10 @@ function nextStep() {
 
   // Validazione per step con shake animation
   if (step === 1) {
+    // step 1 = prodotto (opzionale, passa sempre)
+  }
+
+  if (step === 2) {
     if (!c.platform) {
       shakeElement('step-content');
       showToast && showToast('🔴 Seleziona una piattaforma per continuare', 'error');
@@ -2782,21 +2842,22 @@ function nextStep() {
     }
   }
 
-  if (step === 2) {
+  if (step === 3) {
     const errors = [];
-    if (!c.name || c.name.trim() === '') {
-      errors.push('nome della campagna');
+    if (!c.name || c.name.trim() === '') errors.push('nome della campagna');
+    if (!c.objective) errors.push('obiettivo principale');
+    if (c.budget <= 0 || !c.budget) errors.push('budget valido');
+    if (c.budget > (AppState.tokens || 0)) errors.push('budget (superiore ai token disponibili)');
+    if (errors.length > 0) {
+      shakeElement('step-content');
+      const msg = errors.length === 1 ? `Inserisci ${errors[0]}` : `Completa: ${errors.join(', ')}`;
+      showToast && showToast(`🔴 ${msg}`, 'error');
+      return;
     }
-    if (!c.objective) {
-      errors.push('obiettivo principale');
-    }
-    if (c.budget <= 0 || !c.budget) {
-      errors.push('budget valido');
-    }
-    if (c.budget > (AppState.tokens || 0)) {
-      errors.push('budget (superiore ai token disponibili)');
-    }
+  }
 
+  if (false) {
+    const errors = [];
     if (errors.length > 0) {
       shakeElement('step-content');
       const msg = errors.length === 1
@@ -2807,8 +2868,8 @@ function nextStep() {
     }
   }
 
-  if (step === 3) {
-    // Creative validation
+  if (step === 4) {
+    // Creative validation (step 4 = creatività)
     const c = AppState.activeCampaign;
     if (!c.creative || Object.keys(c.creative).length === 0) {
       shakeElement('step-content');
@@ -2817,7 +2878,7 @@ function nextStep() {
     }
   }
 
-  if (step < 6) {
+  if (step < 7) {
     AppState.activeCampaign.step = step + 1;
     renderBuilderStep();
     // Scroll to top of step
