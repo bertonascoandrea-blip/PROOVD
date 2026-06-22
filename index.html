@@ -96,6 +96,7 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .view{display:none;padding:24px;min-height:100%}
 .view.active{display:block;animation:fadeIn 200ms ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}}
 /* === CARDS === */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:transform var(--transition),border-color var(--transition);box-shadow:0 2px 12px rgba(0,0,0,0.3)}
 .card:hover:not(.no-hover){border-color:#3a3a3a}
@@ -1504,21 +1505,46 @@ function renderStep1() {
 
   const selected = AppState.activeCampaign.platform;
 
+  const categoryColors = {
+    'Social': '#0055FF',
+    'Search': '#00AA44',
+    'Video': '#FF0033',
+    'B2B': '#9933FF',
+    'Discovery': '#FFAA00',
+    'Email & Organic': '#00CCCC',
+    'Programmatic': '#FF6600'
+  };
+
+  const categoryMap = {
+    meta: 'Social', tiktok: 'Social', snapchat: 'Social', x_ads: 'Social',
+    google_search: 'Search', google_display: 'Search',
+    youtube: 'Video',
+    linkedin: 'B2B',
+    pinterest: 'Discovery',
+    email: 'Email & Organic', seo: 'Email & Organic',
+    programmatic: 'Programmatic'
+  };
+
   container.innerHTML = `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
       <div>
-        <h2 style="font-size:18px;font-weight:600;margin:0 0 16px">Scegli la piattaforma</h2>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <h2 style="font-size:18px;font-weight:600;margin:0 0 20px">Scegli la piattaforma</h2>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
           ${PLATFORMS.map(p => {
             const isSelected = selected === p.id;
+            const benchData = PLATFORM_BENCHMARKS[p.id];
+            const cpmDisplay = benchData?.cpm > 0 ? `€${benchData.cpm.toFixed(1)}` : (benchData?.cpc ? `€${benchData.cpc.toFixed(1)} CPC` : '—');
+            const category = categoryMap[p.id] || 'Other';
+            const catColor = categoryColors[category] || '#0055FF';
+
             return `
-              <div class="card" onclick="selectPlatform('${p.id}')" style="cursor:pointer;border:2px solid ${isSelected ? '#0055FF' : '#2A2A2A'};padding:14px;transition:all .2s;background:${isSelected ? '#0055FF11' : '#111'}" onmouseover="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#444'" onmouseout="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#2A2A2A'">
-                <div style="font-size:24px;margin-bottom:6px">${p.emoji}</div>
-                <div style="font-size:13px;font-weight:600;margin-bottom:3px">${p.name}</div>
-                <div style="font-size:11px;color:#777">${p.desc}</div>
-                <div style="margin-top:8px;display:flex;gap:3px;flex-wrap:wrap">
-                  ${'★'.repeat(p.difficulty) + '☆'.repeat(4-p.difficulty)} <span style="font-size:10px;color:#777;margin-left:2px">difficoltà</span>
-                </div>
+              <div class="card" onclick="selectPlatform('${p.id}')" style="cursor:pointer;border:2px solid ${isSelected ? '#AAFF00' : '#2A2A2A'};padding:16px;transition:all .2s;background:${isSelected ? '#AAFF0011' : '#111'};display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;min-height:160px" onmouseover="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#444'" onmouseout="if('${p.id}'!==AppState.activeCampaign.platform)this.style.borderColor='#2A2A2A'">
+                ${isSelected ? '<div style="position:absolute;top:8px;right:8px;background:#AAFF00;color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">✓</div>' : ''}
+                <div style="font-size:48px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;height:52px">${p.emoji}</div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#F0F0F0">${p.name}</div>
+                <div style="background:${catColor}33;border:1px solid ${catColor}66;color:${catColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">${category}</div>
+                <div style="font-size:10px;color:#777;margin-bottom:8px;flex:1;display:flex;align-items:center">${p.desc}</div>
+                <div style="font-size:11px;color:#AAFF00;font-weight:600;margin-top:auto;padding-top:8px;border-top:1px solid #2A2A2A;width:100%">CPM: ${cpmDisplay}</div>
               </div>`;
           }).join('')}
         </div>
@@ -1593,11 +1619,21 @@ function renderStep2() {
         </div>
 
         <div style="margin-bottom:14px">
-          <label style="font-size:12px;color:#777;display:block;margin-bottom:8px">Obiettivo principale</label>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${['Awareness','Traffico','Lead','Vendite','App Install','Engagement'].map(obj => {
-              const isActive = c.objective === obj.toLowerCase();
-              return `<button onclick="selectObjective('${obj.toLowerCase()}')" style="padding:6px 14px;border-radius:100px;border:1px solid ${isActive ? '#0055FF' : '#2A2A2A'};background:${isActive ? '#0055FF22' : 'transparent'};color:${isActive ? '#F0F0F0' : '#777'};font-size:12px;cursor:pointer">${obj}</button>`;
+          <label style="font-size:12px;color:#777;display:block;margin-bottom:12px;font-weight:600">Obiettivo principale</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            ${[
+              { id: 'awareness', emoji: '🎯', label: 'Brand Awareness', desc: 'Massimizza visibilità e riconoscimento' },
+              { id: 'vendite', emoji: '🛒', label: 'Conversioni', desc: 'Genera vendite e lead qualificati' },
+              { id: 'traffico', emoji: '📣', label: 'Traffico', desc: 'Porta utenti sul tuo sito' },
+              { id: 'engagement', emoji: '👥', label: 'Engagement', desc: 'Aumenta interazioni e follower' }
+            ].map(obj => {
+              const isActive = c.objective === obj.id;
+              return `
+                <div onclick="selectObjective('${obj.id}')" style="cursor:pointer;border:2px solid ${isActive ? '#AAFF00' : '#2A2A2A'};background:${isActive ? 'rgba(170,255,0,0.05)' : 'transparent'};padding:12px;border-radius:12px;transition:all .2s;display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:24px">${obj.emoji}</div>
+                  <div style="font-size:12px;font-weight:600;color:#F0F0F0">${obj.label}</div>
+                  <div style="font-size:10px;color:#777">${obj.desc}</div>
+                </div>`;
             }).join('')}
           </div>
         </div>
@@ -1897,12 +1933,52 @@ async function analyzeCreativeAI() {
   }
 }
 
+function calculateTargetingScore(campaign) {
+  let score = 0;
+  const c = campaign;
+  const platform = c.platform;
+
+  // Base: age range configured
+  if (c.ageMin && c.ageMax && c.ageMax > c.ageMin) score += 20;
+
+  // Base: geo specified
+  if (c.geo && c.geo !== 'Mondo') score += 20;
+
+  // Platform-specific
+  if (platform === 'google_search' || platform === 'seo') {
+    const kwCount = (c.targeting?.keywords || []).length;
+    if (kwCount > 0) score += Math.min(60, kwCount * 12); // Max 60 from keywords
+  } else if (platform === 'linkedin') {
+    if (c.targeting?.jobTitle) score += 20;
+    if (c.targeting?.companySize) score += 20;
+    if (c.targeting?.industry) score += 20;
+    if ((c.targeting?.seniority || []).length > 0) score += 15;
+  } else {
+    // Meta/other platforms
+    const interestCount = (c.targeting?.interests || []).length;
+    if (interestCount > 0) score += Math.min(60, interestCount * 12); // Max 60 from interests
+    if (c.targeting?.audienceType) score += 20;
+  }
+
+  return Math.min(100, score);
+}
+
+function getTargetingLabel(score) {
+  if (score < 20) return 'Generico';
+  if (score < 40) return 'Base';
+  if (score < 70) return 'Buono';
+  if (score < 90) return 'Ottimo';
+  return 'Preciso';
+}
+
 function renderStep4() {
   const container = document.getElementById('step-content');
   if (!container) return;
 
   const c = AppState.activeCampaign;
   const platform = c.platform;
+  const targetingScore = calculateTargetingScore(c);
+  const targetingLabel = getTargetingLabel(targetingScore);
 
   let platformTargeting = '';
 
@@ -1999,8 +2075,27 @@ function renderStep4() {
       </div>`;
   }
 
+  const scoreColor = targetingScore < 40 ? '#FF6600' : targetingScore < 70 ? '#FFB800' : '#AAFF00';
+
   container.innerHTML = `
     <h2 style="font-size:18px;font-weight:600;margin:0 0 20px">Targeting — ${getPlatformName(platform)}</h2>
+
+    <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,${scoreColor}11,${scoreColor}11);border:1px solid ${scoreColor}33">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:12px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Targeting Score</div>
+          <div style="font-size:28px;font-weight:800;color:${scoreColor}">${targetingScore}/100</div>
+          <div style="font-size:12px;color:${scoreColor};font-weight:600">${targetingLabel}</div>
+        </div>
+        <div style="flex:1;margin-left:24px">
+          <div style="height:12px;background:#1A1A1A;border-radius:100px;overflow:hidden;margin-bottom:6px">
+            <div style="width:${targetingScore}%;height:100%;background:${scoreColor};transition:width .3s ease"></div>
+          </div>
+          <div style="font-size:10px;color:#777">Specificity del targeting</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">${platformTargeting}</div>`;
 }
 
@@ -2377,24 +2472,64 @@ function launchCampaign() {
   if (typeof navigateTo === 'function') navigateTo('live');
 }
 
+function shakeElement(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.style.animation = 'none';
+  setTimeout(() => {
+    el.style.animation = 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both';
+  }, 10);
+  setTimeout(() => {
+    el.style.animation = 'none';
+  }, 450);
+}
+
 function nextStep() {
   const c = AppState.activeCampaign;
   if (!c) return;
 
   const step = c.step || 1;
 
-  // Validazione per step
-  if (step === 1 && !c.platform) {
-    showToast && showToast('Seleziona una piattaforma per continuare', 'error');
-    return;
-  }
-  if (step === 2) {
-    if (!c.name || c.name.trim() === '') {
-      showToast && showToast('Inserisci il nome della campagna', 'error');
+  // Validazione per step con shake animation
+  if (step === 1) {
+    if (!c.platform) {
+      shakeElement('step-content');
+      showToast && showToast('🔴 Seleziona una piattaforma per continuare', 'error');
       return;
     }
+  }
+
+  if (step === 2) {
+    const errors = [];
+    if (!c.name || c.name.trim() === '') {
+      errors.push('nome della campagna');
+    }
+    if (!c.objective) {
+      errors.push('obiettivo principale');
+    }
+    if (c.budget <= 0 || !c.budget) {
+      errors.push('budget valido');
+    }
     if (c.budget > (AppState.tokens || 0)) {
-      showToast && showToast('Budget superiore ai token disponibili', 'error');
+      errors.push('budget (superiore ai token disponibili)');
+    }
+
+    if (errors.length > 0) {
+      shakeElement('step-content');
+      const msg = errors.length === 1
+        ? `Inserisci ${errors[0]}`
+        : `Completa: ${errors.join(', ')}`;
+      showToast && showToast(`🔴 ${msg}`, 'error');
+      return;
+    }
+  }
+
+  if (step === 3) {
+    // Creative validation
+    const c = AppState.activeCampaign;
+    if (!c.creative || Object.keys(c.creative).length === 0) {
+      shakeElement('step-content');
+      showToast && showToast('🔴 Aggiungi almeno un elemento creativo', 'error');
       return;
     }
   }
@@ -3086,116 +3221,123 @@ function getAnalyticsTabContent(tab) {
 function renderKPICalculator() {
   return `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-      <div class="card" style="padding:24px;">
-        <h3 style="color:#F0F0F0;font-size:16px;font-weight:600;margin-bottom:20px;">Parametri campagna</h3>
-
-        <div style="margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <label style="color:#777777;font-size:13px;">Impressioni <span title="Il numero totale di volte che il tuo annuncio è stato mostrato" style="color:#0055FF;cursor:help;">ℹ</span></label>
-            <span id="kpi-impressions-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">50.000</span>
-          </div>
-          <input type="range" id="kpi-impressions" min="1000" max="1000000" step="1000" value="50000"
-            oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
-        </div>
-
-        <div style="margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <label style="color:#777777;font-size:13px;">CTR (%) <span title="Click-Through Rate: % di utenti che cliccano sull'annuncio. Formula: Click / Impressioni × 100" style="color:#0055FF;cursor:help;">ℹ</span></label>
-            <span id="kpi-ctr-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">1.5%</span>
-          </div>
-          <input type="range" id="kpi-ctr" min="0.1" max="10" step="0.1" value="1.5"
-            oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
-        </div>
-
-        <div style="margin-bottom:16px;background:#1A1A1A;border-radius:8px;padding:12px;">
-          <div style="display:flex;justify-content:space-between;">
-            <span style="color:#777777;font-size:13px;">Click calcolati</span>
-            <span id="kpi-clicks-calc" style="color:#AAFF00;font-size:13px;font-weight:700;">750</span>
+      <div>
+        <div class="card" style="padding:20px;margin-bottom:16px;">
+          <h3 style="color:#F0F0F0;font-size:14px;font-weight:600;margin-bottom:12px;">Preset per settore</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="btn btn-ghost" onclick="applyKPIPreset('ecommerce')" style="padding:8px;font-size:12px;border:1px solid #2A2A2A;border-radius:8px;cursor:pointer;transition:all 0.2s;">E-commerce</button>
+            <button class="btn btn-ghost" onclick="applyKPIPreset('leadgen')" style="padding:8px;font-size:12px;border:1px solid #2A2A2A;border-radius:8px;cursor:pointer;transition:all 0.2s;">Lead Gen</button>
+            <button class="btn btn-ghost" onclick="applyKPIPreset('brand')" style="padding:8px;font-size:12px;border:1px solid #2A2A2A;border-radius:8px;cursor:pointer;transition:all 0.2s;">Brand Awareness</button>
           </div>
         </div>
 
-        <div style="margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <label style="color:#777777;font-size:13px;">CPC (€) <span title="Cost Per Click: quanto paghi per ogni click. Formula: Spesa / Click" style="color:#0055FF;cursor:help;">ℹ</span></label>
-            <span id="kpi-cpc-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€0.80</span>
-          </div>
-          <input type="range" id="kpi-cpc" min="0.01" max="5" step="0.01" value="0.80"
-            oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
-        </div>
+        <div class="card" style="padding:24px;">
+          <h3 style="color:#F0F0F0;font-size:16px;font-weight:600;margin-bottom:20px;">Parametri campagna</h3>
 
-        <div style="margin-bottom:16px;background:#1A1A1A;border-radius:8px;padding:12px;">
-          <div style="display:flex;justify-content:space-between;">
-            <span style="color:#777777;font-size:13px;">Spesa totale</span>
-            <span id="kpi-spend-calc" style="color:#AAFF00;font-size:13px;font-weight:700;">€600.00</span>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777777;font-size:13px;">Budget (€) <span title="Budget totale per la campagna" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="kpi-budget-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€500</span>
+            </div>
+            <input type="range" id="kpi-budget" min="100" max="5000" step="50" value="500" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
           </div>
-        </div>
 
-        <div style="margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <label style="color:#777777;font-size:13px;">CVR (%) <span title="Conversion Rate: % di click che diventano conversioni. Formula: Conversioni / Click × 100" style="color:#0055FF;cursor:help;">ℹ</span></label>
-            <span id="kpi-cvr-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">2.5%</span>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777777;font-size:13px;">CPM (€) <span title="Cost Per Mille: costo per 1.000 impressioni" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="kpi-cpm-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€2.50</span>
+            </div>
+            <input type="range" id="kpi-cpm" min="0.50" max="20" step="0.50" value="2.50" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
           </div>
-          <input type="range" id="kpi-cvr" min="0.1" max="20" step="0.1" value="2.5"
-            oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
-        </div>
 
-        <div style="margin-bottom:16px;background:#1A1A1A;border-radius:8px;padding:12px;">
-          <div style="display:flex;justify-content:space-between;">
-            <span style="color:#777777;font-size:13px;">Conversioni calcolate</span>
-            <span id="kpi-conv-calc" style="color:#AAFF00;font-size:13px;font-weight:700;">18</span>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777777;font-size:13px;">CTR (%) <span title="Click-Through Rate: % di utenti che cliccano sull'annuncio" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="kpi-ctr-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">1.5%</span>
+            </div>
+            <input type="range" id="kpi-ctr" min="0.1" max="10" step="0.1" value="1.5" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
           </div>
-        </div>
 
-        <div style="margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <label style="color:#777777;font-size:13px;">AOV — Valore medio ordine (€) <span title="Average Order Value: valore medio di ogni acquisto/conversione" style="color:#0055FF;cursor:help;">ℹ</span></label>
-            <span id="kpi-aov-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€80</span>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777777;font-size:13px;">CVR (%) <span title="Conversion Rate: % di click che diventano conversioni" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="kpi-cvr-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">2.5%</span>
+            </div>
+            <input type="range" id="kpi-cvr" min="0.1" max="20" step="0.1" value="2.5" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
           </div>
-          <input type="range" id="kpi-aov" min="10" max="500" step="10" value="80"
-            oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777777;font-size:13px;">CPC (€) <span title="Cost Per Click: quanto paghi per ogni click" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="kpi-cpc-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€0.80</span>
+            </div>
+            <input type="range" id="kpi-cpc" min="0.01" max="5" step="0.01" value="0.80" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777777;font-size:13px;">Durata (giorni) <span title="Per quanto tempo la campagna rimarrà attiva" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="kpi-days-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">30 giorni</span>
+            </div>
+            <input type="range" id="kpi-days" min="1" max="90" step="1" value="30" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777777;font-size:13px;">AOV (€) <span title="Average Order Value: valore medio di ogni acquisto" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="kpi-aov-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€80</span>
+            </div>
+            <input type="range" id="kpi-aov" min="10" max="500" step="10" value="80" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+          </div>
         </div>
       </div>
 
       <div>
-        <h3 style="color:#F0F0F0;font-size:16px;font-weight:600;margin-bottom:16px;">Risultati</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-
+        <h3 style="color:#F0F0F0;font-size:16px;font-weight:600;margin-bottom:16px;">Risultati calcolati</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
           <div class="card" style="padding:16px;">
-            <div style="color:#777777;font-size:11px;margin-bottom:4px;">REVENUE <span title="Revenue = Conversioni × AOV" style="color:#0055FF;cursor:help;">ℹ</span></div>
-            <div id="res-revenue" style="color:#AAFF00;font-size:22px;font-weight:700;">€1.500</div>
+            <div style="color:#777777;font-size:11px;margin-bottom:4px;">IMPRESSIONI</div>
+            <div id="res-impressions" style="color:#AAFF00;font-size:18px;font-weight:700;">200.000</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">Budget ÷ CPM × 1000</div>
           </div>
-
           <div class="card" style="padding:16px;">
-            <div style="color:#777777;font-size:11px;margin-bottom:4px;">ROAS <span title="Return on Ad Spend = Revenue / Spesa. >3x ottimo, 1-3x ok, <1x perdita" style="color:#0055FF;cursor:help;">ℹ</span></div>
-            <div id="res-roas" style="font-size:22px;font-weight:700;">2.50x</div>
+            <div style="color:#777777;font-size:11px;margin-bottom:4px;">CLICK</div>
+            <div id="res-clicks" style="color:#AAFF00;font-size:18px;font-weight:700;">3.000</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">Impressioni × CTR ÷ 100</div>
           </div>
-
-          <div class="card" style="padding:16px;">
-            <div style="color:#777777;font-size:11px;margin-bottom:4px;">CPA <span title="Cost Per Acquisition = Spesa / Conversioni" style="color:#0055FF;cursor:help;">ℹ</span></div>
-            <div id="res-cpa" style="color:#F0F0F0;font-size:22px;font-weight:700;">€32.00</div>
-          </div>
-
-          <div class="card" style="padding:16px;">
-            <div style="color:#777777;font-size:11px;margin-bottom:4px;">ROI % <span title="Return on Investment = (Revenue - Spesa) / Spesa × 100" style="color:#0055FF;cursor:help;">ℹ</span></div>
-            <div id="res-roi" style="font-size:22px;font-weight:700;">150%</div>
-          </div>
-
-          <div class="card" style="padding:16px;">
-            <div style="color:#777777;font-size:11px;margin-bottom:4px;">SPESA TOTALE</div>
-            <div id="res-spend" style="color:#F0F0F0;font-size:22px;font-weight:700;">€600</div>
-          </div>
-
           <div class="card" style="padding:16px;">
             <div style="color:#777777;font-size:11px;margin-bottom:4px;">CONVERSIONI</div>
-            <div id="res-conversions" style="color:#F0F0F0;font-size:22px;font-weight:700;">18</div>
+            <div id="res-conversions" style="color:#AAFF00;font-size:18px;font-weight:700;">75</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">Click × CVR ÷ 100</div>
           </div>
-
+          <div class="card" style="padding:16px;">
+            <div style="color:#777777;font-size:11px;margin-bottom:4px;">CPA (€)</div>
+            <div id="res-cpa" style="color:#F0F0F0;font-size:18px;font-weight:700;">€6.67</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">Budget ÷ Conversioni</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="color:#777777;font-size:11px;margin-bottom:4px;">REVENUE (€)</div>
+            <div id="res-revenue" style="color:#AAFF00;font-size:18px;font-weight:700;">€6.000</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">Conversioni × AOV</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="color:#777777;font-size:11px;margin-bottom:4px;">ROAS</div>
+            <div id="res-roas" style="font-size:18px;font-weight:700;">12.0x</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">Revenue ÷ Budget</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="color:#777777;font-size:11px;margin-bottom:4px;">ROI %</div>
+            <div id="res-roi" style="font-size:18px;font-weight:700;">1100%</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">(Revenue - Budget) ÷ Budget × 100</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="color:#777777;font-size:11px;margin-bottom:4px;">UTILE NETTO (€)</div>
+            <div id="res-profit" style="color:#AAFF00;font-size:18px;font-weight:700;">€5.500</div>
+            <div style="color:#666666;font-size:10px;margin-top:6px;">Revenue - Budget</div>
+          </div>
         </div>
-
-        <div class="card" style="margin-top:16px;padding:16px;border:1px solid #2A2A2A;">
-          <div id="kpi-interpretation" style="color:#F0F0F0;font-size:13px;line-height:1.6;">
-            Imposta i parametri per vedere l'interpretazione dei risultati.
-          </div>
+        <div class="card" style="padding:16px;border:1px solid #2A2A2A;">
+          <div id="kpi-interpretation" style="color:#F0F0F0;font-size:13px;line-height:1.6;">Imposta i parametri per vedere l'interpretazione dei risultati.</div>
         </div>
       </div>
     </div>
@@ -3203,42 +3345,49 @@ function renderKPICalculator() {
 }
 
 function updateKPICalculator() {
-  const impressionsEl = document.getElementById('kpi-impressions');
+  const budgetEl = document.getElementById('kpi-budget');
+  const cpmEl = document.getElementById('kpi-cpm');
   const ctrEl = document.getElementById('kpi-ctr');
   const cpcEl = document.getElementById('kpi-cpc');
   const cvrEl = document.getElementById('kpi-cvr');
+  const daysEl = document.getElementById('kpi-days');
   const aovEl = document.getElementById('kpi-aov');
 
-  if (!impressionsEl) return;
+  if (!budgetEl) return;
 
-  const impressions = parseFloat(impressionsEl.value) || 50000;
+  const budget = parseFloat(budgetEl.value) || 500;
+  const cpm = parseFloat(cpmEl.value) || 2.50;
   const ctr = parseFloat(ctrEl.value) || 1.5;
   const cpc = parseFloat(cpcEl.value) || 0.80;
   const cvr = parseFloat(cvrEl.value) || 2.5;
+  const days = parseFloat(daysEl.value) || 30;
   const aov = parseFloat(aovEl.value) || 80;
 
+  const impressions = Math.round(budget / cpm * 1000);
   const clicks = Math.round(impressions * ctr / 100);
-  const spend = clicks * cpc;
   const conversions = Math.round(clicks * cvr / 100);
   const revenue = conversions * aov;
-  const roas = spend > 0 ? revenue / spend : 0;
-  const roi = spend > 0 ? ((revenue - spend) / spend * 100) : 0;
-  const cpa = conversions > 0 ? spend / conversions : 0;
+  const roas = budget > 0 ? revenue / budget : 0;
+  const roi = budget > 0 ? ((revenue - budget) / budget * 100) : 0;
+  const cpa = conversions > 0 ? budget / conversions : 0;
+  const profit = revenue - budget;
 
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-  set('kpi-impressions-val', formatNumber(impressions));
+  set('kpi-budget-val', formatCurrency(budget));
+  set('kpi-cpm-val', formatCurrency(cpm));
   set('kpi-ctr-val', ctr.toFixed(1) + '%');
-  set('kpi-cpc-val', '€' + cpc.toFixed(2));
+  set('kpi-cpc-val', formatCurrency(cpc));
   set('kpi-cvr-val', cvr.toFixed(1) + '%');
-  set('kpi-aov-val', '€' + aov);
-  set('kpi-clicks-calc', formatNumber(clicks));
-  set('kpi-spend-calc', formatCurrency(spend));
-  set('kpi-conv-calc', formatNumber(conversions));
-  set('res-revenue', formatCurrency(revenue));
-  set('res-spend', formatCurrency(spend));
+  set('kpi-days-val', days + (days === 1 ? ' giorno' : ' giorni'));
+  set('kpi-aov-val', formatCurrency(aov));
+
+  set('res-impressions', formatNumber(impressions));
+  set('res-clicks', formatNumber(clicks));
   set('res-conversions', formatNumber(conversions));
   set('res-cpa', conversions > 0 ? formatCurrency(cpa) : '—');
+  set('res-revenue', formatCurrency(revenue));
+  set('res-profit', formatCurrency(profit));
 
   const roasColor = roas >= 3 ? '#AAFF00' : roas >= 1 ? '#FFB800' : '#FF4444';
   const roiColor = roi >= 100 ? '#AAFF00' : roi >= 0 ? '#FFB800' : '#FF4444';
@@ -3251,7 +3400,7 @@ function updateKPICalculator() {
 
   let interpretation = '';
   if (roas >= 3) {
-    interpretation = `✅ Eccellente! Con un ROAS di ${roas.toFixed(2)}x stai guadagnando ${formatCurrency(revenue - spend)} di profitto netto. Campagna molto profittevole.`;
+    interpretation = `✅ Eccellente! Con un ROAS di ${roas.toFixed(2)}x stai guadagnando ${formatCurrency(profit)} di profitto netto. Campagna molto profittevole.`;
   } else if (roas >= 1) {
     interpretation = `⚠️ ROAS di ${roas.toFixed(2)}x: recuperi la spesa ma con margini limitati. Prova a ottimizzare CTR o CVR per aumentare la redditività.`;
   } else {
@@ -3259,6 +3408,26 @@ function updateKPICalculator() {
   }
 
   set('kpi-interpretation', interpretation);
+}
+
+function applyKPIPreset(preset) {
+  const presets = {
+    ecommerce: { budget: 500, cpm: 2.50, ctr: 1.5, cpc: 0.80, cvr: 2.3, cpc: 0.72, aov: 85 },
+    leadgen: { budget: 500, cpm: 3.00, ctr: 1.2, cpc: 1.20, cvr: 1.5, aov: 0 },
+    brand: { budget: 500, cpm: 1.80, ctr: 0.8, cpc: 0.50, cvr: 0.5, aov: 0 }
+  };
+
+  const p = presets[preset] || presets.ecommerce;
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  set('kpi-budget', p.budget);
+  set('kpi-cpm', p.cpm);
+  set('kpi-ctr', p.ctr);
+  set('kpi-cpc', p.cpc);
+  set('kpi-cvr', p.cvr);
+  set('kpi-aov', p.aov);
+
+  updateKPICalculator();
 }
 
 function renderScenarioBuilder() {
@@ -3329,15 +3498,26 @@ function generateScenarioComparison(scenarios) {
   }
 
   const calcs = scenarios.map(s => getScenarioCalc(s.impressions, s.ctr, s.cpc, s.cvr, s.aov));
+  const baseCalc = calcs[0];
 
-  const rows = [
-    ['Click', calcs.map(c => formatNumber(c.clicks))],
-    ['Spesa', calcs.map(c => formatCurrency(c.spend))],
-    ['Conversioni', calcs.map(c => formatNumber(c.conversions))],
-    ['Revenue', calcs.map(c => formatCurrency(c.revenue))],
-    ['ROAS', calcs.map(c => c.roas.toFixed(2) + 'x')],
-    ['ROI %', calcs.map(c => c.roi.toFixed(1) + '%')],
-    ['CPA', calcs.map(c => c.cpa > 0 ? formatCurrency(c.cpa) : '—')]
+  const deltaCalc = (val, base, lowerBetter = false) => {
+    if (base === 0 || val === 0) return '—';
+    const pct = ((val - base) / base * 100).toFixed(1);
+    const isPositive = parseFloat(pct) > 0;
+    const isBetter = lowerBetter ? !isPositive : isPositive;
+    const color = isBetter ? '#AAFF00' : isPositive ? '#FFB800' : '#FF4444';
+    const arrow = isPositive ? '↑' : isPositive === false ? '↓' : '';
+    return `<span style="color:${color};font-weight:600;">${arrow} ${pct}%</span>`;
+  };
+
+  const metricConfigs = [
+    { label: 'Click', values: calcs.map(c => formatNumber(c.clicks)), deltas: calcs.map((c, i) => i === 0 ? '—' : deltaCalc(c.clicks, baseCalc.clicks, false)) },
+    { label: 'Spesa', values: calcs.map(c => formatCurrency(c.spend)), deltas: calcs.map((c, i) => i === 0 ? '—' : deltaCalc(c.spend, baseCalc.spend, true)) },
+    { label: 'Conversioni', values: calcs.map(c => formatNumber(c.conversions)), deltas: calcs.map((c, i) => i === 0 ? '—' : deltaCalc(c.conversions, baseCalc.conversions, false)) },
+    { label: 'Revenue', values: calcs.map(c => formatCurrency(c.revenue)), deltas: calcs.map((c, i) => i === 0 ? '—' : deltaCalc(c.revenue, baseCalc.revenue, false)) },
+    { label: 'ROAS', values: calcs.map(c => c.roas.toFixed(2) + 'x'), deltas: calcs.map((c, i) => i === 0 ? '—' : deltaCalc(c.roas, baseCalc.roas, false)) },
+    { label: 'ROI %', values: calcs.map(c => c.roi.toFixed(1) + '%'), deltas: calcs.map((c, i) => i === 0 ? '—' : deltaCalc(c.roi, baseCalc.roi, false)) },
+    { label: 'CPA', values: calcs.map(c => c.cpa > 0 ? formatCurrency(c.cpa) : '—'), deltas: calcs.map((c, i) => i === 0 ? '—' : (c.cpa > 0 ? deltaCalc(c.cpa, baseCalc.cpa > 0 ? baseCalc.cpa : 1, true) : '—')) }
   ];
 
   const deltaColors = ['#FF4444', '#FFB800', '#AAFF00'];
@@ -3347,13 +3527,15 @@ function generateScenarioComparison(scenarios) {
       <tr style="border-bottom:1px solid #2A2A2A;">
         <th style="text-align:left;padding:8px;color:#777777;">Metrica</th>
         ${scenarios.map(s => `<th style="text-align:right;padding:8px;color:${s.color};">${s.label}</th>`).join('')}
+        <th style="text-align:right;padding:8px;color:#0055FF;">vs Pessimistico</th>
       </tr>
     </thead>
     <tbody>
-      ${rows.map(([label, vals]) => `
+      ${metricConfigs.map(m => `
         <tr style="border-bottom:1px solid #1A1A1A;">
-          <td style="padding:8px;color:#777777;">${label}</td>
-          ${vals.map((v, i) => `<td style="text-align:right;padding:8px;color:${deltaColors[i]};font-weight:${i===1?'700':'400'};">${v}</td>`).join('')}
+          <td style="padding:8px;color:#777777;">${m.label}</td>
+          ${m.values.map((v, i) => `<td style="text-align:right;padding:8px;color:${deltaColors[i]};font-weight:${i===1?'700':'400'};">${v}</td>`).join('')}
+          <td style="text-align:right;padding:8px;border-left:1px solid #2A2A2A;">${m.deltas[1]}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -3701,6 +3883,7 @@ function generateBenchmarkTable(industry, platform) {
 
   const userCampaigns = (AppState.campaigns || []).filter(c => c.platform === platform && (c.impressions || 0) > 0);
   let userData = null;
+  let performanceScore = 0;
   if (userCampaigns.length > 0) {
     const totalClicks = userCampaigns.reduce((s, c) => s + (c.clicks || 0), 0);
     const totalImpr = userCampaigns.reduce((s, c) => s + (c.impressions || 0), 0);
@@ -3714,6 +3897,13 @@ function generateBenchmarkTable(industry, platform) {
       cpa: totalConv > 0 ? totalSpend / totalConv : 0,
       roas: totalSpend > 0 ? totalRev / totalSpend : 0
     };
+
+    const ctrBetter = userData.ctr >= bench.ctr ? 1 : 0;
+    const cpcBetter = userData.cpc <= bench.cpc ? 1 : 0;
+    const cvrBetter = userData.cvr >= bench.cvr ? 1 : 0;
+    const cpaBetter = userData.cpa <= bench.cpa ? 1 : 0;
+    const roasBetter = userData.roas >= bench.roas ? 1 : 0;
+    performanceScore = Math.round((ctrBetter + cpcBetter + cvrBetter + cpaBetter + roasBetter) / 5 * 100);
   }
 
   const metrics = [
@@ -3725,17 +3915,32 @@ function generateBenchmarkTable(industry, platform) {
   ];
 
   const industryName = industry.charAt(0).toUpperCase() + industry.slice(1);
+  const performanceColor = performanceScore >= 80 ? '#AAFF00' : performanceScore >= 60 ? '#FFB800' : performanceScore >= 40 ? '#FF8844' : '#FF4444';
 
   return `
     <h3 style="color:#F0F0F0;font-size:14px;font-weight:600;margin-bottom:16px;">
       Benchmark ${industryName} — ${getPlatformLabel(platform)}
     </h3>
+    ${userData ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div class="card" style="padding:12px;border:1px solid ${performanceColor}44;background:${performanceColor}11;">
+          <div style="color:#777777;font-size:11px;margin-bottom:4px;">HEALTH SCORE</div>
+          <div style="color:${performanceColor};font-size:20px;font-weight:700;">${performanceScore}%</div>
+          <div style="color:#666666;font-size:10px;margin-top:4px;">${performanceScore >= 80 ? '✨ Eccellente' : performanceScore >= 60 ? '✓ Buono' : performanceScore >= 40 ? '⚠️ Migliorabile' : '❌ Critico'}</div>
+        </div>
+        <div class="card" style="padding:12px;border:1px solid #2A2A2A;">
+          <div style="color:#777777;font-size:11px;margin-bottom:4px;">CAMPAGNE ANALIZZATE</div>
+          <div style="color:#F0F0F0;font-size:20px;font-weight:700;">${userCampaigns.length}</div>
+          <div style="color:#666666;font-size:10px;margin-top:4px;">su ${getPlatformLabel(platform)}</div>
+        </div>
+      </div>
+    ` : ''}
     <table style="width:100%;border-collapse:collapse;font-size:13px;">
       <thead>
         <tr style="border-bottom:1px solid #2A2A2A;">
           <th style="text-align:left;padding:8px;color:#777777;">Metrica</th>
           <th style="text-align:right;padding:8px;color:#777777;">Benchmark settore</th>
-          ${userData ? '<th style="text-align:right;padding:8px;color:#0055FF;">I tuoi dati</th><th style="text-align:right;padding:8px;color:#777777;">vs Benchmark</th>' : ''}
+          ${userData ? '<th style="text-align:right;padding:8px;color:#0055FF;">I tuoi dati</th><th style="text-align:right;padding:8px;color:#777777;">Stato</th>' : ''}
         </tr>
       </thead>
       <tbody>
@@ -3748,7 +3953,8 @@ function generateBenchmarkTable(industry, platform) {
             const isPositive = parseFloat(pct) >= 0;
             const isBetter = m.higherBetter ? isPositive : !isPositive;
             const color = isBetter ? '#AAFF00' : '#FF4444';
-            deltaCell = `<td style="text-align:right;padding:8px;"><span style="color:${color}">${isPositive ? '+' : ''}${pct}%</span></td>`;
+            const icon = isBetter ? '✓' : '✗';
+            deltaCell = `<td style="text-align:right;padding:8px;"><span style="color:${color};font-weight:600;">${icon} ${isPositive ? '+' : ''}${pct}%</span></td>`;
           } else if (userData) {
             deltaCell = '<td style="text-align:right;padding:8px;color:#777777;">—</td>';
           }
@@ -3762,7 +3968,7 @@ function generateBenchmarkTable(industry, platform) {
         }).join('')}
       </tbody>
     </table>
-    ${!userData ? '<p style="color:#777777;font-size:12px;margin-top:12px;">Lancia campagne su questa piattaforma per confrontare i tuoi dati.</p>' : ''}
+    ${!userData ? '<p style="color:#777777;font-size:12px;margin-top:12px;padding:12px;background:#1A1A1A;border-radius:8px;">Lancia campagne su questa piattaforma per confrontare i tuoi dati.</p>' : ''}
   `;
 }
 
@@ -4605,7 +4811,6 @@ let interviewState = {
   currentQuestion: '',
   answers: [],
   totalScore: 0,
-  breakdownScore: { technique: 0, communication: 0, problemSolving: 0 },
 };
 
 function renderInterviewCoach() {
@@ -4753,7 +4958,6 @@ function renderInterviewSession() {
   if (!content) return;
   const role = INTERVIEW_ROLES.find(r => r.id === interviewState.role);
   const company = COMPANY_TYPES.find(c => c.id === interviewState.company);
-  const progressPct = (interviewState.questionIndex / 5) * 100;
 
   content.innerHTML = `
     <div style="max-width:720px;">
@@ -4765,12 +4969,6 @@ function renderInterviewSession() {
         <div style="display:flex;align-items:center;gap:12px;">
           <div style="font-size:13px;color:#777;">Score parziale: <strong style="color:#F0F0F0;" id="iv-partial-score">${interviewState.totalScore}</strong></div>
           <button onclick="abortInterview()" style="background:#1A1A1A;border:1px solid #2A2A2A;color:#777;padding:6px 14px;border-radius:100px;font-size:12px;cursor:pointer;">Esci</button>
-        </div>
-      </div>
-      <div style="margin-bottom:20px;">
-        <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Progresso: ${interviewState.questionIndex}/5</div>
-        <div style="background:#1A1A1A;border-radius:100px;height:4px;overflow:hidden;">
-          <div style="background:linear-gradient(90deg,#0055FF,#AAFF00);height:4px;width:${progressPct}%;transition:width 0.3s ease;"></div>
         </div>
       </div>
       <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:0;min-height:420px;display:flex;flex-direction:column;overflow:hidden;">
@@ -4885,43 +5083,6 @@ async function endInterview() {
   interviewState.active = false;
   const avgScore = interviewState.totalScore / 5;
 
-  // Calcola breakdown score (tecnico, comunicazione, problem solving) dai feedback
-  const techniqueScores = [], communicationScores = [], problemSolvingScores = [];
-  const allScores = [];
-
-  interviewState.answers.forEach(a => {
-    const feedbackLower = a.feedback.toLowerCase();
-    allScores.push(a.score);
-
-    // Tecnico: parole chiave: tecnico, specifico, framework, strumento, metodologia, tecnica
-    if (/tecnico|specifico|framework|strumento|metodologia|tecnica|competenza|skill/.test(feedbackLower)) {
-      techniqueScores.push(a.score);
-    }
-
-    // Comunicazione: parole chiave: comunicaz, chiaro, spiegaz, struttura, coerente, ordine, logica
-    if (/comunicaz|chiaro|spiegaz|struttura|coerente|ordine|logica|articolato|comprensibile/.test(feedbackLower)) {
-      communicationScores.push(a.score);
-    }
-
-    // Problem solving: parole chiave: problem, soluzione, scenario, analisi, strategia, approccia, approccio
-    if (/problem|soluzione|scenario|analisi|strategia|approccia|approccio|ragionamento|critico/.test(feedbackLower)) {
-      problemSolvingScores.push(a.score);
-    }
-  });
-
-  // Se una categoria non ha match, usa la media generale
-  interviewState.breakdownScore.technique = techniqueScores.length > 0
-    ? Math.round(techniqueScores.reduce((a,b)=>a+b,0)/techniqueScores.length)
-    : Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
-
-  interviewState.breakdownScore.communication = communicationScores.length > 0
-    ? Math.round(communicationScores.reduce((a,b)=>a+b,0)/communicationScores.length)
-    : Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
-
-  interviewState.breakdownScore.problemSolving = problemSolvingScores.length > 0
-    ? Math.round(problemSolvingScores.reduce((a,b)=>a+b,0)/problemSolvingScores.length)
-    : Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
-
   if (avgScore >= 8) earnTokens(10, 'Colloquio eccellente! +10 token');
   else if (avgScore >= 6) earnTokens(5, 'Buon colloquio! +5 token');
 
@@ -4998,34 +5159,6 @@ function renderInterviewSummary(avgScore, summary) {
 
   const summaryFormatted = (summary || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-  // Score breakdown visualization
-  const techniqueColor = interviewState.breakdownScore.technique >= 8 ? '#AAFF00' : interviewState.breakdownScore.technique >= 6 ? '#0055FF' : '#FF6B35';
-  const communicationColor = interviewState.breakdownScore.communication >= 8 ? '#AAFF00' : interviewState.breakdownScore.communication >= 6 ? '#0055FF' : '#FF6B35';
-  const problemSolvingColor = interviewState.breakdownScore.problemSolving >= 8 ? '#AAFF00' : interviewState.breakdownScore.problemSolving >= 6 ? '#0055FF' : '#FF6B35';
-
-  const breakdownHTML = `
-    <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:20px;margin-bottom:24px;">
-      <h3 style="margin:0 0 16px 0;font-size:13px;color:#777;text-transform:uppercase;letter-spacing:.08em;">📊 Breakdown Competenze</h3>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-        <div style="background:#1A1A1A;border-radius:12px;padding:14px;text-align:center;">
-          <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Tecnica</div>
-          <div style="font-size:28px;font-weight:900;color:${techniqueColor};">${interviewState.breakdownScore.technique}</div>
-          <div style="font-size:10px;color:#555;margin-top:4px;">/10</div>
-        </div>
-        <div style="background:#1A1A1A;border-radius:12px;padding:14px;text-align:center;">
-          <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Comunicazione</div>
-          <div style="font-size:28px;font-weight:900;color:${communicationColor};">${interviewState.breakdownScore.communication}</div>
-          <div style="font-size:10px;color:#555;margin-top:4px;">/10</div>
-        </div>
-        <div style="background:#1A1A1A;border-radius:12px;padding:14px;text-align:center;">
-          <div style="font-size:11px;color:#777;margin-bottom:6px;font-weight:600;">Problem Solving</div>
-          <div style="font-size:28px;font-weight:900;color:${problemSolvingColor};">${interviewState.breakdownScore.problemSolving}</div>
-          <div style="font-size:10px;color:#555;margin-top:4px;">/10</div>
-        </div>
-      </div>
-    </div>
-  `;
-
   content.innerHTML = `
     <div style="max-width:720px;">
       <div style="background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:40px;text-align:center;margin-bottom:24px;">
@@ -5034,7 +5167,6 @@ function renderInterviewSummary(avgScore, summary) {
         <div style="font-size:14px;color:#777;margin:16px 0;">Punteggio medio su 5 domande</div>
         ${avgScore >= 8 ? '<div style="background:#AAFF0022;border:1px solid #AAFF0044;border-radius:100px;display:inline-block;padding:8px 20px;font-size:14px;color:#AAFF00;margin-top:8px;">🏆 +10 token guadagnati!</div>' : avgScore >= 6 ? '<div style="background:#0055FF22;border:1px solid #0055FF44;border-radius:100px;display:inline-block;padding:8px 20px;font-size:14px;color:#0055FF;margin-top:8px;">✨ +5 token guadagnati!</div>' : ''}
       </div>
-      ${breakdownHTML}
       <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:24px;margin-bottom:24px;">
         <h3 style="margin:0 0 16px 0;font-size:14px;color:#777;text-transform:uppercase;letter-spacing:.08em;">🤖 Feedback AI Coach</h3>
         <p style="font-size:14px;line-height:1.7;color:#E0E0E0;margin:0;">${summaryFormatted}</p>
@@ -5052,7 +5184,7 @@ function renderInterviewSummary(avgScore, summary) {
 }
 
 function restartInterview() {
-  interviewState = { active: false, role: null, difficulty: 'base', company: null, questionIndex: 0, currentQuestion: '', answers: [], totalScore: 0, breakdownScore: { technique: 0, communication: 0, problemSolving: 0 } };
+  interviewState = { active: false, role: null, difficulty: 'base', company: null, questionIndex: 0, currentQuestion: '', answers: [], totalScore: 0 };
   renderInterviewSetup();
 }
 
@@ -5377,11 +5509,11 @@ function drawScoreGauge(value, containerId) {
 function renderScoreBreakdown() {
   const d = AppState.proovdDimensions || {};
   const dims = [
-    { key: 'strategy', label: 'Campaign Strategy', icon: '🚀', desc: 'Abilità nel costruire e ottimizzare campagne', color: '#0055FF', avgUsers: 35 },
-    { key: 'dataLiteracy', label: 'Data Literacy', icon: '📊', desc: 'Capacità di leggere e interpretare i dati', color: '#AAFF00', avgUsers: 28 },
-    { key: 'creative', label: 'Creative Judgment', icon: '🎨', desc: 'Valutazione e scelta di creatività efficaci', color: '#FF6B35', avgUsers: 42 },
-    { key: 'optimization', label: 'Optimization Speed', icon: '⚡', desc: 'Velocità nel riconoscere problemi e ottimizzare', color: '#B388FF', avgUsers: 31 },
-    { key: 'interview', label: 'Interview Readiness', icon: '🎤', desc: 'Preparazione ai colloqui e conoscenze teoriche', color: '#00E5FF', avgUsers: 45 },
+    { key: 'strategy', label: 'Campaign Strategy', icon: '🚀', desc: 'Abilità nel costruire e ottimizzare campagne', color: '#0055FF' },
+    { key: 'dataLiteracy', label: 'Data Literacy', icon: '📊', desc: 'Capacità di leggere e interpretare i dati', color: '#AAFF00' },
+    { key: 'creative', label: 'Creative Judgment', icon: '🎨', desc: 'Valutazione e scelta di creatività efficaci', color: '#FF6B35' },
+    { key: 'optimization', label: 'Optimization Speed', icon: '⚡', desc: 'Velocità nel riconoscere problemi e ottimizzare', color: '#B388FF' },
+    { key: 'interview', label: 'Interview Readiness', icon: '🎤', desc: 'Preparazione ai colloqui e conoscenze teoriche', color: '#00E5FF' },
   ];
 
   const radarData = dims.map(d2 => ({ label: d2.label.split(' ')[0], value: d[d2.key] || 0, max: 100 }));
@@ -5390,7 +5522,6 @@ function renderScoreBreakdown() {
 
   const dimBars = dims.map(dim => {
     const val = Math.min(100, Math.max(0, d[dim.key] || 0));
-    const avgVal = dim.avgUsers;
     return `
       <div style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
@@ -5400,8 +5531,7 @@ function renderScoreBreakdown() {
         <div style="background:#1A1A1A;border-radius:100px;height:6px;">
           <div style="background:${dim.color};height:6px;border-radius:100px;width:${val}%;transition:width .8s ease;"></div>
         </div>
-        <div style="font-size:10px;color:#555;margin-top:3px;">Tu: <strong style="color:#999;">${val}</strong> | Media utenti: <strong style="color:#666;">${avgVal}</strong></div>
-        <div style="font-size:11px;color:#555;margin-top:2px;">${dim.desc}</div>
+        <div style="font-size:11px;color:#555;margin-top:4px;">${dim.desc}</div>
       </div>
     `;
   }).join('');
@@ -5441,17 +5571,10 @@ function drawRadarSVG(data) {
   const pts = data.map((d2, i) => point(d2.value, angles[i], r));
   const polygon = pts.map(p => p.join(',')).join(' ');
 
-  // Labels (nome dimensione)
+  // Labels
   const labels = data.map((d2, i) => {
     const [lx, ly] = [cx + (r + 14) * Math.cos(angles[i]), cy + (r + 14) * Math.sin(angles[i])];
     return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#777" font-size="9" font-family="Inter,sans-serif">${d2.label}</text>`;
-  }).join('');
-
-  // Valori numerici (vicino ai punti dati)
-  const values = data.map((d2, i) => {
-    const [px, py] = pts[i];
-    const [vx, vy] = [cx + (r + 28) * Math.cos(angles[i]), cy + (r + 28) * Math.sin(angles[i])];
-    return `<text x="${vx}" y="${vy}" text-anchor="middle" dominant-baseline="middle" fill="#999" font-size="10" font-family="Inter,sans-serif" font-weight="600">${d2.value}</text>`;
   }).join('');
 
   return `
@@ -5460,7 +5583,6 @@ function drawRadarSVG(data) {
       <polygon points="${polygon}" fill="#0055FF22" stroke="#0055FF" stroke-width="2"/>
       ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#0055FF"/>`).join('')}
       ${labels}
-      ${values}
     </svg>
   `;
 }
@@ -5539,42 +5661,6 @@ function exportProovdCard() {
   const unlockedBadges = (AppState.badges || []).slice(0, 3);
   const d = AppState.proovdDimensions || { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 };
   const userName = AppState.userName || 'Utente PROOVD';
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('it-IT');
-
-  // Genera radar SVG per card
-  const radarData = [
-    { label: 'Strategy', value: d.strategy || 0, max: 100 },
-    { label: 'Data', value: d.dataLiteracy || 0, max: 100 },
-    { label: 'Creative', value: d.creative || 0, max: 100 },
-    { label: 'Optimize', value: d.optimization || 0, max: 100 },
-    { label: 'Interview', value: d.interview || 0, max: 100 },
-  ];
-  const cx = 85, cy = 85, r = 55;
-  const n = radarData.length;
-  const angles = radarData.map((_, i) => (i * 2 * Math.PI / n) - Math.PI / 2);
-  function point(val, angle, radius) {
-    const pct = val / 100;
-    return [cx + radius * pct * Math.cos(angle), cy + radius * pct * Math.sin(angle)];
-  }
-  const gridCircles = [0.25, 0.5, 0.75, 1].map(g =>
-    `<circle cx="${cx}" cy="${cy}" r="${r * g}" fill="none" stroke="#2A2A2A44" stroke-width="0.5"/>`
-  ).join('');
-  const axes = angles.map(a =>
-    `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(a)}" y2="${cy + r * Math.sin(a)}" stroke="#2A2A2A66" stroke-width="0.5"/>`
-  ).join('');
-  const pts = radarData.map((d2, i) => point(d2.value, angles[i], r));
-  const polygon = pts.map(p => p.join(',')).join(' ');
-  const labels = radarData.map((d2, i) => {
-    const [lx, ly] = [cx + (r + 10) * Math.cos(angles[i]), cy + (r + 10) * Math.sin(angles[i])];
-    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="7" font-family="Inter,sans-serif">${d2.label}</text>`;
-  }).join('');
-  const radarSVG = `<svg viewBox="0 0 170 170" style="width:140px;height:140px;display:block;margin:0 auto;">
-    ${gridCircles}${axes}
-    <polygon points="${polygon}" fill="#0055FF25" stroke="#0055FF" stroke-width="1.5"/>
-    ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#0055FF"/>`).join('')}
-    ${labels}
-  </svg>`;
 
   const cardHTML = `<!DOCTYPE html>
 <html>
@@ -5584,32 +5670,28 @@ function exportProovdCard() {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 100%); display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: Inter, sans-serif; padding: 20px; }
-  .card { width: 480px; background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%); border: 1px solid #2A2A2A; border-radius: 28px; padding: 40px; color: #F0F0F0; position: relative; overflow: hidden; box-shadow: 0 60px 120px rgba(0,85,255,0.15), 0 40px 80px rgba(0,0,0,.8); }
-  .card::before { content: ''; position: absolute; top: -150px; right: -150px; width: 400px; height: 400px; background: radial-gradient(circle, #0055FF22 0%, transparent 70%); pointer-events: none; }
-  .card::after { content: ''; position: absolute; bottom: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, #AAFF0015 0%, transparent 70%); pointer-events: none; }
-  .logo { font-size: 12px; font-weight: 800; color: #AAFF00; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 12px; }
-  .username { font-size: 32px; font-weight: 900; margin-bottom: 4px; background: linear-gradient(90deg, #F0F0F0 0%, #AAFF00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .subtitle { font-size: 13px; color: #777; margin-bottom: 24px; font-weight: 500; }
-  .score-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 24px; }
-  .score-num { font-size: 72px; font-weight: 900; color: #AAFF00; line-height: 1; }
-  .score-meta { padding-bottom: 4px; }
-  .score-denom { font-size: 24px; font-weight: 700; color: #555; }
-  .score-label { font-size: 11px; color: #777; margin-top: 2px; }
-  .radar-section { text-align: center; margin-bottom: 24px; }
-  .radar-title { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; font-weight: 600; }
-  .radar-legend { font-size: 8px; color: #555; margin-top: 8px; }
+  body { background: #0A0A0A; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: Inter, sans-serif; padding: 20px; }
+  .card { width: 420px; background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%); border: 1px solid #2A2A2A; border-radius: 24px; padding: 36px; color: #F0F0F0; position: relative; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,.8); }
+  .card::before { content: ''; position: absolute; top: -100px; right: -100px; width: 300px; height: 300px; background: radial-gradient(circle, #0055FF18 0%, transparent 70%); pointer-events: none; }
+  .card::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 200px; height: 200px; background: radial-gradient(circle, #AAFF0010 0%, transparent 70%); pointer-events: none; }
+  .logo { font-size: 13px; font-weight: 700; color: #AAFF00; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 28px; }
+  .username { font-size: 26px; font-weight: 900; margin-bottom: 2px; }
+  .subtitle { font-size: 13px; color: #777; margin-bottom: 28px; }
+  .score-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 28px; }
+  .score-num { font-size: 80px; font-weight: 900; color: #AAFF00; line-height: 1; }
+  .score-meta { padding-bottom: 8px; }
+  .score-denom { font-size: 28px; font-weight: 700; color: #555; }
+  .score-label { font-size: 12px; color: #777; margin-top: 4px; }
   .divider { height: 1px; background: #2A2A2A; margin: 20px 0; }
   .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-  .dim { background: #0A0A0A; border-radius: 10px; padding: 10px 12px; border: 1px solid #1A1A1A; }
-  .dim-name { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; font-weight: 600; }
-  .dim-val { font-size: 20px; font-weight: 900; }
-  .dim-bar { height: 2px; background: #1A1A1A; border-radius: 2px; margin-top: 5px; }
-  .dim-bar-fill { height: 2px; border-radius: 2px; }
-  .badges-row { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; }
-  .badge-chip { background: #0A0A0A; border-radius: 8px; padding: 8px; font-size: 18px; border: 1px solid #1A1A1A; }
-  .footer { font-size: 10px; color: #555; display: flex; justify-content: space-between; align-items: center; }
-  .footer-logo { color: #AAFF00; font-weight: 700; }
+  .dim { background: #0A0A0A; border-radius: 10px; padding: 10px 14px; }
+  .dim-name { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .dim-val { font-size: 22px; font-weight: 900; }
+  .dim-bar { height: 3px; background: #1A1A1A; border-radius: 3px; margin-top: 6px; }
+  .dim-bar-fill { height: 3px; border-radius: 3px; }
+  .badges-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .badge-chip { background: #0A0A0A; border-radius: 10px; padding: 10px; font-size: 22px; border: 1px solid #1A1A1A; }
+  .footer { font-size: 11px; color: #333; display: flex; justify-content: space-between; }
   @media print { body { background: #0A0A0A; } }
 </style>
 </head>
@@ -5617,25 +5699,18 @@ function exportProovdCard() {
 <div class="card">
   <div class="logo">◆ PROOVD</div>
   <div class="username">${userName}</div>
-  <div class="subtitle">Junior Digital Marketer · ${dateStr}</div>
+  <div class="subtitle">Junior Digital Marketer</div>
   <div class="score-row">
     <div class="score-num">${totalScore}</div>
     <div class="score-meta">
       <div class="score-denom">/100</div>
-      <div class="score-label">PROOVD SCORE</div>
+      <div class="score-label">PROOVD Score</div>
     </div>
   </div>
   <div class="divider"></div>
-
-  <div class="radar-section">
-    <div class="radar-title">Competenze</div>
-    ${radarSVG}
-    <div class="radar-legend">Tu vs Media utenti</div>
-  </div>
-
   <div class="dims">
     <div class="dim">
-      <div class="dim-name">Strategy</div>
+      <div class="dim-name">Campaign Strategy</div>
       <div class="dim-val" style="color:#0055FF;">${d.strategy || 0}</div>
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.strategy || 0}%;background:#0055FF;"></div></div>
     </div>
@@ -5645,7 +5720,7 @@ function exportProovdCard() {
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.dataLiteracy || 0}%;background:#AAFF00;"></div></div>
     </div>
     <div class="dim">
-      <div class="dim-name">Creative</div>
+      <div class="dim-name">Creative Judgment</div>
       <div class="dim-val" style="color:#FF6B35;">${d.creative || 0}</div>
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.creative || 0}%;background:#FF6B35;"></div></div>
     </div>
@@ -5655,7 +5730,7 @@ function exportProovdCard() {
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.optimization || 0}%;background:#B388FF;"></div></div>
     </div>
     <div class="dim" style="grid-column:1/-1;">
-      <div class="dim-name">Interview Ready</div>
+      <div class="dim-name">Interview Readiness</div>
       <div class="dim-val" style="color:#00E5FF;">${d.interview || 0}</div>
       <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.interview || 0}%;background:#00E5FF;"></div></div>
     </div>
@@ -5666,11 +5741,11 @@ function exportProovdCard() {
       const b = ALL_BADGES.find(ab => ab.id === bId);
       return b ? `<div class="badge-chip" title="${b.name}">${b.emoji}</div>` : '';
     }).join('')}
-    ${unlockedBadges.length < (AppState.badges || []).length ? `<div class="badge-chip" style="font-size:12px;color:#555;">+${(AppState.badges || []).length - 3}</div>` : ''}
+    ${unlockedBadges.length < (AppState.badges || []).length ? `<div class="badge-chip" style="font-size:12px;color:#555;display:flex;align-items:center;">+${(AppState.badges || []).length - 3}</div>` : ''}
   </div>` : ''}
   <div class="footer">
-    <span><span class="footer-logo">PROOVD</span></span>
-    <span style="color:#999;">${dateStr}</span>
+    <span>proovd.it</span>
+    <span>${new Date().toLocaleDateString('it-IT')}</span>
   </div>
 </div>
 </body>
