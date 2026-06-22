@@ -595,7 +595,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
       </div>
       <div class="header-right">
         <span id="token-display" data-tooltip="I tuoi token virtuali — il tuo budget per simulare campagne">€ 500 token</span>
-        <span id="score-badge" data-tooltip="Il tuo PROOVD Score — misura le tue competenze">0/100</span>
+        <span id="score-badge" data-tooltip="Il tuo PROOVD Score — misura le tue competenze">0/1000</span>
         <span id="username-badge">Marketer</span>
         <button onclick="startTour()" style="background:transparent;border:1px solid #2A2A2A;border-radius:100px;padding:5px 12px;color:#777;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='#555';this.style.color='#F0F0F0'" onmouseout="this.style.borderColor='#2A2A2A';this.style.color='#777'">📍 Tour</button>
         <button id="theme-toggle" onclick="toggleTheme()" aria-label="Cambia tema">🌙</button>
@@ -781,7 +781,7 @@ function showGameOver() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div><div class="text-muted" style="font-size:11px">CAMPAGNE LANCIATE</div><div style="font-size:22px;font-weight:700">${launched}</div></div>
       <div><div class="text-muted" style="font-size:11px">MIGLIOR ROAS</div><div style="font-size:22px;font-weight:700">${bestROAS.toFixed(2)}x</div></div>
-      <div><div class="text-muted" style="font-size:11px">PROOVD SCORE</div><div style="font-size:22px;font-weight:700">${AppState.score}/100</div></div>
+      <div><div class="text-muted" style="font-size:11px">PROOVD SCORE</div><div style="font-size:22px;font-weight:700">${typeof calculateProovdScore1000==='function'?calculateProovdScore1000():AppState.score}/1000</div></div>
       <div><div class="text-muted" style="font-size:11px">BADGE SBLOCCATI</div><div style="font-size:22px;font-weight:700">${AppState.badges.length}</div></div>
     </div>`;
   modal.style.display = 'flex';
@@ -802,7 +802,7 @@ function updateProovdScore(dimension, delta) {
   AppState.proovdDimensions[dimension] = Math.min(100, Math.max(0, (AppState.proovdDimensions[dimension]||0) + delta));
   AppState.score = Math.round(Object.values(AppState.proovdDimensions).reduce((a,b)=>a+b,0)/5);
   const el = document.getElementById('score-badge');
-  if (el) el.textContent = AppState.score + '/100';
+  if (el) el.textContent = (typeof calculateProovdScore1000 === 'function' ? calculateProovdScore1000() : AppState.score) + '/1000';
   saveState();
 }
 function calculateTotalScore() {
@@ -1348,29 +1348,44 @@ function obStep(dir) {
 
 // === BADGES (stubs — full impl in part5) ===
 const ALL_BADGES = [
-  { id:'first_launch', emoji:'🚀', name:'First Launch', desc:'Prima campagna lanciata', condition:s=>s.campaigns.length>=1 },
-  { id:'data_nerd', emoji:'📊', name:'Data Nerd', desc:'Usato Analytics Lab', condition:s=>s.proovdDimensions.dataLiteracy>=10 },
-  { id:'roas_master', emoji:'💰', name:'ROAS Master', desc:'ROAS > 4x su una campagna', condition:s=>s.campaigns.some(c=>c.roas>=4) },
-  { id:'precision', emoji:'🎯', name:'Precision Targeting', desc:'Targeting avanzato configurato', condition:s=>s.campaigns.some(c=>c.targeting?.advanced) },
+  { id:'first_campaign', emoji:'🚀', name:'Primo Lancio', desc:'Hai lanciato la tua prima campagna', condition:s=>(s.campaigns||[]).length>=1 },
+  { id:'roas_3x', emoji:'💰', name:'ROI Positivo', desc:'ROAS superiore a 3x su una campagna', condition:s=>(s.campaigns||[]).some(c=>c.roas>=3) },
+  { id:'meta_master', emoji:'📘', name:'Meta Expert', desc:'5 campagne Meta lanciate', condition:s=>(s.campaigns||[]).filter(c=>c.platform==='meta').length>=5 },
+  { id:'google_master', emoji:'🔍', name:'Google Guru', desc:'3 campagne Google lanciate', condition:s=>(s.campaigns||[]).filter(c=>c.platform==='google_search').length>=3 },
+  { id:'interview_ace', emoji:'🎤', name:'Interview Ace', desc:'Score colloquio ≥ 8/10', condition:s=>(s.interviewScores||[]).some(x=>x>=8) },
+  { id:'flashcard_50', emoji:'🃏', name:'Studioso', desc:'50 flashcard completate', condition:s=>(s.flashcardsCompleted||0)>=50 },
+  { id:'academy_all', emoji:'🎓', name:'Laureato PROOVD', desc:'Tutti i moduli Academy completati', condition:s=>(s.academyCompleted||[]).length>=7 },
+  { id:'token_1000', emoji:'💎', name:'Token Millionaire', desc:'Guadagnati 1000 token in totale', condition:s=>(s.totalTokensEarned||0)>=1000 },
+  { id:'multi_platform', emoji:'🌐', name:'Multiplatform', desc:'Campagne su 4+ piattaforme diverse', condition:s=>new Set((s.campaigns||[]).map(c=>c.platform)).size>=4 },
+  { id:'big_spender', emoji:'💸', name:'Big Spender', desc:'Budget cumulativo > €500', condition:s=>(s.campaigns||[]).reduce((t,c)=>t+(c.budget||0),0)>=500 },
+  { id:'analytics_user', emoji:'📈', name:'Data Driven', desc:'Usato Analytics Lab almeno 10 volte', condition:s=>(s.analyticsUses||0)>=10 },
+  { id:'perfect_score', emoji:'⭐', name:'Perfect 10', desc:'Score colloquio 10/10', condition:s=>(s.interviewScores||[]).some(x=>x>=10) },
   { id:'ai_collaborator', emoji:'🤖', name:'AI Collaborator', desc:'AI Coach consultato 10 volte', condition:s=>(s.aiCallCount||0)>=10 },
-  { id:'report_ready', emoji:'📈', name:'Report Ready', desc:'Primo report generato', condition:s=>(s.reportsGenerated||0)>=1 },
-  { id:'multi_platform', emoji:'🌐', name:'Multi-Platform', desc:'3+ piattaforme usate', condition:s=>new Set(s.campaigns.map(c=>c.platform)).size>=3 },
-  { id:'interviewer', emoji:'🎤', name:'Interview Pro', desc:'Colloquio con score 8+', condition:s=>s.proovdDimensions.interview>=80 },
-  { id:'optimizer', emoji:'⚡', name:'Speed Optimizer', desc:'Ottimizzatore campagne', condition:s=>s.proovdDimensions.optimization>=20 },
-  { id:'token_grower', emoji:'💎', name:'Token Grower', desc:'Superato 600 token', condition:s=>s.tokens>=600 },
-  { id:'persona_builder', emoji:'👤', name:'Persona Expert', desc:'2+ buyer personas create', condition:s=>(s.personas?.length||0)>=2 },
-  { id:'full_funnel', emoji:'🏆', name:'Full Funnel', desc:'Journey completo mappato', condition:s=>Object.keys(s.journey||{}).length>=4 },
+  { id:'persona_builder', emoji:'👤', name:'Persona Expert', desc:'2+ buyer personas create', condition:s=>(s.personas||[]).length>=2 },
+  { id:'full_funnel', emoji:'🏆', name:'Full Funnel', desc:'Customer journey completo mappato', condition:s=>Object.keys(s.journey||{}).length>=4 },
+  // legacy compatibility aliases
+  { id:'first_launch', emoji:'🚀', name:'Primo Lancio', desc:'Prima campagna lanciata', condition:s=>(s.campaigns||[]).length>=1 },
+  { id:'roas_master', emoji:'💰', name:'ROAS Master', desc:'ROAS > 4x su una campagna', condition:s=>(s.campaigns||[]).some(c=>c.roas>=4) },
+  { id:'report_ready', emoji:'📋', name:'Report Ready', desc:'Primo report generato', condition:s=>(s.reportsGenerated||0)>=1 },
+  { id:'token_grower', emoji:'💎', name:'Token Grower', desc:'Superato 600 token', condition:s=>(s.tokens||0)>=600 },
 ];
 function checkBadges() {
+  if (!AppState.badges) AppState.badges = [];
   let newBadge = false;
   ALL_BADGES.forEach(badge => {
-    if (!AppState.badges.includes(badge.id) && badge.condition(AppState)) {
-      AppState.badges.push(badge.id);
-      showToast(`🏅 Badge sbloccato: ${badge.name}!`, 'success');
-      newBadge = true;
+    if (!AppState.badges.includes(badge.id)) {
+      try {
+        if (badge.condition(AppState)) {
+          AppState.badges.push(badge.id);
+          if (typeof showToast === 'function') showToast(`${badge.emoji} Badge sbloccato: ${badge.name}!`, 'success');
+          newBadge = true;
+          const grid = document.getElementById('badge-grid');
+          if (grid) grid.innerHTML = renderBadgeGrid();
+        }
+      } catch(e) { /* ignore condition errors */ }
     }
   });
-  if (newBadge) saveState();
+  if (newBadge) { if (typeof saveState === 'function') saveState(); }
 }
 
 // === AUTH UI ===
@@ -1489,7 +1504,7 @@ function hideAuthScreen() {
   document.getElementById('theme-toggle').textContent = AppState.theme === 'dark' ? '🌙' : '☀️';
   buildSidebar();
   updateTokenBadge();
-  document.getElementById('score-badge').textContent = AppState.score + '/100';
+  document.getElementById('score-badge').textContent = (typeof calculateProovdScore1000 === 'function' ? calculateProovdScore1000() : AppState.score) + '/1000';
   document.getElementById('username-badge').textContent = AppState.userName;
   initTooltips();
   initCommandPalette();
@@ -8337,51 +8352,205 @@ Max 250 parole. Usa **grassetto** per termini chiave.`;
 
 // === MODULE: PROOVD SCORE ===
 
+// === PROOVD SCORE MODULE ===
+
+function calculateProovdScore1000() {
+  const s = AppState;
+  const campaigns = s.campaigns || [];
+  const tokensEarned = s.totalTokensEarned || 0;
+  const flashcards = s.flashcardsCompleted || 0;
+  const interviews = (s.interviewScores || []).length;
+  const academy = (s.academyCompleted || []).length;
+
+  const pt1 = Math.min(300, Math.round((tokensEarned / 1000) * 300));
+  const pt2 = Math.min(300, campaigns.length * 30);
+  const pt3 = Math.min(150, flashcards * 5);
+  const pt4 = Math.min(150, interviews * 50);
+  const pt5 = Math.min(100, academy * 20);
+  return pt1 + pt2 + pt3 + pt4 + pt5;
+}
+
+function getScoreLabel1000(score) {
+  if (score >= 800) return 'Expert';
+  if (score >= 600) return 'Senior';
+  if (score >= 400) return 'Mid-Level';
+  if (score >= 200) return 'Junior';
+  return 'Novizio';
+}
+
+function getScoreColor(score) {
+  if (score >= 800) return '#AAFF00';
+  if (score >= 600) return '#0055FF';
+  if (score >= 400) return '#00E5FF';
+  if (score >= 200) return '#FF6B35';
+  return '#777';
+}
+
+function computeSpiderAxes() {
+  const s = AppState;
+  const campaigns = s.campaigns || [];
+  const metaTikLin = campaigns.filter(c => ['meta','tiktok','linkedin'].includes(c.platform)).length;
+  const googleCamps = campaigns.filter(c => ['google_search','google_display'].includes(c.platform)).length;
+  const avgRoas = campaigns.length ? campaigns.reduce((t,c)=>(t+(c.roas||0)),0)/campaigns.length : 0;
+  return [
+    { label:'Paid Social',  icon:'📢', value: Math.min(100, metaTikLin * 12), color:'#0055FF' },
+    { label:'SEM/PPC',      icon:'🔍', value: Math.min(100, googleCamps * 20), color:'#AAFF00' },
+    { label:'Analytics',    icon:'📊', value: Math.min(100, (s.analyticsUses||0) * 10), color:'#00E5FF' },
+    { label:'Copywriting',  icon:'✍️',  value: Math.min(100, (s.creativesBuilt||0) * 15), color:'#FF6B35' },
+    { label:'Strategy',     icon:'🎯', value: Math.min(100, ((s.interviewScores||[]).length * 20) + ((s.academyCompleted||[]).length * 5)), color:'#B388FF' },
+    { label:'Budget Mgmt',  icon:'💰', value: Math.min(100, Math.round(avgRoas * 20)), color:'#AAFF00' },
+  ];
+}
+
+function drawScoreCircleSVG(score, maxScore) {
+  const r = 80, cx = 100, cy = 100;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.min(1, score / maxScore);
+  const dash = pct * circ;
+  const color = getScoreColor(score);
+  const label = getScoreLabel1000(score);
+  const uid = 'sc_' + Date.now();
+  return `
+    <svg viewBox="0 0 200 200" style="width:200px;height:200px;overflow:visible;">
+      <defs>
+        <style>
+          @keyframes dash_${uid} {
+            from { stroke-dashoffset: ${circ}; }
+            to   { stroke-dashoffset: ${circ - dash}; }
+          }
+        </style>
+      </defs>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1A1A1A" stroke-width="14"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="14"
+        stroke-linecap="round"
+        stroke-dasharray="${circ}"
+        stroke-dashoffset="${circ - dash}"
+        transform="rotate(-90 ${cx} ${cy})"
+        style="animation: dash_${uid} 1.2s cubic-bezier(.4,0,.2,1) both;"/>
+      <text x="${cx}" y="${cy - 10}" text-anchor="middle" font-family="Inter,sans-serif" font-size="34" font-weight="900" fill="${color}">${score}</text>
+      <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#555">/1000</text>
+      <text x="${cx}" y="${cy + 28}" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="${color}">${label}</text>
+    </svg>
+  `;
+}
+
+function drawSpiderSVG(axes, size) {
+  size = size || 200;
+  const cx = size/2, cy = size/2, r = size * 0.36, labelR = size * 0.48;
+  const n = axes.length;
+  const angles = axes.map((_, i) => (i * 2 * Math.PI / n) - Math.PI / 2);
+  const pt = (val, angle, radius) => {
+    const pct = val / 100;
+    return [cx + radius * pct * Math.cos(angle), cy + radius * pct * Math.sin(angle)];
+  };
+  const gridLines = [0.25, 0.5, 0.75, 1].map(g =>
+    `<polygon points="${angles.map(a=>`${cx+r*g*Math.cos(a)},${cy+r*g*Math.sin(a)}`).join(' ')}" fill="none" stroke="#2A2A2A" stroke-width="1"/>`
+  ).join('');
+  const axisLines = angles.map(a =>
+    `<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="#2A2A2A" stroke-width="1"/>`
+  ).join('');
+  const pts = axes.map((ax, i) => pt(ax.value, angles[i], r));
+  const polygon = pts.map(p=>p.join(',')).join(' ');
+  const dots = pts.map((p,i) => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${axes[i].color}"/>`).join('');
+  const labels = axes.map((ax, i) => {
+    const [lx, ly] = [cx + labelR * Math.cos(angles[i]), cy + labelR * Math.sin(angles[i])];
+    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#999" font-size="9" font-family="Inter,sans-serif">${ax.icon} ${ax.label}</text>`;
+  }).join('');
+  return `
+    <svg viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px;">
+      ${gridLines}${axisLines}
+      <polygon points="${polygon}" fill="#0055FF18" stroke="#0055FF" stroke-width="2"/>
+      ${dots}
+      ${labels}
+    </svg>
+  `;
+}
+
 function renderProovdScore() {
   const view = document.getElementById('view-score');
   if (!view) return;
 
-  const total = calculateTotalScore();
-  const d = AppState.proovdDimensions || {};
+  const score1000 = calculateProovdScore1000();
+  const legacyScore = calculateTotalScore();
   const badgeCount = (AppState.badges || []).length;
+  const scoreLabel = getScoreLabel1000(score1000);
+  const axes = computeSpiderAxes();
 
   view.innerHTML = `
     <div class="page-header">
       <h2>PROOVD Score</h2>
       <p class="muted">Il tuo profilo competenze da junior digital marketer</p>
     </div>
-    <div style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;max-width:1100px;">
+    <div style="display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start;max-width:1100px;">
+
+      <!-- Colonna sinistra: cerchio score + export -->
       <div>
-        <div style="background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:32px;text-align:center;margin-bottom:16px;">
-          <div style="font-size:80px;font-weight:900;color:#AAFF00;line-height:1;">${total}</div>
-          <div style="font-size:18px;color:#777;margin-bottom:4px;">/100 — PROOVD Score</div>
-          <div style="font-size:13px;color:#555;margin-top:8px;">${getScoreLabel(total)}</div>
-          <div style="margin:24px 0;">
-            <div id="score-gauge-main" style="position:relative;width:160px;height:80px;margin:0 auto;"></div>
+        <div style="background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:28px 24px;text-align:center;margin-bottom:16px;">
+          <div style="margin-bottom:4px;font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;">PROOVD Score</div>
+          <div style="display:flex;justify-content:center;margin:12px 0 8px;">
+            ${drawScoreCircleSVG(score1000, 1000)}
           </div>
-          <div style="background:#1A1A1A;border-radius:12px;padding:12px;font-size:13px;color:#777;">
-            🏅 ${badgeCount} badge sbloccati · 💰 ${formatCurrency ? formatCurrency(AppState.tokens || 500) : (AppState.tokens || 500) + '€'} token
+          <div style="font-size:13px;font-weight:700;color:${getScoreColor(score1000)};margin-bottom:16px;">${scoreLabel}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+            <div style="background:#1A1A1A;border-radius:10px;padding:10px;">
+              <div style="font-size:10px;color:#555;text-transform:uppercase;margin-bottom:4px;">Badge</div>
+              <div style="font-size:22px;font-weight:900;color:#AAFF00;">${badgeCount}</div>
+            </div>
+            <div style="background:#1A1A1A;border-radius:10px;padding:10px;">
+              <div style="font-size:10px;color:#555;text-transform:uppercase;margin-bottom:4px;">Campagne</div>
+              <div style="font-size:22px;font-weight:900;color:#0055FF;">${(AppState.campaigns||[]).length}</div>
+            </div>
+          </div>
+          <div style="background:#1A1A1A;border-radius:10px;padding:10px;font-size:12px;color:#777;line-height:1.6;text-align:left;">
+            <div>🪙 Token guadagnati: <strong style="color:#F0F0F0;">${AppState.totalTokensEarned||0}</strong></div>
+            <div>🃏 Flashcard: <strong style="color:#F0F0F0;">${AppState.flashcardsCompleted||0}</strong></div>
+            <div>🎤 Colloqui: <strong style="color:#F0F0F0;">${(AppState.interviewScores||[]).length}</strong></div>
+            <div>🎓 Academy: <strong style="color:#F0F0F0;">${(AppState.academyCompleted||[]).length}/7</strong></div>
           </div>
         </div>
         <button onclick="exportProovdCard()" style="width:100%;background:#AAFF00;color:#0A0A0A;border:none;padding:14px;border-radius:100px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
           📤 Esporta PROOVD Card
         </button>
       </div>
+
+      <!-- Colonna destra: spider + barre + badge -->
       <div>
-        ${renderScoreBreakdown()}
-        <div style="margin-top:20px;">
-          <h3 style="font-size:14px;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">Badge</h3>
+        <!-- Spider chart competenze -->
+        <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:24px;margin-bottom:20px;">
+          <h3 style="font-size:13px;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;">Radar Competenze</h3>
+          <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:center;">
+            <div style="display:flex;justify-content:center;">${drawSpiderSVG(axes, 220)}</div>
+            <div>
+              ${axes.map(ax => {
+                const val = ax.value;
+                return `
+                  <div style="margin-bottom:13px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                      <span style="font-size:13px;">${ax.icon} ${ax.label}</span>
+                      <span style="font-size:13px;font-weight:700;color:${ax.color};">${val}<span style="font-size:10px;color:#555;">/100</span></span>
+                    </div>
+                    <div style="background:#1A1A1A;border-radius:100px;height:5px;">
+                      <div style="background:${ax.color};height:5px;border-radius:100px;width:${val}%;transition:width 1s ease;"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Badge grid -->
+        <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:24px;">
+          <h3 style="font-size:13px;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">Badge — ${badgeCount} sbloccati su ${ALL_BADGES.filter(b=>!['first_launch','roas_master','report_ready','token_grower'].includes(b.id)).length}</h3>
           <div id="badge-grid">${renderBadgeGrid()}</div>
         </div>
       </div>
     </div>
   `;
-
-  // Draw gauge
-  drawScoreGauge(total, 'score-gauge-main');
 }
 
 function getScoreLabel(score) {
+  // legacy: score 0-100
   if (score >= 85) return '🏆 Expert — Pronto per il mercato del lavoro';
   if (score >= 70) return '⭐ Advanced — Profilo competitivo';
   if (score >= 50) return '📈 Intermediate — Buon progresso';
@@ -8394,7 +8563,6 @@ function drawScoreGauge(value, containerId) {
   if (!el) return;
   const pct = value / 100;
   const color = value >= 70 ? '#AAFF00' : value >= 50 ? '#0055FF' : '#FF6B35';
-  const angle = pct * 180;
   el.innerHTML = `
     <svg viewBox="0 0 160 80" style="width:160px;height:80px;">
       <path d="M10,80 A70,70 0 0,1 150,80" stroke="#1A1A1A" stroke-width="12" fill="none" stroke-linecap="round"/>
@@ -8414,76 +8582,15 @@ function renderScoreBreakdown() {
     { key: 'optimization', label: 'Optimization Speed', icon: '⚡', desc: 'Velocità nel riconoscere problemi e ottimizzare', color: '#B388FF' },
     { key: 'interview', label: 'Interview Readiness', icon: '🎤', desc: 'Preparazione ai colloqui e conoscenze teoriche', color: '#00E5FF' },
   ];
-
-  const radarData = dims.map(d2 => ({ label: d2.label.split(' ')[0], value: d[d2.key] || 0, max: 100 }));
-
-  let radarSVG = drawRadarSVG(radarData);
-
   const dimBars = dims.map(dim => {
     const val = Math.min(100, Math.max(0, d[dim.key] || 0));
-    return `
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-          <span style="font-size:13px;">${dim.icon} ${dim.label}</span>
-          <span style="font-size:13px;font-weight:700;color:${dim.color};">${val}/100</span>
-        </div>
-        <div style="background:#1A1A1A;border-radius:100px;height:6px;">
-          <div style="background:${dim.color};height:6px;border-radius:100px;width:${val}%;transition:width .8s ease;"></div>
-        </div>
-        <div style="font-size:11px;color:#555;margin-top:4px;">${dim.desc}</div>
-      </div>
-    `;
+    return `<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:13px;">${dim.icon} ${dim.label}</span><span style="font-size:13px;font-weight:700;color:${dim.color};">${val}/100</span></div><div style="background:#1A1A1A;border-radius:100px;height:6px;"><div style="background:${dim.color};height:6px;border-radius:100px;width:${val}%;transition:width .8s ease;"></div></div><div style="font-size:11px;color:#555;margin-top:4px;">${dim.desc}</div></div>`;
   }).join('');
-
-  return `
-    <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:24px;margin-bottom:0;">
-      <h3 style="font-size:14px;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;">Competenze</h3>
-      <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;margin-bottom:20px;">
-        <div style="text-align:center;">${radarSVG}</div>
-        <div>${dimBars}</div>
-      </div>
-    </div>
-  `;
+  return `<div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:24px;margin-bottom:0;"><h3 style="font-size:14px;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;">Competenze</h3>${dimBars}</div>`;
 }
 
 function drawRadarSVG(data) {
-  const cx = 90, cy = 90, r = 70;
-  const n = data.length;
-  const angles = data.map((_, i) => (i * 2 * Math.PI / n) - Math.PI / 2);
-
-  function point(val, angle, radius) {
-    const pct = val / 100;
-    return [cx + radius * pct * Math.cos(angle), cy + radius * pct * Math.sin(angle)];
-  }
-
-  // Grid circles
-  const gridCircles = [0.25, 0.5, 0.75, 1].map(g =>
-    `<circle cx="${cx}" cy="${cy}" r="${r * g}" fill="none" stroke="#2A2A2A" stroke-width="1"/>`
-  ).join('');
-
-  // Axes
-  const axes = angles.map(a =>
-    `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(a)}" y2="${cy + r * Math.sin(a)}" stroke="#2A2A2A" stroke-width="1"/>`
-  ).join('');
-
-  // Data polygon
-  const pts = data.map((d2, i) => point(d2.value, angles[i], r));
-  const polygon = pts.map(p => p.join(',')).join(' ');
-
-  // Labels
-  const labels = data.map((d2, i) => {
-    const [lx, ly] = [cx + (r + 14) * Math.cos(angles[i]), cy + (r + 14) * Math.sin(angles[i])];
-    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#777" font-size="9" font-family="Inter,sans-serif">${d2.label}</text>`;
-  }).join('');
-
-  return `
-    <svg viewBox="0 0 180 180" style="width:180px;height:180px;">
-      ${gridCircles}${axes}
-      <polygon points="${polygon}" fill="#0055FF22" stroke="#0055FF" stroke-width="2"/>
-      ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#0055FF"/>`).join('')}
-      ${labels}
-    </svg>
-  `;
+  return drawSpiderSVG(data.map(d=>({...d, icon:'', color:'#0055FF'})), 180);
 }
 
 function calculateTotalScore() {
@@ -8496,57 +8603,32 @@ function updateProovdScore(dimension, delta) {
   if (!AppState.proovdDimensions) {
     AppState.proovdDimensions = { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 };
   }
-  const dimMap = { strategy: 'strategy', dataLiteracy: 'dataLiteracy', creative: 'creative', optimization: 'optimization', interview: 'interview' };
-  const key = dimMap[dimension] || dimension;
+  const key = dimension;
   if (key in AppState.proovdDimensions) {
     AppState.proovdDimensions[key] = Math.min(100, Math.max(0, (AppState.proovdDimensions[key] || 0) + delta));
   }
   AppState.score = calculateTotalScore();
   if (typeof saveState === 'function') saveState();
   const badge = document.getElementById('score-badge');
-  if (badge) badge.textContent = AppState.score + '/100';
+  if (badge) badge.textContent = calculateProovdScore1000() + '/1000';
   checkBadges();
 }
 
-// BADGE SYSTEM (uses ALL_BADGES defined in shell)
-
-function checkBadges() {
-  if (!AppState.badges) AppState.badges = [];
-  let newBadges = [];
-  ALL_BADGES.forEach(badge => {
-    if (!AppState.badges.includes(badge.id)) {
-      try {
-        if (badge.condition(AppState)) {
-          AppState.badges.push(badge.id);
-          newBadges.push(badge);
-        }
-      } catch (e) { /* ignore condition errors */ }
-    }
-  });
-  if (newBadges.length > 0) {
-    if (typeof saveState === 'function') saveState();
-    newBadges.forEach(b => {
-      if (typeof showToast === 'function') {
-        showToast(`${b.emoji} Badge sbloccato: ${b.name}!`, 'success');
-      }
-    });
-    // Refresh badge grid if visible
-    const grid = document.getElementById('badge-grid');
-    if (grid) grid.innerHTML = renderBadgeGrid();
-  }
-}
+// BADGE SYSTEM
 
 function renderBadgeGrid() {
   const unlockedIds = AppState.badges || [];
+  // Show only the primary (non-legacy) badges
+  const primaryBadges = ALL_BADGES.filter(b => !['first_launch','roas_master','report_ready','token_grower'].includes(b.id));
   return `
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
-      ${ALL_BADGES.map(badge => {
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;">
+      ${primaryBadges.map(badge => {
         const unlocked = unlockedIds.includes(badge.id);
         return `
-          <div title="${badge.desc}" style="background:${unlocked ? '#1A1A1A' : '#111'};border:1px solid ${unlocked ? '#2A2A2A' : '#1A1A1A'};border-radius:12px;padding:14px 12px;text-align:center;opacity:${unlocked ? '1' : '0.4'};transition:all .2s;cursor:default;">
-            <div style="font-size:28px;margin-bottom:6px;filter:${unlocked ? 'none' : 'grayscale(1)'};">${badge.emoji}</div>
-            <div style="font-size:12px;font-weight:600;color:${unlocked ? '#F0F0F0' : '#555'};margin-bottom:2px;">${badge.name}</div>
-            <div style="font-size:10px;color:#555;line-height:1.4;">${unlocked ? badge.desc : '???'}</div>
+          <div title="${badge.desc}" style="background:${unlocked?'#1A1A1A':'#0D0D0D'};border:1px solid ${unlocked?'#AAFF0030':'#1A1A1A'};border-radius:12px;padding:14px 10px;text-align:center;transition:all .25s;cursor:default;${unlocked?'box-shadow:0 0 16px #AAFF0010;':'opacity:.45;'}">
+            <div style="font-size:26px;margin-bottom:6px;filter:${unlocked?'none':'grayscale(1)'};">${badge.emoji}</div>
+            <div style="font-size:11px;font-weight:700;color:${unlocked?'#F0F0F0':'#555'};margin-bottom:3px;">${badge.name}</div>
+            <div style="font-size:10px;color:${unlocked?'#777':'#333'};line-height:1.4;">${unlocked?badge.desc:'🔒 Bloccato'}</div>
           </div>
         `;
       }).join('')}
@@ -8556,97 +8638,100 @@ function renderBadgeGrid() {
 
 // 8C — EXPORT PROFILE CARD
 function exportProovdCard() {
-  const totalScore = calculateTotalScore();
-  const unlockedBadges = (AppState.badges || []).slice(0, 3);
-  const d = AppState.proovdDimensions || { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 };
+  const totalScore = calculateProovdScore1000();
+  const legacyScore = calculateTotalScore();
+  const unlockedBadgeIds = (AppState.badges || []).slice(0, 3);
+  const axes = computeSpiderAxes();
   const userName = AppState.userName || 'Utente PROOVD';
+  const scoreLabel = getScoreLabel1000(totalScore);
+  const scoreColor = getScoreColor(totalScore);
+
+  function miniSpiderSVG(axes) {
+    const size = 140, cx = size/2, cy = size/2, r = size * 0.34, labelR = size * 0.46;
+    const n = axes.length;
+    const angles = axes.map((_,i)=>(i*2*Math.PI/n)-Math.PI/2);
+    const gridLines = [0.5,1].map(g=>`<polygon points="${angles.map(a=>`${cx+r*g*Math.cos(a)},${cy+r*g*Math.sin(a)}`).join(' ')}" fill="none" stroke="#2A2A2A" stroke-width="1"/>`).join('');
+    const axisL = angles.map(a=>`<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="#2A2A2A" stroke-width="1"/>`).join('');
+    const pts = axes.map((ax,i)=>[cx+r*(ax.value/100)*Math.cos(angles[i]),cy+r*(ax.value/100)*Math.sin(angles[i])]);
+    const polygon = pts.map(p=>p.join(',')).join(' ');
+    const lbs = axes.map((ax,i)=>{const[lx,ly]=[cx+labelR*Math.cos(angles[i]),cy+labelR*Math.sin(angles[i])];return`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#555" font-size="7" font-family="Inter,sans-serif">${ax.label}</text>`;}).join('');
+    return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${gridLines}${axisL}<polygon points="${polygon}" fill="#0055FF18" stroke="#0055FF" stroke-width="1.5"/>${lbs}</svg>`;
+  }
+
+  const primaryBadges = ALL_BADGES.filter(b => !['first_launch','roas_master','report_ready','token_grower'].includes(b.id));
+  const top3 = unlockedBadgeIds.map(id => primaryBadges.find(b=>b.id===id)).filter(Boolean).slice(0,3);
 
   const cardHTML = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>PROOVD Card - ${userName}</title>
+<title>PROOVD Card — ${userName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0A0A0A; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: Inter, sans-serif; padding: 20px; }
-  .card { width: 420px; background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%); border: 1px solid #2A2A2A; border-radius: 24px; padding: 36px; color: #F0F0F0; position: relative; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,.8); }
-  .card::before { content: ''; position: absolute; top: -100px; right: -100px; width: 300px; height: 300px; background: radial-gradient(circle, #0055FF18 0%, transparent 70%); pointer-events: none; }
-  .card::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 200px; height: 200px; background: radial-gradient(circle, #AAFF0010 0%, transparent 70%); pointer-events: none; }
-  .logo { font-size: 13px; font-weight: 700; color: #AAFF00; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 28px; }
-  .username { font-size: 26px; font-weight: 900; margin-bottom: 2px; }
-  .subtitle { font-size: 13px; color: #777; margin-bottom: 28px; }
-  .score-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 28px; }
-  .score-num { font-size: 80px; font-weight: 900; color: #AAFF00; line-height: 1; }
-  .score-meta { padding-bottom: 8px; }
-  .score-denom { font-size: 28px; font-weight: 700; color: #555; }
-  .score-label { font-size: 12px; color: #777; margin-top: 4px; }
-  .divider { height: 1px; background: #2A2A2A; margin: 20px 0; }
-  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-  .dim { background: #0A0A0A; border-radius: 10px; padding: 10px 14px; }
-  .dim-name { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
-  .dim-val { font-size: 22px; font-weight: 900; }
-  .dim-bar { height: 3px; background: #1A1A1A; border-radius: 3px; margin-top: 6px; }
-  .dim-bar-fill { height: 3px; border-radius: 3px; }
-  .badges-row { display: flex; gap: 10px; margin-bottom: 20px; }
-  .badge-chip { background: #0A0A0A; border-radius: 10px; padding: 10px; font-size: 22px; border: 1px solid #1A1A1A; }
-  .footer { font-size: 11px; color: #333; display: flex; justify-content: space-between; }
-  @media print { body { background: #0A0A0A; } }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0A0A0A; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:Inter,sans-serif; padding:20px; }
+  .card { width:440px; background:linear-gradient(140deg,#111 0%,#181818 100%); border:1px solid #2A2A2A; border-radius:28px; padding:36px; color:#F0F0F0; position:relative; overflow:hidden; box-shadow:0 40px 80px rgba(0,0,0,.9); }
+  .glow1 { position:absolute; top:-80px; right:-80px; width:280px; height:280px; background:radial-gradient(circle,#0055FF1A 0%,transparent 70%); pointer-events:none; }
+  .glow2 { position:absolute; bottom:-60px; left:-60px; width:200px; height:200px; background:radial-gradient(circle,#AAFF0012 0%,transparent 70%); pointer-events:none; }
+  .logo { font-size:12px; font-weight:700; color:#AAFF00; letter-spacing:.18em; text-transform:uppercase; margin-bottom:24px; }
+  .user-row { display:flex; align-items:center; gap:14px; margin-bottom:24px; }
+  .avatar { width:48px; height:48px; background:#1A1A1A; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; border:2px solid #2A2A2A; flex-shrink:0; }
+  .username { font-size:22px; font-weight:900; }
+  .subtitle { font-size:12px; color:#777; margin-top:2px; }
+  .score-row { display:flex; align-items:center; gap:16px; margin-bottom:24px; padding:20px; background:#0D0D0D; border-radius:16px; border:1px solid #1E1E1E; }
+  .score-num { font-size:64px; font-weight:900; color:${scoreColor}; line-height:1; }
+  .score-side { flex:1; }
+  .score-label { font-size:13px; color:#777; }
+  .score-level { font-size:18px; font-weight:700; color:${scoreColor}; margin-top:4px; }
+  .section-title { font-size:10px; font-weight:600; color:#555; text-transform:uppercase; letter-spacing:.1em; margin-bottom:12px; }
+  .badges-row { display:flex; gap:10px; margin-bottom:20px; }
+  .badge-chip { background:#0A0A0A; border:1px solid #1A1A1A; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .badge-chip-emoji { font-size:20px; }
+  .badge-chip-name { font-size:9px; color:#555; white-space:nowrap; }
+  .spider-row { margin-bottom:20px; display:flex; align-items:center; gap:16px; }
+  .divider { height:1px; background:#1A1A1A; margin:20px 0; }
+  .footer { font-size:11px; color:#333; display:flex; justify-content:space-between; }
+  @media print { body { background:#0A0A0A; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .card { box-shadow:none; } }
 </style>
 </head>
 <body>
 <div class="card">
+  <div class="glow1"></div><div class="glow2"></div>
   <div class="logo">◆ PROOVD</div>
-  <div class="username">${userName}</div>
-  <div class="subtitle">Junior Digital Marketer</div>
+  <div class="user-row">
+    <div class="avatar">🧑‍💼</div>
+    <div>
+      <div class="username">${userName}</div>
+      <div class="subtitle">Junior Digital Marketer</div>
+    </div>
+  </div>
   <div class="score-row">
     <div class="score-num">${totalScore}</div>
-    <div class="score-meta">
-      <div class="score-denom">/100</div>
-      <div class="score-label">PROOVD Score</div>
+    <div class="score-side">
+      <div class="score-label">PROOVD Score / 1000</div>
+      <div class="score-level">${scoreLabel}</div>
+    </div>
+  </div>
+  ${top3.length > 0 ? `
+  <div class="section-title">Badge Sbloccati</div>
+  <div class="badges-row">
+    ${top3.map(b=>`<div class="badge-chip"><div class="badge-chip-emoji">${b.emoji}</div><div class="badge-chip-name">${b.name}</div></div>`).join('')}
+    ${(AppState.badges||[]).length > 3 ? `<div class="badge-chip" style="justify-content:center;"><div style="font-size:14px;font-weight:700;color:#555;">+${(AppState.badges||[]).length-3}</div><div class="badge-chip-name">altri</div></div>` : ''}
+  </div>` : ''}
+  <div class="section-title">Radar Competenze</div>
+  <div class="spider-row">
+    ${miniSpiderSVG(axes)}
+    <div style="flex:1;">
+      ${axes.slice(0,4).map(ax=>`<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#777;">${ax.icon} ${ax.label}</span><span style="font-weight:700;color:${ax.color};">${ax.value}</span></div>`).join('')}
     </div>
   </div>
   <div class="divider"></div>
-  <div class="dims">
-    <div class="dim">
-      <div class="dim-name">Campaign Strategy</div>
-      <div class="dim-val" style="color:#0055FF;">${d.strategy || 0}</div>
-      <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.strategy || 0}%;background:#0055FF;"></div></div>
-    </div>
-    <div class="dim">
-      <div class="dim-name">Data Literacy</div>
-      <div class="dim-val" style="color:#AAFF00;">${d.dataLiteracy || 0}</div>
-      <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.dataLiteracy || 0}%;background:#AAFF00;"></div></div>
-    </div>
-    <div class="dim">
-      <div class="dim-name">Creative Judgment</div>
-      <div class="dim-val" style="color:#FF6B35;">${d.creative || 0}</div>
-      <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.creative || 0}%;background:#FF6B35;"></div></div>
-    </div>
-    <div class="dim">
-      <div class="dim-name">Optimization</div>
-      <div class="dim-val" style="color:#B388FF;">${d.optimization || 0}</div>
-      <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.optimization || 0}%;background:#B388FF;"></div></div>
-    </div>
-    <div class="dim" style="grid-column:1/-1;">
-      <div class="dim-name">Interview Readiness</div>
-      <div class="dim-val" style="color:#00E5FF;">${d.interview || 0}</div>
-      <div class="dim-bar"><div class="dim-bar-fill" style="width:${d.interview || 0}%;background:#00E5FF;"></div></div>
-    </div>
-  </div>
-  ${unlockedBadges.length > 0 ? `
-  <div class="badges-row">
-    ${unlockedBadges.map(bId => {
-      const b = ALL_BADGES.find(ab => ab.id === bId);
-      return b ? `<div class="badge-chip" title="${b.name}">${b.emoji}</div>` : '';
-    }).join('')}
-    ${unlockedBadges.length < (AppState.badges || []).length ? `<div class="badge-chip" style="font-size:12px;color:#555;display:flex;align-items:center;">+${(AppState.badges || []).length - 3}</div>` : ''}
-  </div>` : ''}
   <div class="footer">
-    <span>proovd.it</span>
+    <span>Generato da PROOVD.io</span>
     <span>${new Date().toLocaleDateString('it-IT')}</span>
   </div>
 </div>
+<script>window.onload=()=>setTimeout(()=>window.print(),800);<\/script>
 </body>
 </html>`;
 
@@ -8691,7 +8776,7 @@ function initApp() {
   const tokenEl = document.getElementById('token-balance');
   if (tokenEl) tokenEl.textContent = (AppState.tokens || 500).toFixed(0);
   const scoreEl = document.getElementById('score-badge');
-  if (scoreEl) scoreEl.textContent = AppState.score + '/100';
+  if (scoreEl) scoreEl.textContent = calculateProovdScore1000() + '/1000';
 
   // Check badges on init
   checkBadges();
