@@ -314,11 +314,20 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .interview-msg.coach{background:#AAFF0010;border:1px solid #AAFF0030;align-self:flex-start}
 .interview-input-row{display:flex;gap:8px}
 /* === FLASHCARD === */
-.flashcard-wrapper{perspective:600px;margin:0 auto;max-width:480px}
-.flashcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:transform 300ms ease;transform-style:preserve-3d;position:relative}
-.flashcard.revealed{border-color:var(--lime)}
-.flashcard-front,.flashcard-back{backface-visibility:hidden}
-.flashcard-back{color:var(--muted);font-size:13px;line-height:1.7;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);text-align:left}
+.flashcard-wrapper{perspective:1000px;margin:0 auto;max-width:540px;cursor:pointer}
+.flashcard-inner{position:relative;width:100%;min-height:260px;transform-style:preserve-3d;transition:transform 0.55s cubic-bezier(.4,2,.6,1)}
+.flashcard-inner.flipped{transform:rotateY(180deg)}
+.flashcard-face{position:absolute;top:0;left:0;width:100%;min-height:260px;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:20px;padding:32px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.flashcard-front-face{background:#111;border:2px solid #2A2A2A}
+.flashcard-back-face{background:#111;border:2px solid #AAFF0044;transform:rotateY(180deg);text-align:left;align-items:flex-start;justify-content:flex-start}
+.flashcard-spacer{min-height:260px;width:100%;visibility:hidden;display:block}
+/* === STUDY ACCORDION === */
+.study-accordion-item{border:1px solid #2A2A2A;border-radius:14px;overflow:hidden;margin-bottom:10px;transition:border-color .2s}
+.study-accordion-item.open{border-color:#0055FF44}
+.study-accordion-header{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;background:#111;user-select:none}
+.study-accordion-header:hover{background:#1A1A1A}
+.study-accordion-body{display:none;padding:20px 24px;background:#0A0A0A;border-top:1px solid #1A1A1A}
+.study-accordion-item.open .study-accordion-body{display:block}
 /* === SCORE PAGE === */
 .score-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 @media(max-width:900px){.score-layout{grid-template-columns:1fr}}
@@ -7283,7 +7292,7 @@ const INTERVIEW_QUESTION_BANK = [
 let interviewState = {
   active: false,
   role: null,
-  difficulty: 'base',
+  difficulty: 'junior',
   company: null,
   questionIndex: 0,
   currentQuestion: '',
@@ -7573,14 +7582,15 @@ function renderInterviewSetup() {
   `).join('');
 
   const difficultyOpts = [
-    { id: 'base', label: 'Base' },
-    { id: 'intermedio', label: 'Intermedio' },
-    { id: 'avanzato', label: 'Avanzato' },
+    { id: 'junior', label: 'Junior', desc: 'Domande base, valutazione generosa' },
+    { id: 'mid', label: 'Mid', desc: 'Domande tecniche, casi pratici' },
+    { id: 'senior', label: 'Senior', desc: 'Domande strategiche, budget management' },
   ].map(d => `
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-      <input type="radio" name="iv-difficulty" value="${d.id}" ${interviewState.difficulty === d.id ? 'checked' : ''} onchange="interviewState.difficulty='${d.id}'">
-      <span class="pill" style="padding:6px 16px;border-radius:100px;background:${interviewState.difficulty === d.id ? '#0055FF' : '#1A1A1A'};font-size:13px;">${d.label}</span>
-    </label>
+    <div onclick="selectInterviewDifficulty('${d.id}')" id="diff-${d.id}"
+      style="background:${interviewState.difficulty === d.id ? '#0055FF22' : '#1A1A1A'};border:2px solid ${interviewState.difficulty === d.id ? '#0055FF' : '#2A2A2A'};border-radius:14px;padding:14px 20px;cursor:pointer;transition:all .2s;min-width:140px;">
+      <div style="font-weight:700;font-size:14px;color:${interviewState.difficulty === d.id ? '#0055FF' : '#F0F0F0'};">${d.label}</div>
+      <div style="font-size:11px;color:#777;margin-top:4px;">${d.desc}</div>
+    </div>
   `).join('');
 
   const companyOpts = COMPANY_TYPES.map(c => `
@@ -7610,15 +7620,7 @@ function renderInterviewSetup() {
     </div>
   `;
 
-  // Bind radio change visuals
-  content.querySelectorAll('input[name="iv-difficulty"]').forEach(inp => {
-    inp.addEventListener('change', () => {
-      interviewState.difficulty = inp.value;
-      content.querySelectorAll('input[name="iv-difficulty"]').forEach(i => {
-        i.nextElementSibling.style.background = i.checked ? '#0055FF' : '#1A1A1A';
-      });
-    });
-  });
+  // Bind company radio change visuals
   content.querySelectorAll('input[name="iv-company"]').forEach(inp => {
     inp.addEventListener('change', () => {
       interviewState.company = inp.value;
@@ -7640,6 +7642,18 @@ function selectInterviewRole(roleId) {
     sel.style.borderColor = '#AAFF00';
     sel.style.background = '#1A1A1A';
   }
+}
+
+function selectInterviewDifficulty(diffId) {
+  interviewState.difficulty = diffId;
+  ['junior','mid','senior'].forEach(id => {
+    const el = document.getElementById('diff-' + id);
+    if (!el) return;
+    const active = id === diffId;
+    el.style.background = active ? '#0055FF22' : '#1A1A1A';
+    el.style.borderColor = active ? '#0055FF' : '#2A2A2A';
+    el.querySelector('div').style.color = active ? '#0055FF' : '#F0F0F0';
+  });
 }
 
 async function startInterview() {
@@ -7714,7 +7728,7 @@ async function askNextQuestion() {
   const systemPrompt = `Sei un recruiter/responsabile marketing che sta intervistando un candidato per il ruolo di ${role.name} in ${company.context}.
 Difficoltà: ${interviewState.difficulty}.
 Fai UNA SOLA domanda di colloquio realistica in italiano, specifica per il ruolo.
-La domanda deve essere ${interviewState.difficulty === 'base' ? 'semplice e concettuale' : interviewState.difficulty === 'intermedio' ? 'pratica con scenari reali' : 'complessa con case study'}.
+La domanda deve essere ${(interviewState.difficulty === 'junior' || interviewState.difficulty === 'base') ? 'semplice e concettuale, adatta a un candidato alle prime armi' : interviewState.difficulty === 'mid' || interviewState.difficulty === 'intermedio' ? 'pratica con scenari reali e casi tecnici concreti' : 'strategica e complessa, con budget management e decisioni di alto livello'}.
 Non aggiungere prefazioni. Inizia direttamente con la domanda.`;
 
   const contextMsg = interviewState.questionIndex === 0
@@ -7900,7 +7914,7 @@ function renderInterviewSummary(avgScore, summary) {
 }
 
 function restartInterview() {
-  interviewState = { active: false, role: null, difficulty: 'base', company: null, questionIndex: 0, currentQuestion: '', answers: [], totalScore: 0 };
+  interviewState = { active: false, role: null, difficulty: 'junior', company: null, questionIndex: 0, currentQuestion: '', answers: [], totalScore: 0 };
   renderInterviewSetup();
 }
 
@@ -8026,27 +8040,29 @@ function renderCurrentFlashcard() {
       <div style="background:#2A2A2A;border-radius:100px;height:4px;margin-bottom:24px;">
         <div style="background:#0055FF;height:4px;border-radius:100px;width:${progressPct}%;transition:width .3s;"></div>
       </div>
-      <div id="flashcard-front" onclick="revealFlashcard()"
-        style="background:#111;border:2px solid #2A2A2A;border-radius:20px;padding:40px 32px;cursor:pointer;min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;transition:border-color .2s;margin-bottom:16px;"
-        onmouseover="this.style.borderColor='#0055FF'" onmouseout="this.style.borderColor='${flashcardState.revealed ? '#AAFF00' : '#2A2A2A'}'">
-        <div>
-          <div style="font-size:12px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;">DOMANDA</div>
-          <div style="font-size:18px;font-weight:600;line-height:1.5;">${escapeHtml(card.q)}</div>
-          ${!flashcardState.revealed ? '<div style="margin-top:20px;font-size:12px;color:#555;">Clicca per rivelare la risposta</div>' : ''}
+
+      <div class="flashcard-wrapper" onclick="revealFlashcard()">
+        <div class="flashcard-inner${flashcardState.revealed ? ' flipped' : ''}" id="fc-inner">
+          <div class="flashcard-face flashcard-front-face">
+            <div style="font-size:12px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;">DOMANDA — clicca per girare</div>
+            <div style="font-size:18px;font-weight:600;line-height:1.5;color:#F0F0F0;">${escapeHtml(card.q)}</div>
+          </div>
+          <div class="flashcard-face flashcard-back-face" onclick="event.stopPropagation()">
+            <div style="font-size:11px;color:#AAFF00;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;font-weight:700;">RISPOSTA</div>
+            <div style="font-size:14px;line-height:1.75;color:#E0E0E0;">${escapeHtml(card.a)}</div>
+          </div>
         </div>
+        <div class="flashcard-spacer"></div>
       </div>
+
       ${flashcardState.revealed ? `
-        <div style="background:#111;border:2px solid #AAFF0033;border-radius:20px;padding:32px;margin-bottom:20px;animation:fadeIn .3s ease;">
-          <div style="font-size:12px;color:#AAFF00;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">RISPOSTA</div>
-          <div style="font-size:15px;line-height:1.7;color:#E0E0E0;">${escapeHtml(card.a)}</div>
-        </div>
-        <div style="display:flex;gap:12px;">
-          <button onclick="flashcardAnswer(false)" style="flex:1;background:#FF6B3522;border:1px solid #FF6B3566;color:#FF6B35;padding:14px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;">✗ Non sapevo</button>
-          <button onclick="flashcardAnswer(true)" style="flex:1;background:#AAFF0022;border:1px solid #AAFF0066;color:#AAFF00;padding:14px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;">✓ Sapevo!</button>
+        <div style="display:flex;gap:12px;margin-top:20px;">
+          <button onclick="flashcardAnswer(false)" style="flex:1;background:#FF6B3522;border:1px solid #FF6B3566;color:#FF6B35;padding:14px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:700;">❌ Da ripassare</button>
+          <button onclick="flashcardAnswer(true)" style="flex:1;background:#AAFF0022;border:1px solid #AAFF0066;color:#AAFF00;padding:14px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:700;">✅ Lo so!</button>
         </div>
       ` : `
-        <div style="text-align:center;">
-          <button onclick="revealFlashcard()" style="background:#0055FF;color:#fff;border:none;padding:14px 32px;border-radius:100px;font-size:15px;font-weight:600;cursor:pointer;">Rivela risposta</button>
+        <div style="text-align:center;margin-top:16px;">
+          <span style="font-size:12px;color:#555;">Clicca sulla card per girare</span>
         </div>
       `}
     </div>
@@ -8054,8 +8070,17 @@ function renderCurrentFlashcard() {
 }
 
 function revealFlashcard() {
+  if (flashcardState.revealed) return;
   flashcardState.revealed = true;
-  renderCurrentFlashcard();
+  // Animate flip without full re-render for smoothness
+  const inner = document.getElementById('fc-inner');
+  if (inner) {
+    inner.classList.add('flipped');
+    // Show answer buttons after flip
+    setTimeout(() => renderCurrentFlashcard(), 200);
+  } else {
+    renderCurrentFlashcard();
+  }
 }
 
 function flashcardAnswer(knew) {
@@ -8071,36 +8096,194 @@ function flashcardAnswer(knew) {
 }
 
 // 7C — STUDIA
+const STUDY_GUIDE_SECTIONS = [
+  {
+    id: 'fondamentali',
+    icon: '📐',
+    title: 'Fondamentali Digital Marketing',
+    color: '#AAFF00',
+    content: `<p><strong style="color:#AAFF00">Digital Marketing</strong> è l'insieme di attività di marketing che sfruttano canali digitali (motori di ricerca, social, email, display) per raggiungere e convertire utenti online.</p>
+<p style="margin-top:12px"><strong>KPI essenziali da conoscere:</strong></p>
+<ul style="margin:10px 0 0 16px;line-height:2">
+  <li><strong>CTR</strong> (Click-Through Rate) = Click / Impressioni × 100 — misura l'attrattività dell'annuncio</li>
+  <li><strong>CPM</strong> (Cost Per Mille) = Budget / Impressioni × 1000 — costo per 1.000 visualizzazioni</li>
+  <li><strong>CPC</strong> (Cost Per Click) = Budget / Click — costo per ogni click ricevuto</li>
+  <li><strong>CPA</strong> (Cost Per Acquisition) = Budget / Conversioni — costo per ottenere un'azione</li>
+  <li><strong>ROAS</strong> (Return On Ad Spend) = Revenue / Spesa × 100 — ritorno sull'investimento</li>
+  <li><strong>LTV</strong> (Lifetime Value) = AOV × Frequenza × Anni — valore totale di un cliente</li>
+  <li><strong>AOV</strong> (Average Order Value) = Revenue / Ordini — valore medio dell'ordine</li>
+</ul>`,
+    questions: [
+      { q: 'Cos\'è il ROAS e quando è considerato "buono"?', a: 'ROAS = Revenue / Spesa pubblicitaria × 100. Un ROAS del 300% (3x) è il minimo accettabile. Sopra il 500% (5x) è ottimo. Dipende sempre dal margine di prodotto: un business con margine basso ha bisogno di ROAS molto più alto per essere profittevole.' },
+      { q: 'Differenza tra reach e impressioni?', a: 'La reach è il numero di utenti UNICI che hanno visto il contenuto. Le impressioni sono il totale delle visualizzazioni, incluse più visualizzazioni dello stesso utente. Se 100 persone vedono il tuo annuncio in media 3 volte: reach = 100, impressioni = 300.' },
+      { q: 'Cos\'è il LTV e perché è fondamentale?', a: 'Il Lifetime Value è il valore totale che un cliente genera nel corso della sua relazione con il brand. È fondamentale perché stabilisce quanto puoi permetterti di spendere per acquisire un cliente (CAC). Regola aurea: LTV / CAC ≥ 3.' }
+    ]
+  },
+  {
+    id: 'googleads',
+    icon: '🔍',
+    title: 'Google Ads',
+    color: '#0055FF',
+    content: `<p><strong style="color:#0055FF">Google Ads</strong> è la piattaforma di advertising di Google. Si basa su un sistema d'asta: gli inserzionisti fanno offerte sulle keyword e il vincitore viene scelto in base all'<strong>Ad Rank</strong>.</p>
+<p style="margin-top:12px"><strong>Struttura account:</strong> Account → Campagna (obiettivo/budget/geo) → Ad Group (tema keyword) → Annunci + Keyword + Landing Page</p>
+<p style="margin-top:12px"><strong>Match Type delle keyword:</strong></p>
+<ul style="margin:8px 0 0 16px;line-height:2">
+  <li><strong>[Esatto]</strong> — solo query con stesso significato. Max precisione, min volume.</li>
+  <li><strong>"Frase"</strong> — include varianti del significato chiave. Bilanciato.</li>
+  <li><strong>Generico</strong> — AI trova ricerche pertinenti. Max volume, meno controllo.</li>
+  <li><strong>Negative</strong> — esclude ricerche non rilevanti. Fondamentale!</li>
+</ul>
+<p style="margin-top:12px"><strong>Quality Score (1-10)</strong> = CTR previsto + Pertinenza annuncio + Qualità landing page. QS alto = CPC più basso e posizioni migliori nell'asta.</p>
+<p style="margin-top:12px"><strong>RSA (Responsive Search Ads)</strong>: fornisci 3-15 titoli + 2-4 descrizioni. Google AI testa tutte le combinazioni e mostra quella più pertinente per ogni utente.</p>`,
+    questions: [
+      { q: 'Cos\'è il Quality Score e come influisce sui costi?', a: 'Il Quality Score (1-10) misura la qualità e rilevanza degli annunci. Componenti: CTR atteso (peso maggiore), rilevanza annuncio rispetto alla keyword, qualità della landing page. QS alto → CPC più basso: con QS 9 potresti pagare 0.30€ per un click che un competitor con QS 3 paga 1.50€.' },
+      { q: 'Quale match type useresti per una campagna di brand?', a: 'Per le campagne brand si usa principalmente [Esatto] per garantire che gli annunci escano SOLO per ricerche del proprio brand, evitando spesa inutile. Si aggiunge "Frase" per varianti come "brand + prodotto". Si escludono i competitor come negative.' },
+      { q: 'Come struttureresti una campagna Google Search per un e-commerce di scarpe?', a: 'Campagna per categoria: scarpe uomo / scarpe donna / scarpe bambino. Ad group per sottocategoria: sneakers, stivali, mocassini. Keyword: [nike air max 90] (esatto) + "sneakers uomo" (frase) + scarpe sportive (generico modificato). Negative: gratuito, usato, taglia non disponibile. Landing page dedicata per ogni ad group.' }
+    ]
+  },
+  {
+    id: 'metaads',
+    icon: '📘',
+    title: 'Meta Ads',
+    color: '#0055FF',
+    content: `<p><strong style="color:#0055FF">Meta Ads</strong> (Facebook + Instagram) è il canale #1 per demand generation. Permette un targeting demografico/comportamentale/per interesse senza pari.</p>
+<p style="margin-top:12px"><strong>Struttura campagne:</strong> Campagna (obiettivo) → Adset (audience + budget + placement) → Annuncio (creativo + copy + CTA)</p>
+<p style="margin-top:12px"><strong>Tipi di audience:</strong></p>
+<ul style="margin:8px 0 0 16px;line-height:2">
+  <li><strong>Interessi/Comportamenti</strong> — utenti interessati a topic specifici</li>
+  <li><strong>Custom Audience</strong> — da CRM, pixel, video views, interazioni</li>
+  <li><strong>Lookalike</strong> — simili ai tuoi migliori clienti (1% = più simile, 10% = più ampio)</li>
+  <li><strong>Advantage+</strong> — AI di Meta gestisce il targeting automaticamente</li>
+</ul>
+<p style="margin-top:12px"><strong>Meta Pixel</strong>: codice JS sul sito che traccia PageView, ViewContent, AddToCart, Purchase. Fondamentale per ottimizzare le conversioni e fare remarketing.</p>
+<p style="margin-top:12px"><strong>CAPI</strong> (Conversions API): integrazione server-to-server che invia eventi di conversione direttamente a Meta, bypassando i blocker di cookie. Migliora il match rate del 15-30%.</p>`,
+    questions: [
+      { q: 'Differenza tra CBO e ABO su Meta Ads?', a: 'CBO (Campaign Budget Optimization): budget impostato a livello campagna, Meta lo distribuisce automaticamente tra gli adset in base alle performance. ABO (Adset Budget Optimization): controllo manuale del budget per ogni adset. CBO è consigliato per ottimizzazione AI, ABO per test controllati dove vuoi spendere uguale su ogni variante.' },
+      { q: 'Cos\'è un Lookalike Audience e quando lo usi?', a: 'Una Lookalike Audience è un\'audience costruita dall\'algoritmo Meta che trova utenti con caratteristiche simili a un Custom Audience esistente (es. tuoi clienti). Si imposta la percentuale: 1% = utenti più simili (meno volume), 10% = più ampio (meno preciso). Si usa dopo aver accumulato almeno 500-1000 eventi di conversione di qualità.' },
+      { q: 'Hai una campagna con CTR alto ma CVR bassissimo, dove guardi?', a: 'Un CTR alto con CVR basso indica che le persone cliccano ma non convertono. Cause da investigare: 1) Landing page poco ottimizzata (lenta, non mobile-friendly, messaggio incoerente con l\'annuncio). 2) Targeting sbagliato (persone attratte dall\'annuncio ma non interessate al prodotto). 3) Offerta non competitiva. 4) Problema tecnico nel tracking delle conversioni.' }
+    ]
+  },
+  {
+    id: 'metriche',
+    icon: '📊',
+    title: 'Metriche & Reporting',
+    color: '#AAFF00',
+    content: `<p><strong style="color:#AAFF00">Il reporting</strong> è la skill che differenzia un marketer junior da uno senior. Non si tratta solo di raccogliere dati: si tratta di trasformarli in insight e raccomandazioni actionable.</p>
+<p style="margin-top:12px"><strong>Come leggere una dashboard:</strong></p>
+<ol style="margin:8px 0 0 16px;line-height:2">
+  <li>Confronta sempre con il periodo precedente (WoW, MoM, YoY)</li>
+  <li>Identifica le anomalie (picchi, cali improvvisi)</li>
+  <li>Distingui vanity metrics (like, impressioni) da business metrics (ROAS, CPA, revenue)</li>
+  <li>Cerca correlazioni tra metriche (es. CTR aumenta ma CVR cala = problema landing)</li>
+</ol>
+<p style="margin-top:12px"><strong>Modelli di attribuzione:</strong></p>
+<ul style="margin:8px 0 0 16px;line-height:2">
+  <li><strong>Last Click</strong> — tutto il credito all'ultimo touchpoint (default, ma limitante)</li>
+  <li><strong>First Click</strong> — credito al primo contatto (valorizza awareness)</li>
+  <li><strong>Linear</strong> — distribuito uguale su tutti i touchpoint</li>
+  <li><strong>Time Decay</strong> — più peso ai touchpoint recenti prima della conversione</li>
+  <li><strong>Data-Driven</strong> — ML assegna credito in base ai pattern reali (il migliore)</li>
+</ul>
+<p style="margin-top:12px"><strong>Benchmark di settore 2025:</strong> Google Search CTR 3-5% | Meta CTR 0.9-1.5% | ROAS buono >3x | ottimo >5x | Email open rate >25%</p>`,
+    questions: [
+      { q: 'Come struttureresti un report mensile per un cliente?', a: 'Struttura: 1) Executive Summary (una pagina, solo i KPI chiave e il take-away principale) 2) Performance overview con confronto periodo precedente 3) Analisi per canale 4) Top performer e bottom performer creativi 5) Insights e anomalie spiegate 6) Raccomandazioni prioritizzate 7) Piano per il mese successivo. Parla sempre di impatto sul business, non solo di metriche digitali.' },
+      { q: 'Qual è la differenza tra last-click e data-driven attribution?', a: 'Last-click assegna il 100% del credito di conversione all\'ultimo annuncio cliccato, ignorando tutto il percorso precedente. Data-driven usa il machine learning per analizzare quali touchpoint hanno realmente contribuito alla conversione, distribuendo il credito in modo proporzionale. Data-driven è molto più accurato ma richiede almeno 300 conversioni/mese per funzionare.' },
+      { q: 'Come spiegheresti a un cliente perché il ROAS di Meta sembra diverso da quello del P&L?', a: 'Il ROAS di piattaforma conta le conversioni attribuite secondo il suo modello (spesso 7-day click, 1-day view), che può contare conversioni che sarebbero avvenute anche senza l\'annuncio. Il P&L è la realtà finanziaria. La differenza si chiama "incrementality gap". Soluzione: usare conversion lift test o incrementality measurement per misurare il vero impatto.' }
+    ]
+  },
+  {
+    id: 'softskills',
+    icon: '🎯',
+    title: 'Soft Skills & Metodo STAR',
+    color: '#AAFF00',
+    content: `<p>Le domande comportamentali ("Raccontami di una volta in cui...") si rispondono con il <strong style="color:#AAFF00">metodo STAR</strong>:</p>
+<ul style="margin:10px 0 0 16px;line-height:2.2">
+  <li><strong>S — Situation</strong>: descrivi il contesto (2-3 frasi)</li>
+  <li><strong>T — Task</strong>: qual era il tuo compito o obiettivo?</li>
+  <li><strong>A — Action</strong>: cosa hai fatto TU nello specifico? (il cuore della risposta)</li>
+  <li><strong>R — Result</strong>: qual è stato il risultato? Usa numeri dove possibile.</li>
+</ul>
+<p style="margin-top:16px"><strong>Domande frequenti da preparare:</strong></p>
+<ul style="margin:8px 0 0 16px;line-height:2">
+  <li>"Parlami di un errore che hai fatto" → mostra autoconsapevolezza e cosa hai imparato</li>
+  <li>"Come gestisci le priorità?" → descrivi un framework (Eisenhower, to-do list, OKR)</li>
+  <li>"Dove ti vedi tra 3 anni?" → ambizioso ma realistico, collegato al ruolo</li>
+  <li>"Perché vuoi lavorare qui?" → fai ricerca sull'azienda PRIMA del colloquio</li>
+  <li>"Qual è il tuo punto debole?" → scegli uno reale ma non dealbreaker, spiega come ci stai lavorando</li>
+</ul>
+<p style="margin-top:16px"><strong>Tips universali:</strong> Arriva preparato (studia il sito, il tone of voice, le campagne recenti dell'azienda). Fai domande alla fine (dimostra interesse). Non dire mai "non so" — di' "non lo conosco bene ma lo affronterei così..."</p>`,
+    questions: [
+      { q: '"Raccontami di un progetto in cui hai avuto un risultato che non ti aspettavi"', a: 'Usa il metodo STAR. Esempio: "Stavo gestendo una campagna Meta per un cliente e-commerce [S]. Il mio obiettivo era raggiungere un ROAS 3x entro il mese [T]. Ho deciso di testare 5 creatività video UGC invece dei banner statici standard e ho ottimizzato il targeting verso audience Lookalike basate sui clienti con LTV più alto [A]. Il risultato è stato un ROAS 5.2x, il doppio dell\'obiettivo, con un CPA ridotto del 34% [R]."' },
+      { q: '"Come ti tieni aggiornato sul digital marketing?"', a: 'Mostra proattività concreta, non generica. Esempio: "Seguo Marketing Italiano su LinkedIn, leggo le newsletter di Marketers e GrowthNotes, monitoro i blog ufficiali di Meta e Google Ads per gli aggiornamenti di prodotto. Ogni settimana dedico 1-2 ore a leggere case study di campagne reali. Recentemente ho partecipato a [evento/corso concreto]." Evita risposte vaghe come "seguo i social".' },
+      { q: '"Qual è la tua esperienza con i dati e l\'analisi?"', a: 'Anche se sei junior, mostra approccio analitico. "Sono abituato a prendere decisioni basate sui dati: leggo dashboard quotidianamente, so costruire report in Google Sheets con pivot table, ho familiarità con Google Analytics 4. Ho imparato a distinguere le correlazioni dalle causalità e so quando un test ha raggiunto la significatività statistica prima di dichiarare un vincitore."' }
+    ]
+  }
+];
+
+let studyOpenSection = null;
+
 function renderStudyMode() {
   const content = document.getElementById('interview-content');
   if (!content) return;
 
-  const suggestTopics = ['CTR', 'ROAS', 'Lookalike Audience', 'Quality Score', 'CPM', 'Retargeting', 'A/B Testing', 'Attribution', 'Funnel TOFU/MOFU/BOFU', 'Smart Bidding', 'Meta Pixel', 'UTM Parameters', 'Core Web Vitals', 'Email Deliverability', 'Customer Lifetime Value'];
+  const suggestTopics = ['CTR', 'ROAS', 'Quality Score', 'CPM', 'Meta Pixel', 'A/B Testing', 'Attribution', 'Funnel TOFU/MOFU/BOFU', 'Smart Bidding', 'UTM Parameters', 'LTV', 'CPA'];
 
   const chips = suggestTopics.map(t => `
-    <button onclick="studyTopic('${t}')" style="background:#1A1A1A;border:1px solid #2A2A2A;color:#E0E0E0;padding:8px 16px;border-radius:100px;font-size:13px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#0055FF';this.style.color='#0055FF'" onmouseout="this.style.borderColor='#2A2A2A';this.style.color='#E0E0E0'">${t}</button>
+    <button onclick="studyTopic('${t}')" style="background:#1A1A1A;border:1px solid #2A2A2A;color:#E0E0E0;padding:6px 14px;border-radius:100px;font-size:12px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#0055FF';this.style.color='#0055FF'" onmouseout="this.style.borderColor='#2A2A2A';this.style.color='#E0E0E0'">${t}</button>
   `).join('');
 
+  const accordionHtml = STUDY_GUIDE_SECTIONS.map((sec, i) => {
+    const isOpen = studyOpenSection === sec.id;
+    const questionsHtml = sec.questions.map((qitem, qi) => `
+      <div style="background:#111;border:1px solid #2A2A2A;border-radius:12px;padding:16px;margin-bottom:10px;">
+        <div style="font-size:13px;color:#AAFF00;font-weight:600;margin-bottom:8px;">❓ ${qitem.q}</div>
+        <div style="font-size:13px;color:#999;line-height:1.7;padding-top:8px;border-top:1px solid #1A1A1A;">${qitem.a}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="study-accordion-item${isOpen ? ' open' : ''}" id="acc-${sec.id}">
+        <div class="study-accordion-header" onclick="toggleStudySection('${sec.id}')">
+          <span style="font-size:20px">${sec.icon}</span>
+          <span style="font-weight:700;font-size:14px;flex:1">${sec.title}</span>
+          <span style="font-size:12px;color:#555;margin-right:10px">${sec.questions.length} domande tipiche</span>
+          <span style="color:${sec.color};font-size:18px;transition:transform .25s;display:inline-block;transform:${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'}"">›</span>
+        </div>
+        <div class="study-accordion-body">
+          <div style="font-size:14px;line-height:1.75;color:#D0D0D0;margin-bottom:20px">${sec.content}</div>
+          <div style="font-size:12px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;font-weight:700">Domande tipiche al colloquio + risposta modello</div>
+          ${questionsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
   content.innerHTML = `
-    <div style="max-width:680px;">
-      <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:24px;margin-bottom:20px;">
-        <label style="font-size:13px;color:#777;display:block;margin-bottom:10px;">Di cosa vuoi sapere di più?</label>
-        <div style="display:flex;gap:10px;">
+    <div style="max-width:760px;">
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:16px;font-weight:700;margin:0 0 4px">Guida Studio</h3>
+        <p style="font-size:13px;color:#777;margin:0">5 sezioni essenziali per prepararti al colloquio da zero.</p>
+      </div>
+      ${accordionHtml}
+      <div style="margin-top:32px;background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;">🤖 Chiedi all'AI su qualsiasi argomento</div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;">
           <input id="study-input" type="text" placeholder="Es: 'ROAS', 'Meta Pixel', 'A/B Testing'..."
             style="flex:1;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:12px 16px;color:#F0F0F0;font-size:14px;outline:none;"
             onkeydown="if(event.key==='Enter'){const v=this.value.trim();if(v)studyTopic(v);}"
             onfocus="this.style.borderColor='#0055FF'" onblur="this.style.borderColor='#2A2A2A'">
           <button onclick="const v=document.getElementById('study-input').value.trim();if(v)studyTopic(v);"
-            style="background:#0055FF;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">Spiega →</button>
+            style="background:#0055FF;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">Spiega →</button>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">${chips}</div>
+        <div id="study-output" style="margin-top:16px;min-height:0;"></div>
       </div>
-      <div style="margin-bottom:20px;">
-        <p style="font-size:12px;color:#555;margin-bottom:10px;">Argomenti suggeriti:</p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">${chips}</div>
-      </div>
-      <div id="study-output" style="min-height:80px;"></div>
     </div>
   `;
+}
+
+function toggleStudySection(sectionId) {
+  studyOpenSection = studyOpenSection === sectionId ? null : sectionId;
+  renderStudyMode();
 }
 
 async function studyTopic(topic) {
