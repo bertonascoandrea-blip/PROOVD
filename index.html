@@ -507,6 +507,9 @@ const DEFAULT_STATE = {
   proovdDimensions: { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 },
   aiCallCount: 0, reportsGenerated: 0, flashcardXP: 0,
   coachHistory: [], currentModule: 'dashboard',
+  wizardDone: false, wizardStep: 0, wizardAnswers: {},
+  liveView: 'cards',
+  activeLearningPath: null, academyCompleted: [],
 };
 let AppState = { ...DEFAULT_STATE };
 
@@ -1270,6 +1273,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // === MODULE: DASHBOARD ===
 
+// === CAMPAIGN WIZARD ===
+function recommendPlatforms(goal, budget, audience) {
+  const recs = {
+    'vendite_micro_b2c': ['Meta Ads', 'TikTok Ads', 'Pinterest Ads'],
+    'vendite_piccolo_b2c': ['Meta Ads', 'Google Search', 'YouTube Ads'],
+    'vendite_medio_b2c': ['Meta Ads', 'Google Search', 'Google Display'],
+    'lead_micro_b2b': ['LinkedIn Ads', 'Google Search', 'Email Marketing'],
+    'lead_piccolo_b2b': ['LinkedIn Ads', 'Google Search', 'Meta Ads'],
+    'lead_medio_b2b': ['LinkedIn Ads', 'Google Search', 'YouTube Ads'],
+    'visibilita_micro_b2c': ['TikTok Ads', 'Meta Ads', 'Pinterest Ads'],
+    'visibilita_piccolo_b2c': ['YouTube Ads', 'Meta Ads', 'TikTok Ads'],
+    'visibilita_medio_b2c': ['YouTube Ads', 'Meta Ads', 'Google Display'],
+    'appinstalls_micro_b2c': ['Meta Ads', 'TikTok Ads', 'Google Search'],
+    'appinstalls_piccolo_b2c': ['Meta Ads', 'Google Search', 'YouTube Ads'],
+    'appinstalls_medio_b2c': ['Google Search', 'Meta Ads', 'YouTube Ads'],
+    'lead_micro_entrambi': ['Meta Ads', 'Google Search', 'Email Marketing'],
+    'visibilita_micro_b2b': ['LinkedIn Ads', 'Google Search', 'YouTube Ads'],
+  };
+  const key = goal + '_' + budget + '_' + audience;
+  return recs[key] || ['Meta Ads', 'Google Search', 'TikTok Ads'];
+}
+
+function wizardSelectAnswer(field, value) {
+  AppState.wizardAnswers[field] = value;
+  AppState.wizardStep = (AppState.wizardStep || 0) + 1;
+  saveState();
+  renderDashboard();
+}
+
+function dismissWizard() {
+  AppState.wizardDone = true;
+  saveState();
+  renderDashboard();
+}
+
+function renderWizardCard() {
+  if (AppState.wizardDone) return '';
+  const step = AppState.wizardStep || 0;
+  const answers = AppState.wizardAnswers || {};
+  const platMotivations = {
+    'Meta Ads': 'Alto volume, targeting preciso, ottimo per conversioni',
+    'TikTok Ads': 'Costo basso, virale, ideale per brand awareness giovane',
+    'Pinterest Ads': "Alta intenzione d'acquisto, ottimo per e-commerce",
+    'Google Search': 'Intercetta domanda attiva, conversioni alte',
+    'YouTube Ads': 'Video storytelling, brand recall elevato',
+    'Google Display': 'Retargeting e awareness a basso costo',
+    'LinkedIn Ads': 'B2B preciso, decision maker, lead quality alta',
+    'Email Marketing': 'ROI altissimo, nurturing, costo minimo'
+  };
+
+  let content = '';
+  if (step === 0) {
+    content = '<p style="margin:0 0 12px;font-size:14px;color:#ccc">Qual è il tuo obiettivo?</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      ['🛒 Vendite|vendite', '🎯 Lead|lead', '👀 Visibilità|visibilita', '📱 App installs|appinstalls'].map(function(item) {
+        var parts = item.split('|'); var label = parts[0]; var val = parts[1];
+        return '<button onclick="wizardSelectAnswer(\'goal\',\'' + val + '\')" style="padding:8px 18px;border-radius:100px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0F0F0;font-size:13px;cursor:pointer">' + label + '</button>';
+      }).join('') + '</div>';
+  } else if (step === 1) {
+    content = '<p style="margin:0 0 12px;font-size:14px;color:#ccc">Qual è il tuo budget?</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      ['Micro (&lt;€100)|micro', 'Piccolo (€100-500)|piccolo', 'Medio (€500+)|medio'].map(function(item) {
+        var parts = item.split('|'); var label = parts[0]; var val = parts[1];
+        return '<button onclick="wizardSelectAnswer(\'budget\',\'' + val + '\')" style="padding:8px 18px;border-radius:100px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0F0F0;font-size:13px;cursor:pointer">' + label + '</button>';
+      }).join('') + '</div>';
+  } else if (step === 2) {
+    content = '<p style="margin:0 0 12px;font-size:14px;color:#ccc">Qual è il tuo pubblico?</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      ['🛍️ Consumer (B2C)|b2c', '💼 Business (B2B)|b2b', '🌍 Entrambi|entrambi'].map(function(item) {
+        var parts = item.split('|'); var label = parts[0]; var val = parts[1];
+        return '<button onclick="wizardSelectAnswer(\'audience\',\'' + val + '\')" style="padding:8px 18px;border-radius:100px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0F0F0;font-size:13px;cursor:pointer">' + label + '</button>';
+      }).join('') + '</div>';
+  } else {
+    // Show recommendations
+    var platforms = recommendPlatforms(answers.goal, answers.budget, answers.audience);
+    content = '<p style="margin:0 0 16px;font-size:14px;color:#AAFF00;font-weight:600">🎯 Piattaforme consigliate per te:</p>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+      platforms.map(function(p, i) {
+        return '<div style="background:#1A1A1A;border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">' +
+          '<div><span style="font-weight:700;font-size:14px">' + (i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉') + ' ' + p + '</span>' +
+          '<div style="font-size:12px;color:#777;margin-top:4px">' + (platMotivations[p] || '') + '</div></div>' +
+          '<button onclick="AppState.preselectedPlatform=\'' + p + '\';navigateTo(\'builder\')" style="padding:6px 14px;border-radius:100px;border:none;background:#0055FF;color:#fff;font-size:12px;cursor:pointer;white-space:nowrap">Crea campagna →</button>' +
+          '</div>';
+      }).join('') + '</div>';
+  }
+
+  var steps = step >= 3 ? 3 : step;
+  var progressBar = '<div style="display:flex;gap:4px;margin-bottom:16px">' +
+    [0,1,2].map(function(i) {
+      return '<div style="flex:1;height:3px;border-radius:2px;background:' + (i < steps ? '#0055FF' : (i === steps && step < 3 ? '#0055FF44' : '#2A2A2A')) + '"></div>';
+    }).join('') + '</div>';
+
+  return '<div id="campaign-wizard-card" class="card" style="margin-bottom:20px;background:linear-gradient(135deg,#0055FF11,#AAFF0011);border:1px solid #0055FF33">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+    '<div style="font-size:15px;font-weight:700">🚀 Wizard — Trova la piattaforma giusta</div>' +
+    '<button onclick="dismissWizard()" style="background:none;border:none;color:#777;font-size:18px;cursor:pointer;padding:0 4px">×</button>' +
+    '</div>' + progressBar + content + '</div>';
+}
+
 function renderDashboard() {
   const view = document.getElementById('view-dashboard');
   if (!view) return;
@@ -1289,6 +1391,8 @@ function renderDashboard() {
         <span>+</span> Nuova Campagna
       </button>
     </div>
+
+    ${renderWizardCard()}
 
     <div class="kpi-grid" id="kpi-grid"></div>
 
@@ -3103,16 +3207,22 @@ function renderLiveManager() {
         </div>
       </div>
 
-      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-        ${[['all','Tutte'],['active','Attive'],['paused','In pausa'],['completed','Completate']].map(([val,label]) => `
-          <button class="pill ${AppState.liveFilter === val ? 'active' : ''}"
-            style="cursor:pointer;background:${AppState.liveFilter === val ? '#0055FF' : '#1A1A1A'};color:${AppState.liveFilter === val ? '#fff' : '#777777'};border:1px solid ${AppState.liveFilter === val ? '#0055FF' : '#2A2A2A'};padding:6px 16px;border-radius:100px;font-size:13px;"
-            onclick="AppState.liveFilter='${val}';renderCampaignTable();">${label}</button>
-        `).join('')}
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${[['all','Tutte'],['active','Attive'],['paused','In pausa'],['completed','Completate']].map(([val,label]) => `
+            <button class="pill ${AppState.liveFilter === val ? 'active' : ''}"
+              style="cursor:pointer;background:${AppState.liveFilter === val ? '#0055FF' : '#1A1A1A'};color:${AppState.liveFilter === val ? '#fff' : '#777777'};border:1px solid ${AppState.liveFilter === val ? '#0055FF' : '#2A2A2A'};padding:6px 16px;border-radius:100px;font-size:13px;"
+              onclick="AppState.liveFilter='${val}';renderCampaignTable();">${label}</button>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="AppState.liveView='cards';renderLiveManager()" style="padding:6px 16px;border-radius:100px;border:1px solid ${(AppState.liveView||'cards')==='cards'?'#0055FF':'#2A2A2A'};background:${(AppState.liveView||'cards')==='cards'?'#0055FF':'#1A1A1A'};color:${(AppState.liveView||'cards')==='cards'?'#fff':'#777'};font-size:13px;cursor:pointer">🃏 Cards</button>
+          <button onclick="AppState.liveView='table';renderLiveManager()" style="padding:6px 16px;border-radius:100px;border:1px solid ${(AppState.liveView||'cards')==='table'?'#0055FF':'#2A2A2A'};background:${(AppState.liveView||'cards')==='table'?'#0055FF':'#1A1A1A'};color:${(AppState.liveView||'cards')==='table'?'#fff':'#777'};font-size:13px;cursor:pointer">📋 Tabella</button>
+        </div>
       </div>
 
       <div id="campaign-table-container">
-        ${renderCampaignTableHTML()}
+        ${(AppState.liveView||'cards')==='cards' ? renderCampaignCardsHTML(campaigns) : renderCampaignTableHTML()}
       </div>
 
       ${renderAICampaignIntelligence(campaigns)}
@@ -3178,9 +3288,41 @@ function regenerateCampaignAI(campaignId) {
   generateCampaignWithAI(c);
 }
 
+function renderCampaignCardsHTML(campaigns) {
+  const filter = AppState.liveFilter || 'all';
+  const benchmarkCTR = {'Meta Ads':1.5,'Google Search':3.0,'YouTube Ads':0.5,'TikTok Ads':1.2,'LinkedIn Ads':0.8,'Google Display':0.35,'Pinterest Ads':0.5,'Snapchat Ads':0.8,'X Ads':0.9,'Email Marketing':2.5,'SEO/SEM Organico':2.0,'Programmatic/DSP':0.3};
+  const filtered = filter === 'all' ? campaigns : campaigns.filter(c => c.status === filter);
+  if (filtered.length === 0) return '<div style="text-align:center;padding:48px;color:#777">Nessuna campagna trovata.</div>';
+  return '<div style="display:grid;gap:16px">' + filtered.map(function(c) {
+    var statusColor = c.status === 'active' ? '#AAFF00' : c.status === 'paused' ? '#FFB800' : '#777';
+    var statusLabel = c.status === 'active' ? 'Attiva' : c.status === 'paused' ? 'In pausa' : 'Completata';
+    var ctr = c.ctr || 0;
+    var roas = c.roas || 0;
+    var bench = benchmarkCTR[c.platform] || 1;
+    var ctrColor = ctr >= bench ? '#AAFF00' : ctr < bench * 0.5 ? '#FF4444' : '#FFB800';
+    var roasColor = roas >= 3 ? '#AAFF00' : roas < 1 ? '#FF4444' : '#FFB800';
+    var warnings = '';
+    if (ctr < bench * 0.5) warnings += '<div style="background:#FF444415;border:1px solid #FF444430;border-radius:8px;padding:8px 12px;font-size:12px;color:#FF8888;margin-top:10px">⚠️ CTR basso vs benchmark — prova a rinnovare le creatività</div>';
+    if (roas < 1) warnings += '<div style="background:#FF000015;border:1px solid #FF000030;border-radius:8px;padding:8px 12px;font-size:12px;color:#FF6666;margin-top:6px">🔴 ROAS negativo — valuta di mettere in pausa</div>';
+    return '<div class="card" style="border-left:3px solid ' + statusColor + ';padding:16px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div><span style="font-weight:700;font-size:15px">' + getPlatformEmoji(c.platform) + ' ' + c.name + '</span>' +
+      '<span style="font-size:12px;color:#777;margin-left:8px">' + c.platform + ' · Giorno ' + (c.day||1) + '/' + (c.duration||30) + '</span></div>' +
+      '<span style="font-size:11px;padding:3px 10px;border-radius:100px;background:' + statusColor + '22;color:' + statusColor + ';font-weight:600">' + statusLabel + '</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">' +
+      '<div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center"><div style="font-size:11px;color:#777;margin-bottom:4px">CTR</div><div style="font-size:18px;font-weight:700;color:' + ctrColor + '">' + ctr.toFixed(2) + '%</div></div>' +
+      '<div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center"><div style="font-size:11px;color:#777;margin-bottom:4px">ROAS</div><div style="font-size:18px;font-weight:700;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div></div>' +
+      '<div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center"><div style="font-size:11px;color:#777;margin-bottom:4px">Speso/Budget</div><div style="font-size:15px;font-weight:700;color:#F0F0F0">€' + (c.spent||0).toFixed(0) + '/€' + (c.budget||0) + '</div></div>' +
+      '</div>' + warnings + '</div>';
+  }).join('') + '</div>';
+}
+
 function renderCampaignTable() {
   const container = document.getElementById('campaign-table-container');
-  if (container) container.innerHTML = renderCampaignTableHTML();
+  if (!container) return;
+  const campaigns = AppState.campaigns || [];
+  container.innerHTML = (AppState.liveView||'cards')==='cards' ? renderCampaignCardsHTML(campaigns) : renderCampaignTableHTML();
 }
 
 function renderCampaignTableHTML() {
@@ -5361,6 +5503,58 @@ let interviewState = {
   totalScore: 0,
 };
 
+const LEARNING_PATHS = [
+  { id: 'ecommerce', icon: '📦', title: 'E-commerce Path', steps: ['Budget & Strategy', 'Meta Ads', 'Google Search', 'Analytics', 'Reporting'] },
+  { id: 'b2b', icon: '🏢', title: 'B2B/Lead Gen Path', steps: ['LinkedIn Ads', 'Google Search', 'Email Marketing', 'Analytics', 'Reporting'] },
+  { id: 'social', icon: '📱', title: 'Social Media Path', steps: ['Meta Ads', 'TikTok Ads', 'YouTube Ads', 'Analytics', 'Audience Studio'] },
+];
+
+const PATH_STEP_MODULES = {
+  'Meta Ads': 'builder', 'Google Search': 'builder', 'TikTok Ads': 'builder',
+  'LinkedIn Ads': 'builder', 'YouTube Ads': 'builder', 'Email Marketing': 'builder',
+  'Google Display': 'builder', 'Analytics': 'analytics', 'Reporting': 'reporting',
+  'Budget & Strategy': 'builder', 'Audience Studio': 'audience',
+};
+
+function renderLearningPathsSection() {
+  const completed = AppState.academyCompleted || [];
+  const active = AppState.activeLearningPath || null;
+  let banner = '';
+  if (active) {
+    const path = LEARNING_PATHS.find(function(p) { return p.id === active; });
+    if (path) {
+      const nextStep = path.steps.find(function(s) { return completed.indexOf(s) === -1; });
+      banner = '<div style="background:linear-gradient(135deg,#0055FF22,#AAFF0011);border:1px solid #0055FF44;border-radius:16px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">' +
+        '<div><div style="font-size:12px;color:#AAFF00;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Percorso attivo: ' + path.icon + ' ' + path.title + '</div>' +
+        '<div style="font-size:14px;color:#F0F0F0">' + (nextStep ? 'Prossimo step: <strong>' + nextStep + '</strong>' : '🎉 Percorso completato!') + '</div></div>' +
+        (nextStep ? '<button onclick="navigateTo(\'' + (PATH_STEP_MODULES[nextStep]||'builder') + '\')" style="padding:8px 18px;border-radius:100px;border:none;background:#0055FF;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap">Continua →</button>' : '') +
+        '</div>';
+    }
+  }
+  var pathCards = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:32px">' +
+    LEARNING_PATHS.map(function(path) {
+      var isActive = active === path.id;
+      return '<div class="card" style="border:1px solid ' + (isActive ? '#0055FF' : '#2A2A2A') + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<div style="font-size:15px;font-weight:700">' + path.icon + ' ' + path.title + '</div>' +
+        (isActive ? '<span style="font-size:11px;padding:2px 8px;border-radius:100px;background:#0055FF22;color:#0055FF">Attivo</span>' : '') + '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">' +
+        path.steps.map(function(step, i) {
+          var done = completed.indexOf(step) !== -1;
+          var isNext = !done && (i === 0 || completed.indexOf(path.steps[i-1]) !== -1);
+          var color = done ? '#AAFF00' : isNext ? '#0055FF' : '#2A2A2A';
+          var textColor = done ? '#AAFF00' : isNext ? '#F0F0F0' : '#555';
+          return '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div style="width:18px;height:18px;border-radius:50%;border:2px solid ' + color + ';display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;color:' + color + '">' + (done ? '✓' : (i+1)) + '</div>' +
+            '<span style="font-size:13px;color:' + textColor + '">' + step + '</span></div>';
+        }).join('') +
+        '</div>' +
+        '<button onclick="AppState.activeLearningPath=\'' + path.id + '\';saveState();renderInterviewCoach()" style="width:100%;padding:8px;border-radius:100px;border:1px solid ' + (isActive ? '#0055FF' : '#2A2A2A') + ';background:' + (isActive ? '#0055FF' : 'transparent') + ';color:' + (isActive ? '#fff' : '#777') + ';font-size:13px;cursor:pointer">' + (isActive ? '✓ Percorso scelto' : 'Segui questo percorso') + '</button>' +
+        '</div>';
+    }).join('') + '</div>';
+  return banner + '<h3 style="font-size:16px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px">🗺️ Learning Path</h3>' + pathCards;
+}
+
 function renderInterviewCoach() {
   const view = document.getElementById('view-interview');
   if (!view) return;
@@ -5369,6 +5563,7 @@ function renderInterviewCoach() {
       <h2>Interview Coach</h2>
       <p class="muted">Preparati al tuo prossimo colloquio in digital marketing</p>
     </div>
+    ${renderLearningPathsSection()}
     <div class="tab-bar" style="display:flex;gap:8px;margin-bottom:24px;">
       <button class="tab-btn active" id="itab-interview" onclick="switchInterviewTab('interview')">🎤 Colloquio</button>
       <button class="tab-btn" id="itab-flashcard" onclick="switchInterviewTab('flashcard')">📚 Flashcard</button>
