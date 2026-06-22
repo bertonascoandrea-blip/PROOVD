@@ -453,6 +453,53 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 </div>
 
 <script>
+// === SUPABASE CONFIG ===
+const SUPABASE_URL = 'https://mzbguicvbeitlukhxbqk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16Ymd1aWN2YmVpdGx1a2h4YnFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzM0NDAsImV4cCI6MjA5NzcwOTQ0MH0._VMZYdCCXn-OsgWRALTZ0PJsmKm6ryl-Ux-jy709u0I';
+
+let _authSession = null; // { access_token, user: { id, email } }
+
+async function sbFetch(path, opts = {}) {
+  const headers = { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (_authSession?.access_token) headers['Authorization'] = `Bearer ${_authSession.access_token}`;
+  const res = await fetch(SUPABASE_URL + path, { ...opts, headers });
+  const text = await res.text();
+  try { return { ok: res.ok, status: res.status, data: JSON.parse(text) }; }
+  catch { return { ok: res.ok, status: res.status, data: text }; }
+}
+
+async function supabaseSignUp(email, password, username) {
+  const r = await sbFetch('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password, data: { username } }) });
+  return r;
+}
+async function supabaseSignIn(email, password) {
+  const r = await sbFetch('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email, password }) });
+  return r;
+}
+async function supabaseSignOut() {
+  if (_authSession?.access_token) await sbFetch('/auth/v1/logout', { method: 'POST' });
+  _authSession = null;
+  localStorage.removeItem('proovd_session');
+}
+async function supabaseLoadProfile() {
+  const userId = _authSession?.user?.id;
+  if (!userId) return null;
+  const r = await sbFetch(`/rest/v1/profiles?id=eq.${userId}&select=game_state`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+  if (r.ok && r.data?.length) return r.data[0].game_state;
+  return null;
+}
+async function supabaseSaveProfile(state) {
+  const userId = _authSession?.user?.id;
+  if (!userId) return;
+  const safe = { ...state };
+  delete safe.apiKey; // non salvare la key in cloud
+  await sbFetch('/rest/v1/profiles', {
+    method: 'POST',
+    headers: { 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify({ id: userId, email: _authSession.user.email, game_state: safe, updated_at: new Date().toISOString() })
+  });
+}
+
 // === STATE MANAGEMENT ===
 const DEFAULT_STATE = {
   tokens: 500, score: 0, userName: 'Marketer', theme: 'dark', apiKey: '',
@@ -465,6 +512,7 @@ let AppState = { ...DEFAULT_STATE };
 
 function saveState() {
   try { localStorage.setItem('proovd_state', JSON.stringify(AppState)); } catch(e) {}
+  if (_authSession) supabaseSaveProfile(AppState).catch(()=>{});
 }
 function loadState() {
   try {
@@ -1020,9 +1068,113 @@ function checkBadges() {
   if (newBadge) saveState();
 }
 
-// === INIT ===
-document.addEventListener('DOMContentLoaded', () => {
-  loadState();
+// === AUTH UI ===
+function showAuthScreen() {
+  document.getElementById('app').style.display = 'none';
+  let el = document.getElementById('auth-screen');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'auth-screen';
+    el.style.cssText = 'position:fixed;inset:0;background:#0A0A0A;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:Inter,system-ui,sans-serif';
+    document.body.appendChild(el);
+  }
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <div style="width:100%;max-width:400px;padding:0 20px">
+      <div style="text-align:center;margin-bottom:40px">
+        <div style="font-size:40px;font-weight:900;color:#AAFF00;letter-spacing:-1px">PROOVD</div>
+        <div style="color:#777;font-size:14px;margin-top:6px">Simulatore di Digital Marketing</div>
+      </div>
+      <div style="background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:28px">
+        <div style="display:flex;gap:0;margin-bottom:24px;background:#1A1A1A;border-radius:100px;padding:3px">
+          <button onclick="switchAuthTab('login')" id="tab-login" style="flex:1;padding:8px;border:none;border-radius:100px;background:#0055FF;color:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:all 200ms">Accedi</button>
+          <button onclick="switchAuthTab('signup')" id="tab-signup" style="flex:1;padding:8px;border:none;border-radius:100px;background:transparent;color:#777;font-weight:600;font-size:13px;cursor:pointer;transition:all 200ms">Registrati</button>
+        </div>
+        <div id="auth-signup-name" style="display:none;margin-bottom:14px">
+          <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Nome / Nickname</label>
+          <input id="auth-username" type="text" placeholder="Il tuo nome" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Email</label>
+          <input id="auth-email" type="email" placeholder="tu@email.com" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit">
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="font-size:11px;color:#777;font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Password</label>
+          <input id="auth-password" type="password" placeholder="Min. 6 caratteri" style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:11px 14px;color:#F0F0F0;font-size:14px;outline:none;font-family:inherit" onkeydown="if(event.key==='Enter')doAuth()">
+        </div>
+        <div id="auth-error" style="display:none;background:rgba(255,59,59,.12);border:1px solid rgba(255,59,59,.3);border-radius:8px;padding:10px 14px;color:#FF3B3B;font-size:13px;margin-bottom:14px"></div>
+        <button onclick="doAuth()" id="auth-btn" style="width:100%;padding:13px;background:#0055FF;color:#fff;border:none;border-radius:100px;font-weight:700;font-size:15px;cursor:pointer;transition:opacity 200ms">Accedi</button>
+        <div style="text-align:center;margin-top:16px;color:#555;font-size:12px">Continua come ospite → <a onclick="guestLogin()" style="color:#AAFF00;cursor:pointer;font-weight:600">Prova senza account</a></div>
+      </div>
+    </div>`;
+  document.getElementById('auth-email').focus();
+}
+let _authTab = 'login';
+function switchAuthTab(tab) {
+  _authTab = tab;
+  const isLogin = tab === 'login';
+  document.getElementById('tab-login').style.cssText = `flex:1;padding:8px;border:none;border-radius:100px;background:${isLogin?'#0055FF':'transparent'};color:${isLogin?'#fff':'#777'};font-weight:600;font-size:13px;cursor:pointer;transition:all 200ms`;
+  document.getElementById('tab-signup').style.cssText = `flex:1;padding:8px;border:none;border-radius:100px;background:${!isLogin?'#0055FF':'transparent'};color:${!isLogin?'#fff':'#777'};font-weight:600;font-size:13px;cursor:pointer;transition:all 200ms`;
+  document.getElementById('auth-signup-name').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('auth-btn').textContent = isLogin ? 'Accedi' : 'Crea account';
+  document.getElementById('auth-error').style.display = 'none';
+}
+async function doAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-btn');
+  if (!email || !password) { errEl.textContent = 'Inserisci email e password'; errEl.style.display = 'block'; return; }
+  btn.textContent = '...'; btn.disabled = true;
+  try {
+    let r;
+    if (_authTab === 'login') {
+      r = await supabaseSignIn(email, password);
+    } else {
+      const username = document.getElementById('auth-username').value.trim() || 'Marketer';
+      r = await supabaseSignUp(email, password, username);
+      if (r.ok && r.data?.user) {
+        errEl.style.background = 'rgba(0,200,83,.12)'; errEl.style.borderColor = 'rgba(0,200,83,.3)'; errEl.style.color = '#00C853';
+        errEl.textContent = '✅ Account creato! Controlla la tua email per confermare, poi accedi.';
+        errEl.style.display = 'block';
+        btn.textContent = 'Accedi'; btn.disabled = false;
+        switchAuthTab('login'); return;
+      }
+    }
+    if (!r.ok || r.data?.error) {
+      const msg = r.data?.error_description || r.data?.message || r.data?.error || 'Errore di accesso';
+      errEl.textContent = msg; errEl.style.display = 'block';
+      btn.textContent = _authTab === 'login' ? 'Accedi' : 'Crea account'; btn.disabled = false; return;
+    }
+    _authSession = r.data;
+    localStorage.setItem('proovd_session', JSON.stringify({ access_token: r.data.access_token, user: r.data.user }));
+    const username = r.data.user?.user_metadata?.username || email.split('@')[0];
+    await afterLogin(username);
+  } catch(e) {
+    errEl.textContent = 'Errore di rete. Riprova.'; errEl.style.display = 'block';
+    btn.textContent = _authTab === 'login' ? 'Accedi' : 'Crea account'; btn.disabled = false;
+  }
+}
+async function guestLogin() {
+  _authSession = null;
+  hideAuthScreen();
+}
+async function afterLogin(username) {
+  const cloudState = await supabaseLoadProfile();
+  if (cloudState) {
+    AppState = { ...DEFAULT_STATE, ...cloudState };
+    if (username && username !== 'Marketer') AppState.userName = username;
+    localStorage.setItem('proovd_state', JSON.stringify(AppState));
+  } else {
+    loadState();
+    if (username && username !== 'Marketer') AppState.userName = username;
+  }
+  hideAuthScreen();
+}
+function hideAuthScreen() {
+  const el = document.getElementById('auth-screen');
+  if (el) el.style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
   document.documentElement.dataset.theme = AppState.theme || 'dark';
   document.getElementById('theme-toggle').textContent = AppState.theme === 'dark' ? '🌙' : '☀️';
   buildSidebar();
@@ -1032,7 +1184,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initTooltips();
   initCommandPalette();
   startSimulation();
-  // Register renderers (will be defined in other parts)
   const register = () => {
     if (typeof renderDashboard === 'function') registerRenderer('dashboard', renderDashboard);
     if (typeof renderCampaignBuilder === 'function') registerRenderer('builder', renderCampaignBuilder);
@@ -1044,7 +1195,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof renderProovdScore === 'function') registerRenderer('score', renderProovdScore);
   };
   register();
-  // Route
   const hash = window.location.hash.replace('#','') || 'dashboard';
   const validModule = MODULES.find(m=>m.id===hash) ? hash : 'dashboard';
   navigateTo(validModule);
@@ -1052,8 +1202,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const h = window.location.hash.replace('#','');
     if (MODULES.find(m=>m.id===h)) navigateTo(h);
   });
-  // Onboarding
-  if (!localStorage.getItem('proovd_onboarded')) showOnboarding();
+  if (!localStorage.getItem('proovd_onboarded') && !_authSession) showOnboarding();
+  addLogoutButton();
+}
+function addLogoutButton() {
+  if (!_authSession) return;
+  const footer = document.querySelector('.sidebar-footer');
+  if (!footer || footer.querySelector('#logout-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'logout-btn';
+  btn.className = 'nav-item';
+  btn.style.cssText = 'width:100%;color:#FF3B3B;margin-top:4px';
+  btn.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="nav-label">Esci</span>`;
+  btn.onclick = async () => { await supabaseSignOut(); localStorage.removeItem('proovd_onboarded'); location.reload(); };
+  footer.appendChild(btn);
+}
+
+// === INIT ===
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  // Try restoring session from localStorage
+  try {
+    const saved = localStorage.getItem('proovd_session');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed?.access_token && parsed?.user) {
+        _authSession = parsed;
+        const username = parsed.user?.user_metadata?.username || parsed.user?.email?.split('@')[0] || 'Marketer';
+        supabaseLoadProfile().then(cloudState => {
+          if (cloudState) {
+            AppState = { ...DEFAULT_STATE, ...cloudState };
+            if (username) AppState.userName = username;
+            localStorage.setItem('proovd_state', JSON.stringify(AppState));
+          }
+          hideAuthScreen();
+          addLogoutButton();
+        }).catch(() => hideAuthScreen());
+        return;
+      }
+    }
+  } catch(e) {}
+  showAuthScreen();
 });
 
 // === MODULE: DASHBOARD ===
