@@ -329,6 +329,77 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   #header{padding:0 16px}
   .score-layout{grid-template-columns:1fr}
 }
+/* === PREMIUM UI ENHANCEMENTS === */
+/* --- Typography Hierarchy --- */
+.text-hero{font-size:32px;font-weight:800;letter-spacing:-0.5px;line-height:1.2}
+.text-title{font-size:20px;font-weight:700;letter-spacing:-0.3px}
+.text-label{font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#777}
+.text-mono{font-family:'SF Mono','Fira Code',monospace;font-size:13px}
+/* --- Enhanced Cards --- */
+.card{background:#111111;border:1px solid #2A2A2A;border-radius:16px;padding:20px;transition:border-color 0.2s,box-shadow 0.2s,transform 0.2s;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
+.card:hover:not(.no-hover){border-color:#3A3A3A;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.card-highlight{background:linear-gradient(135deg,#111111 0%,#0a1020 100%);border-color:rgba(0,85,255,0.3)}
+.card-lime{background:linear-gradient(135deg,#111111 0%,#0a1208 100%);border-color:rgba(170,255,0,0.3)}
+/* --- Enhanced Buttons --- */
+.btn-primary{background:var(--blue);color:#fff;border:none;border-radius:100px;padding:10px 20px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s;letter-spacing:0.2px}
+.btn-primary:hover{background:#0044DD;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,85,255,0.4)}
+.btn-primary:active{transform:scale(0.97)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-lime{background:var(--lime);color:#000;border:none;border-radius:100px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s}
+.btn-lime:hover{background:#99EE00;transform:translateY(-1px);box-shadow:0 4px 16px rgba(170,255,0,0.3)}
+.btn-lime:active{transform:scale(0.97)}
+.btn-lime:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;color:#F0F0F0;border:1px solid #2A2A2A;border-radius:100px;padding:9px 18px;font-weight:500;font-size:13px;cursor:pointer;transition:all 0.2s}
+.btn-ghost:hover{border-color:#555;background:#1A1A1A}
+/* --- Enhanced KPI Cards --- */
+.kpi-card{background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:20px;transition:all 0.2s;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#0055FF,#AAFF00);opacity:0;transition:opacity 0.2s}
+.kpi-card:hover::before{opacity:1}
+.kpi-card:hover{transform:translateY(-2px);border-color:#3a3a3a;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.kpi-value{font-size:28px;font-weight:800;letter-spacing:-0.5px;line-height:1;margin-bottom:8px}
+.kpi-label{font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#777;margin-top:4px;margin-bottom:8px}
+.kpi-delta-up{color:#00C853;font-size:12px;font-weight:600}
+.kpi-delta-down{color:#FF3B3B;font-size:12px;font-weight:600}
+/* --- Enhanced Inputs --- */
+.input-field{width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:11px 14px;color:#F0F0F0;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box}
+.input-field:focus{border-color:#0055FF;box-shadow:0 0 0 3px rgba(0,85,255,0.15)}
+.input-label{display:block;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#777;margin-bottom:6px}
+/* --- Badge/Tag Components --- */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;letter-spacing:0.3px}
+.badge-blue{background:rgba(0,85,255,0.15);color:#4488FF;border:1px solid rgba(0,85,255,0.3)}
+.badge-lime{background:rgba(170,255,0,0.12);color:#AAFF00;border:1px solid rgba(170,255,0,0.3)}
+.badge-green{background:rgba(0,200,83,0.12);color:#00C853;border:1px solid rgba(0,200,83,0.3)}
+.badge-red{background:rgba(255,59,59,0.12);color:#FF6B6B;border:1px solid rgba(255,59,59,0.3)}
+.badge-gray{background:rgba(255,255,255,0.06);color:#999;border:1px solid #2A2A2A}
+/* --- Enhanced Nav Items --- */
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;transition:all 0.15s;color:#777;font-size:13px;font-weight:500;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;white-space:nowrap;overflow:hidden;position:relative}
+.nav-item:hover{background:#1A1A1A;color:#F0F0F0;transform:none}
+.nav-item.active{background:rgba(0,85,255,0.15);color:#4488FF;font-weight:600;border-left:2px solid var(--blue);padding-left:12px}
+.nav-item svg{flex-shrink:0;width:20px;height:20px}
+.nav-item .nav-icon{font-size:16px;width:20px;text-align:center}
+/* --- Glassmorphism Modal --- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn 200ms ease}
+.modal-box{background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:28px;max-width:480px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,0.6);animation:modalIn 0.2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+/* --- Module View Transitions --- */
+.module-view{animation:fadeSlideIn 0.2s ease}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* --- Better Scrollbar --- */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2A2A2A;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#444}
+/* --- Progress Bar --- */
+.progress-bar{height:6px;background:#1A1A1A;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#0055FF,#4488FF);transition:width 0.5s ease}
+.progress-fill.lime{background:linear-gradient(90deg,#7ACC00,#AAFF00)}
+/* --- Enhanced Skeleton --- */
+.skeleton{background:linear-gradient(90deg,#1A1A1A 25%,#222 50%,#1A1A1A 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* --- Enhanced Toast --- */
+.toast.success{border-left:3px solid #00C853}
+.toast.error{border-left:3px solid #FF3B3B}
+.toast.info{border-left:3px solid #0055FF}
 </style>
 </head>
 <body>
