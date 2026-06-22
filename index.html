@@ -4456,17 +4456,17 @@ function renderAnalyticsLab() {
     <div style="padding:24px;">
       <h1 style="color:#F0F0F0;font-size:24px;font-weight:700;margin-bottom:20px;">Analytics Lab</h1>
 
-      <div class="tab-bar" style="display:flex;gap:4px;background:#111111;border-radius:12px;padding:4px;margin-bottom:24px;border:1px solid #2A2A2A;">
+      <div class="tab-bar" style="display:flex;gap:4px;background:#111111;border-radius:12px;padding:4px;margin-bottom:24px;border:1px solid #2A2A2A;flex-wrap:wrap;">
         ${[
-          ['calculator', '🧮 Calcolatore KPI'],
+          ['calculator', '🧮 KPI Calc'],
           ['scenario', '📊 Scenario Builder'],
-          ['whatif', '🔮 What-If'],
-          ['benchmarks', '📈 Benchmark']
+          ['benchmarks', '📈 Benchmark'],
+          ['funnel', '🔻 Funnel']
         ].map(([tab, label]) => `
           <button class="tab-btn ${AppState.analyticsTab === tab ? 'active' : ''}"
             id="tab-btn-${tab}"
             onclick="renderAnalyticsTab('${tab}')"
-            style="flex:1;padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:${AppState.analyticsTab === tab ? '#0055FF' : 'transparent'};color:${AppState.analyticsTab === tab ? '#fff' : '#777777'};transition:all 0.2s;">
+            style="flex:1;min-width:100px;padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:${AppState.analyticsTab === tab ? '#0055FF' : 'transparent'};color:${AppState.analyticsTab === tab ? '#fff' : '#777777'};transition:all 0.2s;">
             ${label}
           </button>
         `).join('')}
@@ -4479,17 +4479,17 @@ function renderAnalyticsLab() {
   `;
 
   if (AppState.analyticsTab === 'calculator') {
-    setTimeout(updateKPICalculator, 10);
+    setTimeout(() => { updateKPICalculator(); switchKPISubTab(AppState.kpiSubTab || 'roas'); }, 10);
   }
-  if (AppState.analyticsTab === 'whatif') {
-    setTimeout(updateWhatIf, 10);
+  if (AppState.analyticsTab === 'funnel') {
+    setTimeout(updateFunnelVisualizer, 10);
   }
 }
 
 function renderAnalyticsTab(tab) {
   AppState.analyticsTab = tab;
 
-  ['calculator','scenario','whatif','benchmarks'].forEach(t => {
+  ['calculator','scenario','benchmarks','funnel'].forEach(t => {
     const btn = document.getElementById(`tab-btn-${t}`);
     if (btn) {
       btn.style.background = t === tab ? '#0055FF' : 'transparent';
@@ -4506,21 +4506,36 @@ function renderAnalyticsTab(tab) {
   AppState.score.dataLiteracy = Math.min(100, (AppState.score.dataLiteracy || 0) + 1);
   saveState();
 
-  if (tab === 'calculator') setTimeout(updateKPICalculator, 10);
-  if (tab === 'whatif') setTimeout(updateWhatIf, 10);
+  if (tab === 'calculator') setTimeout(() => { updateKPICalculator(); switchKPISubTab(AppState.kpiSubTab || 'roas'); }, 10);
   if (tab === 'benchmarks') setTimeout(() => updateBenchmarks(), 10);
+  if (tab === 'funnel') setTimeout(updateFunnelVisualizer, 10);
 }
 
 function getAnalyticsTabContent(tab) {
   if (tab === 'calculator') return renderKPICalculator();
   if (tab === 'scenario') return renderScenarioBuilder();
-  if (tab === 'whatif') return renderWhatIfSimulator();
   if (tab === 'benchmarks') return renderBenchmarks();
+  if (tab === 'funnel') return renderFunnelVisualizer();
   return '';
 }
 
 function renderKPICalculator() {
+  const kpiSub = AppState.kpiSubTab || 'roas';
   return `
+    <!-- KPI Sub-tabs -->
+    <div style="display:flex;gap:4px;margin-bottom:20px;background:#111;border-radius:10px;padding:4px;border:1px solid #2A2A2A;">
+      ${[['roas','ROAS'],['cpa','CPA'],['ctr','CTR'],['cpm','CPM'],['ltv','LTV']].map(([k,l]) => `
+        <button id="kpi-sub-${k}" onclick="switchKPISubTab('${k}')"
+          style="flex:1;padding:8px 4px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;background:${kpiSub===k?'#0055FF':'transparent'};color:${kpiSub===k?'#fff':'#777'};">
+          ${l}
+        </button>`).join('')}
+    </div>
+
+    <!-- KPI Detail Panel -->
+    <div id="kpi-detail-panel" style="margin-bottom:24px;">
+      ${getKPIDetailPanel(kpiSub)}
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
       <div>
         <div class="card" style="padding:20px;margin-bottom:16px;">
@@ -4843,6 +4858,377 @@ function applyKPIPreset(preset) {
   updateKPICalculator();
 }
 
+// === KPI SUB-TABS ===
+function getKPIDetailPanel(kpi) {
+  const defs = {
+    roas: {
+      label: 'ROAS — Return On Ad Spend',
+      formula: 'ROAS = Revenue ÷ Budget Speso',
+      desc: 'Misura quanti euro guadagni per ogni euro investito in pubblicità.',
+      fields: [
+        { id: 'qs-roas-rev', label: 'Revenue generata (€)', placeholder: 'es. 1500', hint: 'Fatturato totale attribuibile alla campagna' },
+        { id: 'qs-roas-spend', label: 'Budget speso (€)', placeholder: 'es. 500', hint: 'Spesa pubblicitaria totale' }
+      ],
+      resultId: 'qs-roas-result',
+      calc: () => {
+        const r = parseFloat(document.getElementById('qs-roas-rev')?.value) || 0;
+        const s = parseFloat(document.getElementById('qs-roas-spend')?.value) || 0;
+        if (!s) return null;
+        return { val: (r / s).toFixed(2) + 'x', raw: r / s, good: 3, warn: 1 };
+      },
+      benchmarks: [
+        { label: 'Eccellente', val: '≥ 4x', color: '#AAFF00' },
+        { label: 'Buono', val: '≥ 3x', color: '#88CC00' },
+        { label: 'Attenzione', val: '1x – 3x', color: '#FFB800' },
+        { label: 'Critico', val: '< 1x', color: '#FF4444' }
+      ],
+      getStatus: (raw) => raw >= 4 ? { label: 'Eccellente', color: '#AAFF00', icon: '✅' } : raw >= 3 ? { label: 'Buono', color: '#88CC00', icon: '✅' } : raw >= 1 ? { label: 'Attenzione', color: '#FFB800', icon: '⚠️' } : { label: 'Critico', color: '#FF4444', icon: '❌' }
+    },
+    cpa: {
+      label: 'CPA — Cost Per Acquisition',
+      formula: 'CPA = Budget Speso ÷ Conversioni',
+      desc: 'Quanto paghi in media per ogni cliente acquisito o conversione.',
+      fields: [
+        { id: 'qs-cpa-spend', label: 'Budget speso (€)', placeholder: 'es. 500', hint: 'Spesa pubblicitaria totale' },
+        { id: 'qs-cpa-conv', label: 'Numero conversioni', placeholder: 'es. 25', hint: 'Acquisti, lead, registrazioni...' },
+        { id: 'qs-cpa-aov', label: 'AOV — Valore ordine medio (€)', placeholder: 'es. 80', hint: 'Average Order Value: valore medio di ogni conversione' },
+        { id: 'qs-cpa-margin', label: 'Margine prodotto (%)', placeholder: 'es. 40', hint: 'Percentuale di margine lordo sul prodotto' }
+      ],
+      resultId: 'qs-cpa-result',
+      getStatus: (raw, ctx) => {
+        if (!ctx) return null;
+        const maxCpa = ctx.aov * (ctx.margin / 100);
+        if (raw <= maxCpa * 0.6) return { label: 'Eccellente — molto profittevole', color: '#AAFF00', icon: '✅' };
+        if (raw <= maxCpa) return { label: 'Buono — profittevole', color: '#88CC00', icon: '✅' };
+        if (raw <= ctx.aov) return { label: 'Attenzione — margini risicati', color: '#FFB800', icon: '⚠️' };
+        return { label: 'Critico — stai perdendo soldi', color: '#FF4444', icon: '❌' };
+      },
+      benchmarks: [
+        { label: 'CPA < AOV × margine', val: 'Profittevole ✅', color: '#AAFF00' },
+        { label: 'CPA < AOV', val: 'Attenzione ⚠️', color: '#FFB800' },
+        { label: 'CPA > AOV', val: 'Critico ❌', color: '#FF4444' }
+      ]
+    },
+    ctr: {
+      label: 'CTR — Click-Through Rate',
+      formula: 'CTR = (Click ÷ Impressioni) × 100',
+      desc: 'Percentuale di persone che cliccano sull\'annuncio dopo averlo visto.',
+      fields: [
+        { id: 'qs-ctr-clicks', label: 'Numero click', placeholder: 'es. 300', hint: 'Click ricevuti dall\'annuncio' },
+        { id: 'qs-ctr-imp', label: 'Impressioni', placeholder: 'es. 20000', hint: 'Quante volte l\'annuncio è stato visualizzato' }
+      ],
+      resultId: 'qs-ctr-result',
+      getStatus: (raw) => raw >= 3 ? { label: 'Eccellente', color: '#AAFF00', icon: '✅' } : raw >= 1.5 ? { label: 'Nella media', color: '#88CC00', icon: '✅' } : raw >= 0.5 ? { label: 'Sotto la media', color: '#FFB800', icon: '⚠️' } : { label: 'Molto basso', color: '#FF4444', icon: '❌' },
+      benchmarks: [
+        { label: 'Google Search', val: '3-5%', color: '#AAFF00' },
+        { label: 'Meta Ads', val: '1-2%', color: '#88CC00' },
+        { label: 'Display / Banner', val: '0.1-0.5%', color: '#FFB800' },
+        { label: 'Programmatic', val: '< 0.1%', color: '#FF4444' }
+      ]
+    },
+    cpm: {
+      label: 'CPM — Cost Per Mille',
+      formula: 'CPM = (Budget ÷ Impressioni) × 1000',
+      desc: 'Costo per 1.000 visualizzazioni del tuo annuncio.',
+      fields: [
+        { id: 'qs-cpm-spend', label: 'Budget speso (€)', placeholder: 'es. 500', hint: 'Spesa pubblicitaria totale' },
+        { id: 'qs-cpm-imp', label: 'Impressioni totali', placeholder: 'es. 200000', hint: 'Numero totale di visualizzazioni' }
+      ],
+      resultId: 'qs-cpm-result',
+      getStatus: (raw) => raw <= 5 ? { label: 'Ottimo — costo basso', color: '#AAFF00', icon: '✅' } : raw <= 15 ? { label: 'Nella media', color: '#88CC00', icon: '✅' } : raw <= 35 ? { label: 'Alto — valuta la piattaforma', color: '#FFB800', icon: '⚠️' } : { label: 'Molto alto', color: '#FF4444', icon: '❌' },
+      benchmarks: [
+        { label: 'Display / TikTok', val: '€2–€5', color: '#AAFF00' },
+        { label: 'Meta / Google', val: '€5–€15', color: '#88CC00' },
+        { label: 'YouTube', val: '€10–€25', color: '#FFB800' },
+        { label: 'LinkedIn', val: '€25–€60', color: '#FF4444' }
+      ]
+    },
+    ltv: {
+      label: 'LTV — Lifetime Value',
+      formula: 'LTV = AOV × Frequenza acquisti × Durata relazione (mesi)',
+      desc: 'Valore totale che un cliente genererà per la tua azienda nel tempo.',
+      fields: [
+        { id: 'qs-ltv-aov', label: 'AOV — Valore ordine medio (€)', placeholder: 'es. 80', hint: 'Quanto spende in media per ordine' },
+        { id: 'qs-ltv-freq', label: 'Frequenza acquisti/mese', placeholder: 'es. 1.5', hint: 'Quante volte acquista al mese in media' },
+        { id: 'qs-ltv-months', label: 'Durata relazione (mesi)', placeholder: 'es. 12', hint: 'Per quanti mesi resta cliente mediamente' },
+        { id: 'qs-ltv-margin', label: 'Margine prodotto (%)', placeholder: 'es. 40', hint: 'Percentuale di margine lordo' }
+      ],
+      resultId: 'qs-ltv-result',
+      getStatus: (raw) => null,
+      benchmarks: [
+        { label: 'LTV : CPA ≥ 3:1', val: 'Ottimo equilibrio', color: '#AAFF00' },
+        { label: 'LTV : CPA ≥ 2:1', val: 'Accettabile', color: '#FFB800' },
+        { label: 'LTV : CPA < 2:1', val: 'Rischioso', color: '#FF4444' }
+      ]
+    }
+  };
+
+  const d = defs[kpi] || defs.roas;
+
+  return `
+    <div class="card" style="padding:20px;border:1px solid #2A2A2A;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+        <div>
+          <div style="margin-bottom:12px;">
+            <div style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Formula</div>
+            <div style="background:#1A1A1A;border-radius:8px;padding:12px 14px;font-family:monospace;font-size:14px;color:#AAFF00;font-weight:600;">${d.formula}</div>
+          </div>
+          <p style="color:#777;font-size:13px;line-height:1.6;margin-bottom:16px;">${d.desc}</p>
+          <div style="display:grid;gap:10px;">
+            ${d.fields.map(f => `
+              <div>
+                <label style="color:#F0F0F0;font-size:12px;display:block;margin-bottom:4px;">${f.label} <span title="${f.hint}" style="color:#0055FF;cursor:help;">ℹ</span></label>
+                <input type="number" id="${f.id}" placeholder="${f.placeholder}" oninput="calcKPIDetail('${kpi}')"
+                  style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:10px;color:#F0F0F0;font-size:14px;box-sizing:border-box;transition:border-color 0.2s;"
+                  onfocus="this.style.borderColor='#0055FF'" onblur="this.style.borderColor='#2A2A2A'">
+              </div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="background:#1A1A1A;border-radius:12px;padding:20px;margin-bottom:16px;text-align:center;min-height:100px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+            <div style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">${d.label.split(' — ')[0]}</div>
+            <div id="${d.resultId}" style="font-size:36px;font-weight:700;color:#AAFF00;">—</div>
+            <div id="${d.resultId}-status" style="margin-top:8px;font-size:13px;font-weight:500;"></div>
+          </div>
+          <div>
+            <div style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Benchmark di riferimento</div>
+            ${d.benchmarks.map(b => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1A1A1A;">
+                <span style="color:#777;font-size:12px;">${b.label}</span>
+                <span style="color:${b.color};font-size:12px;font-weight:600;">${b.val}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function switchKPISubTab(kpi) {
+  AppState.kpiSubTab = kpi;
+  ['roas','cpa','ctr','cpm','ltv'].forEach(k => {
+    const btn = document.getElementById(`kpi-sub-${k}`);
+    if (btn) { btn.style.background = k===kpi ? '#0055FF' : 'transparent'; btn.style.color = k===kpi ? '#fff' : '#777'; }
+  });
+  const panel = document.getElementById('kpi-detail-panel');
+  if (panel) panel.innerHTML = getKPIDetailPanel(kpi);
+}
+
+function calcKPIDetail(kpi) {
+  const g = id => parseFloat(document.getElementById(id)?.value) || 0;
+  let val = null, raw = 0, ctx = null;
+  if (kpi === 'roas') {
+    const r = g('qs-roas-rev'), s = g('qs-roas-spend');
+    if (s > 0) { raw = r / s; val = raw.toFixed(2) + 'x'; }
+  } else if (kpi === 'cpa') {
+    const spend = g('qs-cpa-spend'), conv = g('qs-cpa-conv'), aov = g('qs-cpa-aov'), margin = g('qs-cpa-margin');
+    if (conv > 0) { raw = spend / conv; val = '€' + raw.toFixed(2); ctx = { aov, margin }; }
+  } else if (kpi === 'ctr') {
+    const clicks = g('qs-ctr-clicks'), imp = g('qs-ctr-imp');
+    if (imp > 0) { raw = clicks / imp * 100; val = raw.toFixed(2) + '%'; }
+  } else if (kpi === 'cpm') {
+    const spend = g('qs-cpm-spend'), imp = g('qs-cpm-imp');
+    if (imp > 0) { raw = spend / imp * 1000; val = '€' + raw.toFixed(2); }
+  } else if (kpi === 'ltv') {
+    const aov = g('qs-ltv-aov'), freq = g('qs-ltv-freq'), months = g('qs-ltv-months'), margin = g('qs-ltv-margin');
+    if (aov > 0 && freq > 0 && months > 0) {
+      const ltv = aov * freq * months;
+      const ltvMargin = ltv * (margin / 100);
+      raw = ltv;
+      val = '€' + ltv.toFixed(0);
+      const resEl = document.getElementById('qs-ltv-result');
+      if (resEl) { resEl.textContent = val; resEl.style.color = '#AAFF00'; }
+      const statusEl = document.getElementById('qs-ltv-result-status');
+      if (statusEl && margin > 0) statusEl.innerHTML = `<span style="color:#777;font-size:12px;">LTV netto (con margine ${margin}%): <span style="color:#AAFF00;font-weight:600;">€${ltvMargin.toFixed(0)}</span></span>`;
+      return;
+    }
+  }
+
+  const kpiDefs = {
+    roas: { resultId: 'qs-roas-result', getStatus: (raw) => raw >= 4 ? { label: 'Eccellente', color: '#AAFF00', icon: '✅' } : raw >= 3 ? { label: 'Buono', color: '#88CC00', icon: '✅' } : raw >= 1 ? { label: 'Attenzione', color: '#FFB800', icon: '⚠️' } : { label: 'Critico', color: '#FF4444', icon: '❌' } },
+    cpa: { resultId: 'qs-cpa-result', getStatus: (raw, ctx) => { if (!ctx || !ctx.aov || !ctx.margin) return { label: 'Inserisci AOV e margine', color: '#777', icon: 'ℹ️' }; const maxCpa = ctx.aov * (ctx.margin / 100); if (raw <= maxCpa * 0.6) return { label: 'Eccellente — molto profittevole', color: '#AAFF00', icon: '✅' }; if (raw <= maxCpa) return { label: 'Buono — profittevole', color: '#88CC00', icon: '✅' }; if (raw <= ctx.aov) return { label: 'Attenzione — margini risicati', color: '#FFB800', icon: '⚠️' }; return { label: 'Critico — perdi denaro', color: '#FF4444', icon: '❌' }; } },
+    ctr: { resultId: 'qs-ctr-result', getStatus: (raw) => raw >= 3 ? { label: 'Eccellente', color: '#AAFF00', icon: '✅' } : raw >= 1.5 ? { label: 'Nella media', color: '#88CC00', icon: '✅' } : raw >= 0.5 ? { label: 'Sotto la media', color: '#FFB800', icon: '⚠️' } : { label: 'Molto basso', color: '#FF4444', icon: '❌' } },
+    cpm: { resultId: 'qs-cpm-result', getStatus: (raw) => raw <= 5 ? { label: 'Ottimo — costo basso', color: '#AAFF00', icon: '✅' } : raw <= 15 ? { label: 'Nella media', color: '#88CC00', icon: '✅' } : raw <= 35 ? { label: 'Alto', color: '#FFB800', icon: '⚠️' } : { label: 'Molto alto', color: '#FF4444', icon: '❌' } }
+  };
+
+  const def = kpiDefs[kpi];
+  if (!def) return;
+
+  const resEl = document.getElementById(def.resultId);
+  const statusEl = document.getElementById(def.resultId + '-status');
+  if (resEl) {
+    if (val !== null) {
+      const status = def.getStatus(raw, ctx);
+      resEl.textContent = val;
+      resEl.style.color = status ? status.color : '#AAFF00';
+      if (statusEl) statusEl.innerHTML = status ? `<span style="color:${status.color}">${status.icon} ${status.label}</span>` : '';
+    } else {
+      resEl.textContent = '—';
+      resEl.style.color = '#AAFF00';
+      if (statusEl) statusEl.textContent = '';
+    }
+  }
+}
+
+// === FUNNEL VISUALIZER ===
+function renderFunnelVisualizer() {
+  return `
+    <div>
+      <div class="card" style="padding:24px;margin-bottom:20px;">
+        <h3 style="color:#F0F0F0;font-size:16px;font-weight:600;margin-bottom:6px;">Funnel Visualizer</h3>
+        <p style="color:#777;font-size:13px;margin-bottom:20px;">Inserisci i dati del tuo funnel per visualizzare le perdite a ogni stage.</p>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px;">
+          <div>
+            <label style="color:#777;font-size:12px;display:block;margin-bottom:6px;">Impressioni <span title="Numero totale di visualizzazioni dell'annuncio" style="color:#0055FF;cursor:help;">ℹ</span></label>
+            <input type="number" id="fv-imp" placeholder="es. 100000" value="100000" oninput="updateFunnelVisualizer()"
+              style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:10px;color:#F0F0F0;font-size:14px;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777;font-size:12px;">CTR (%) <span title="Click-Through Rate: % di impressioni che diventano click" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="fv-ctr-val" style="color:#AAFF00;font-size:12px;font-weight:600;">1.5%</span>
+            </div>
+            <input type="range" id="fv-ctr" min="0.1" max="10" step="0.1" value="1.5" oninput="updateFunnelVisualizer()" style="width:100%;accent-color:#0055FF;">
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777;font-size:12px;">CVR — Landing Page (%) <span title="Conversion Rate: % di click che compilano form o aggiungono al carrello" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="fv-cvr1-val" style="color:#AAFF00;font-size:12px;font-weight:600;">20%</span>
+            </div>
+            <input type="range" id="fv-cvr1" min="0.5" max="80" step="0.5" value="20" oninput="updateFunnelVisualizer()" style="width:100%;accent-color:#0055FF;">
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <label style="color:#777;font-size:12px;">CVR — Checkout (%) <span title="% di chi ha avviato checkout e completa l'acquisto" style="color:#0055FF;cursor:help;">ℹ</span></label>
+              <span id="fv-cvr2-val" style="color:#AAFF00;font-size:12px;font-weight:600;">30%</span>
+            </div>
+            <input type="range" id="fv-cvr2" min="0.5" max="80" step="0.5" value="30" oninput="updateFunnelVisualizer()" style="width:100%;accent-color:#0055FF;">
+          </div>
+          <div>
+            <label style="color:#777;font-size:12px;display:block;margin-bottom:6px;">AOV — Valore ordine medio (€) <span title="Average Order Value" style="color:#0055FF;cursor:help;">ℹ</span></label>
+            <input type="number" id="fv-aov" placeholder="es. 80" value="80" oninput="updateFunnelVisualizer()"
+              style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:10px;color:#F0F0F0;font-size:14px;box-sizing:border-box;">
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button onclick="updateFunnelVisualizer()" class="btn btn-primary" style="width:100%;padding:10px;">Aggiorna Funnel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Funnel SVG -->
+      <div class="card" style="padding:24px;margin-bottom:20px;">
+        <h3 style="color:#F0F0F0;font-size:14px;font-weight:600;margin-bottom:20px;">Visualizzazione Funnel</h3>
+        <div id="funnel-chart" style="width:100%;overflow-x:auto;"></div>
+      </div>
+
+      <!-- Drop-off analysis -->
+      <div class="card" style="padding:20px;">
+        <h3 style="color:#F0F0F0;font-size:14px;font-weight:600;margin-bottom:16px;">Analisi Drop-off</h3>
+        <div id="funnel-dropoff" style="display:grid;gap:10px;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function updateFunnelVisualizer() {
+  const imp = parseFloat(document.getElementById('fv-imp')?.value) || 100000;
+  const ctr = parseFloat(document.getElementById('fv-ctr')?.value) || 1.5;
+  const cvr1 = parseFloat(document.getElementById('fv-cvr1')?.value) || 20;
+  const cvr2 = parseFloat(document.getElementById('fv-cvr2')?.value) || 30;
+  const aov = parseFloat(document.getElementById('fv-aov')?.value) || 80;
+
+  // Update slider labels
+  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setTxt('fv-ctr-val', ctr.toFixed(1) + '%');
+  setTxt('fv-cvr1-val', cvr1.toFixed(1) + '%');
+  setTxt('fv-cvr2-val', cvr2.toFixed(1) + '%');
+
+  const clicks = Math.round(imp * ctr / 100);
+  const engaged = Math.round(clicks * cvr1 / 100); // Added to cart / filled form
+  const converted = Math.round(engaged * cvr2 / 100); // Completed purchase
+  const revenue = converted * aov;
+
+  const stages = [
+    { label: 'Impressioni', value: imp, icon: '👁️', color: '#0055FF' },
+    { label: 'Click (CTR ' + ctr + '%)', value: clicks, icon: '🖱️', color: '#3377FF' },
+    { label: 'Engagement (CVR ' + cvr1 + '%)', value: engaged, icon: '🛒', color: '#AAFF00' },
+    { label: 'Conversioni (CVR ' + cvr2 + '%)', value: converted, icon: '✅', color: '#88CC00' }
+  ];
+
+  const maxVal = imp;
+  const funnelW = 520;
+  const stageH = 70;
+  const svgH = stages.length * stageH + 20;
+
+  // Build SVG funnel
+  let svgPaths = '';
+  stages.forEach((stage, i) => {
+    const ratio = stage.value / maxVal;
+    const w = Math.max(ratio * funnelW, 40);
+    const x = (funnelW - w) / 2;
+    const y = i * stageH + 10;
+    const nextRatio = i < stages.length - 1 ? stages[i+1].value / maxVal : ratio;
+    const nextW = Math.max(nextRatio * funnelW, 40);
+    const nextX = (funnelW - nextW) / 2;
+
+    // Drop-off color (red if >80% drop)
+    const dropPct = i > 0 ? (1 - stage.value / stages[i-1].value) * 100 : 0;
+    const fillColor = dropPct > 80 ? '#FF4444' : stage.color;
+
+    // Trapezoid path
+    const path = `M${x},${y} L${x+w},${y} L${nextX+nextW},${y+stageH-4} L${nextX},${y+stageH-4} Z`;
+    svgPaths += `
+      <path d="${path}" fill="${fillColor}" fill-opacity="0.85" stroke="${fillColor}" stroke-width="1" rx="4"/>
+      <text x="${funnelW/2}" y="${y + stageH/2 - 8}" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="Inter,sans-serif">${stage.icon} ${stage.label}</text>
+      <text x="${funnelW/2}" y="${y + stageH/2 + 10}" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Inter,sans-serif">${formatNumber(stage.value)}</text>
+      ${i > 0 ? `<text x="${funnelW - 10}" y="${y + stageH/2 + 4}" text-anchor="end" fill="${dropPct>80?'#FF6666':'#AAFF0088'}" font-size="11" font-family="Inter,sans-serif">-${dropPct.toFixed(1)}%</text>` : ''}
+    `;
+  });
+
+  const chartEl = document.getElementById('funnel-chart');
+  if (chartEl) {
+    chartEl.innerHTML = `
+      <div style="text-align:center;">
+        <svg width="100%" viewBox="0 0 ${funnelW} ${svgH}" style="max-width:${funnelW}px;display:inline-block;">
+          ${svgPaths}
+        </svg>
+        <div style="margin-top:12px;display:inline-flex;gap:16px;font-size:12px;color:#777;flex-wrap:wrap;justify-content:center;">
+          <span>Revenue stimata: <strong style="color:#AAFF00;">€${formatNumber(revenue)}</strong></span>
+          <span>CPA effettivo: <strong style="color:#0055FF;">€${converted > 0 ? (imp * (aov / 1000 * 2.5) / converted).toFixed(2) : '—'}</strong></span>
+          <span>ROAS stimato: <strong style="color:#AAFF00;">${converted > 0 && imp > 0 ? (revenue / (imp / 1000 * 2.5)).toFixed(2) + 'x' : '—'}</strong></span>
+        </div>
+      </div>
+    `;
+  }
+
+  // Drop-off analysis
+  const dropEl = document.getElementById('funnel-dropoff');
+  if (dropEl) {
+    const dropData = stages.slice(1).map((stage, i) => {
+      const prev = stages[i];
+      const lost = prev.value - stage.value;
+      const pct = (lost / prev.value * 100);
+      const isCritical = pct > 80;
+      return { from: prev.label, to: stage.label, lost, pct, isCritical };
+    });
+
+    dropEl.innerHTML = dropData.map(d => `
+      <div style="background:#1A1A1A;border-radius:10px;padding:14px 16px;border-left:3px solid ${d.isCritical ? '#FF4444' : '#2A2A2A'};">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="color:#F0F0F0;font-size:13px;font-weight:600;">${d.from} → ${d.to}</span>
+          <span style="color:${d.isCritical?'#FF4444':'#FFB800'};font-size:13px;font-weight:700;">-${d.pct.toFixed(1)}% drop</span>
+        </div>
+        <div style="background:#0A0A0A;border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px;">
+          <div style="height:100%;width:${Math.min(d.pct,100)}%;background:${d.isCritical?'#FF4444':'#FFB800'};border-radius:6px;transition:width 0.4s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:#777;font-size:12px;">${formatNumber(d.lost)} utenti persi</span>
+          ${d.isCritical ? '<span style="color:#FF4444;font-size:11px;font-weight:600;">⚠️ Drop-off critico — ottimizza questo stage</span>' : '<span style="color:#777;font-size:11px;">Nella norma</span>'}
+        </div>
+      </div>`).join('');
+  }
+}
+
 function renderScenarioBuilder() {
   const scenarioDefs = [
     { id: 'pessimistic', label: 'Pessimistico', color: '#FF4444', impressions: 20000, ctr: 0.8, cpc: 1.2, cvr: 1.0, aov: 60 },
@@ -4879,6 +5265,11 @@ function renderScenarioBuilder() {
         <div id="scenario-comparison" style="overflow-x:auto;">
           ${generateScenarioComparison(scenarioDefs)}
         </div>
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:16px;">
+        <h3 style="color:#F0F0F0;font-size:14px;font-weight:600;margin-bottom:16px;">Grafico comparativo</h3>
+        <div id="scenario-bar-chart">${generateScenarioBarChart(scenarioDefs)}</div>
       </div>
 
       <button class="btn btn-primary" onclick="explainScenariosWithAI()" style="margin-bottom:12px;">
@@ -4958,6 +5349,50 @@ function generateScenarioComparison(scenarios) {
 function updateScenarioComparison() {
   const container = document.getElementById('scenario-comparison');
   if (container) container.innerHTML = generateScenarioComparison(null);
+  const chart = document.getElementById('scenario-bar-chart');
+  if (chart) chart.innerHTML = generateScenarioBarChart(null);
+}
+
+function generateScenarioBarChart(scenarios) {
+  if (!scenarios) {
+    scenarios = ['pessimistic','realistic','optimistic'].map(id => {
+      const get = (f) => parseFloat(document.getElementById(`sc-${id}-${f}`)?.value || 0);
+      const colors = { pessimistic: '#FF4444', realistic: '#FFB800', optimistic: '#AAFF00' };
+      const lbls = { pessimistic: 'Pessimistico', realistic: 'Realistico', optimistic: 'Ottimistico' };
+      return { id, label: lbls[id], color: colors[id], impressions: get('impressioni'), ctr: get('ctr'), cpc: get('cpc'), cvr: get('cvr'), aov: get('aov') };
+    });
+  }
+  const calcs = scenarios.map(s => ({
+    ...s,
+    ...getScenarioCalc(s.impressions, s.ctr, s.cpc, s.cvr, s.aov)
+  }));
+
+  const metrics = [
+    { key: 'revenue', label: 'Revenue (€)', fmt: v => '€' + formatNumber(Math.round(v)) },
+    { key: 'conversions', label: 'Conversioni', fmt: v => formatNumber(Math.round(v)) },
+    { key: 'roas', label: 'ROAS', fmt: v => v.toFixed(2) + 'x' }
+  ];
+
+  return metrics.map(m => {
+    const vals = calcs.map(c => c[m.key] || 0);
+    const maxV = Math.max(...vals, 0.01);
+    return `
+      <div style="margin-bottom:20px;">
+        <div style="color:#777;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">${m.label}</div>
+        ${calcs.map((c, i) => {
+          const pct = Math.max((vals[i] / maxV) * 100, 2);
+          return `
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+              <div style="width:110px;color:${c.color};font-size:12px;font-weight:600;flex-shrink:0;">${c.label}</div>
+              <div style="flex:1;background:#1A1A1A;border-radius:100px;height:22px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:${c.color};border-radius:100px;transition:width 0.5s;display:flex;align-items:center;padding-left:10px;">
+                  <span style="color:#000;font-size:11px;font-weight:700;white-space:nowrap;">${m.fmt(vals[i])}</span>
+                </div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }).join('');
 }
 
 async function explainScenariosWithAI() {
