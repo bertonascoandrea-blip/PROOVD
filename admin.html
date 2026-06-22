@@ -4,1213 +4,1127 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PROOVD Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* === RESET & BASE === */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: #0A0A0A; color: #F0F0F0; font-size: 14px; }
 
-  :root {
-    --bg: #0A0A0A;
-    --surface: #111111;
-    --surface2: #1A1A1A;
-    --border: #2A2A2A;
-    --blue: #0055FF;
-    --lime: #AAFF00;
-    --text: #F0F0F0;
-    --muted: #777777;
-    --red: #FF3B30;
-    --green: #34C759;
+  /* === LOGIN PAGE === */
+  #login-page {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: #0A0A0A;
   }
-
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .login-card {
+    background: #111111; border: 1px solid #2A2A2A; border-radius: 16px;
+    padding: 48px; width: 100%; max-width: 400px;
   }
-
-  /* ===== LOGIN ===== */
-  #login-screen {
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
+  .login-logo { font-size: 24px; font-weight: 800; color: #F0F0F0; margin-bottom: 8px; }
+  .login-logo span { color: #AAFF00; }
+  .login-subtitle { color: #777777; margin-bottom: 32px; font-size: 13px; }
+  .login-label { display: block; font-size: 12px; font-weight: 600; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .login-input {
+    width: 100%; background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 10px;
+    padding: 12px 44px 12px 16px; color: #F0F0F0; font-size: 14px; font-family: inherit;
+    outline: none; transition: border-color 0.2s;
   }
-
-  .login-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 48px;
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
+  .login-input:focus { border-color: #0055FF; }
+  .login-error { color: #FF4444; font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: #0055FF; color: #F0F0F0; border: none; border-radius: 100px;
+    padding: 12px 24px; font-size: 14px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: opacity 0.2s, transform 0.1s; width: 100%; margin-top: 16px;
   }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:active { transform: scale(0.98); }
 
-  .login-logo {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--lime);
-    letter-spacing: -1px;
-    margin-bottom: 8px;
-  }
+  /* === MAIN LAYOUT === */
+  #admin-panel { display: none; height: 100vh; }
+  #admin-panel.visible { display: flex; }
 
-  .login-subtitle {
-    color: var(--muted);
-    font-size: 14px;
-    margin-bottom: 36px;
-  }
-
-  .login-box input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 14px 20px;
-    color: var(--text);
-    font-size: 15px;
-    font-family: inherit;
-    outline: none;
-    margin-bottom: 16px;
-    transition: border-color 0.2s;
-  }
-
-  .login-box input:focus { border-color: var(--blue); }
-
-  .login-box input.error { border-color: var(--red); }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--blue);
-    color: #fff;
-    border: none;
-    border-radius: 100px;
-    padding: 14px 28px;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-    text-decoration: none;
-  }
-
-  .btn:hover { opacity: 0.85; }
-  .btn:active { transform: scale(0.97); }
-
-  .btn-lime { background: var(--lime); color: #000; }
-  .btn-outline {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
-  .btn-outline:hover { border-color: var(--muted); }
-  .btn-sm { padding: 8px 16px; font-size: 13px; }
-  .btn-full { width: 100%; justify-content: center; }
-
-  .login-error {
-    color: var(--red);
-    font-size: 13px;
-    margin-top: 12px;
-    display: none;
-  }
-
-  /* ===== ADMIN LAYOUT ===== */
-  #admin-app {
-    display: none;
-    width: 100%;
-    min-height: 100vh;
-    flex-direction: row;
-  }
-
-  /* Sidebar */
+  /* === SIDEBAR === */
   .sidebar {
-    width: 220px;
-    min-height: 100vh;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 100;
+    width: 240px; min-width: 240px; background: #111111; border-right: 1px solid #2A2A2A;
+    display: flex; flex-direction: column; padding: 24px 0; position: fixed; top: 0; left: 0;
+    height: 100vh; z-index: 100;
   }
-
   .sidebar-logo {
-    padding: 28px 24px 20px;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--lime);
-    letter-spacing: -0.5px;
-    border-bottom: 1px solid var(--border);
+    padding: 0 20px 24px; border-bottom: 1px solid #2A2A2A;
+    font-size: 16px; font-weight: 800; color: #F0F0F0;
   }
-
-  .sidebar-logo span {
-    display: block;
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--muted);
-    letter-spacing: 0;
-    margin-top: 2px;
-  }
-
-  .sidebar-nav {
-    flex: 1;
-    padding: 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
+  .sidebar-logo span { color: #AAFF00; }
+  .sidebar-logo small { display: block; font-size: 10px; font-weight: 500; color: #777777; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
   .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--muted);
-    transition: background 0.15s, color 0.15s;
-    user-select: none;
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    border-radius: 10px; color: #777777; cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: background 0.15s, color 0.15s; text-decoration: none; user-select: none;
   }
+  .nav-item:hover { background: #1A1A1A; color: #F0F0F0; }
+  .nav-item.active { background: #0055FF20; color: #F0F0F0; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid #2A2A2A; }
+  .sidebar-version { font-size: 11px; color: #444444; }
 
-  .nav-item:hover { background: var(--surface2); color: var(--text); }
-  .nav-item.active { background: var(--surface2); color: var(--text); }
-  .nav-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    width: 3px;
-    height: 20px;
-    background: var(--lime);
-    border-radius: 0 4px 4px 0;
-    margin-left: -14px;
-  }
-  .nav-item { position: relative; }
-
-  .sidebar-footer {
-    padding: 16px 12px;
-    border-top: 1px solid var(--border);
-  }
-
-  .logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--muted);
-    transition: color 0.15s;
-  }
-
-  .logout-btn:hover { color: var(--red); }
-
-  /* Main content */
-  .main {
-    margin-left: 220px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
+  /* === HEADER === */
+  .main-wrap { margin-left: 240px; display: flex; flex-direction: column; min-height: 100vh; }
   .header {
-    height: 64px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 32px;
-    position: sticky;
-    top: 0;
-    z-index: 50;
+    height: 60px; background: #111111; border-bottom: 1px solid #2A2A2A;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; position: sticky; top: 0; z-index: 50;
   }
-
-  .header-title {
-    font-size: 17px;
-    font-weight: 600;
+  .header-title { font-size: 16px; font-weight: 700; color: #F0F0F0; }
+  .btn-logout {
+    background: transparent; border: 1px solid #2A2A2A; border-radius: 100px;
+    color: #777777; padding: 6px 16px; font-size: 12px; font-weight: 500;
+    cursor: pointer; font-family: inherit; transition: border-color 0.2s, color 0.2s;
   }
+  .btn-logout:hover { border-color: #FF4444; color: #FF4444; }
 
-  .badge-admin {
-    background: var(--lime);
-    color: #000;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 100px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
+  /* === CONTENT === */
+  .content { flex: 1; padding: 28px; overflow-y: auto; }
 
-  .content {
-    flex: 1;
-    padding: 32px;
-    overflow-y: auto;
-  }
-
-  /* ===== SECTIONS ===== */
+  /* === SECTION === */
   .section { display: none; }
   .section.active { display: block; }
+  .section-header { margin-bottom: 24px; }
+  .section-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .section-desc { color: #777777; font-size: 13px; }
 
-  /* Cards */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
-  }
-
-  .card-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .card-desc {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 20px;
-  }
-
-  /* Stats grid */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
+  /* === STAT CARDS === */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
   .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
+    background: #111111; border: 1px solid #2A2A2A; border-radius: 16px;
+    padding: 24px; position: relative; overflow: hidden;
   }
+  .stat-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #AAFF0008 0%, transparent 60%); pointer-events: none; }
+  .stat-number { font-size: 32px; font-weight: 800; color: #AAFF00; line-height: 1; margin-bottom: 8px; }
+  .stat-label { font-size: 12px; color: #777777; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-skeleton { height: 32px; width: 80px; background: #1A1A1A; border-radius: 8px; margin-bottom: 8px; animation: pulse 1.5s infinite; }
 
-  .stat-label {
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-  }
+  /* === TABLES === */
+  .table-wrap { background: #111111; border: 1px solid #2A2A2A; border-radius: 16px; overflow: hidden; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid #2A2A2A; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid #2A2A2A; }
+  tbody td { padding: 12px 20px; border-bottom: 1px solid #1A1A1A; font-size: 13px; color: #F0F0F0; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #1A1A1A; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #AAFF0020; color: #AAFF00; }
+  .badge-blue { background: #0055FF20; color: #5599FF; }
+  .badge-red { background: #FF444420; color: #FF4444; }
 
-  .stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--lime);
-  }
-
-  .stat-sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  /* Form */
-  .form-group {
-    margin-bottom: 16px;
-  }
-
-  .form-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: var(--muted);
-  }
-
-  .input-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
+  /* === FORM === */
+  .form-group { margin-bottom: 20px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
   .form-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--text);
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s;
+    width: 100%; background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 10px;
+    padding: 12px 44px 12px 16px; color: #F0F0F0; font-size: 14px; font-family: inherit;
+    outline: none; transition: border-color 0.2s;
   }
-
-  .form-input:focus { border-color: var(--blue); }
-
-  .toggle-vis {
-    position: absolute;
-    right: 14px;
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
+  .form-input:focus { border-color: #0055FF; }
+  .input-wrap { position: relative; }
+  .input-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: #777777; cursor: pointer; font-size: 16px; padding: 4px;
   }
+  .input-toggle:hover { color: #F0F0F0; }
 
-  .toggle-vis:hover { color: var(--text); }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
+  /* === BUTTONS === */
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #1A1A1A; color: #F0F0F0; border: 1px solid #2A2A2A; border-radius: 100px;
+    padding: 10px 20px; font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s;
   }
-
-  .form-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-    flex-wrap: wrap;
+  .btn-secondary:hover { border-color: #0055FF; background: #0055FF15; }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-lime {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #AAFF00; color: #0A0A0A; border: none; border-radius: 100px;
+    padding: 10px 20px; font-size: 13px; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: opacity 0.2s;
   }
+  .btn-lime:hover { opacity: 0.85; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
 
-  /* Status */
+  /* === STATUS BOX === */
   .status-box {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    margin-top: 12px;
-    display: none;
+    background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 10px;
+    padding: 14px 16px; margin-top: 16px; font-size: 13px; min-height: 48px;
+    display: flex; align-items: center; gap: 10px; transition: border-color 0.3s;
   }
+  .status-box.connected { border-color: #AAFF0050; }
+  .status-box.error { border-color: #FF444450; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #777777; flex-shrink: 0; }
+  .status-dot.green { background: #AAFF00; box-shadow: 0 0 8px #AAFF00; }
+  .status-dot.red { background: #FF4444; box-shadow: 0 0 8px #FF4444; }
+  .status-dot.loading { background: #0055FF; animation: pulse 1s infinite; }
 
-  .status-box.show { display: block; }
-  .status-box.success { border-color: var(--green); color: var(--green); }
-  .status-box.error { border-color: var(--red); color: var(--red); }
-  .status-box.info { border-color: var(--blue); color: #6B9FFF; }
-
-  /* Table */
-  .table-wrap {
-    overflow-x: auto;
-    border-radius: 12px;
-    border: 1px solid var(--border);
+  /* === CODE BOX === */
+  .code-box {
+    background: #0A0A0A; border: 1px solid #2A2A2A; border-radius: 10px;
+    padding: 20px; font-family: 'Courier New', monospace; font-size: 12px;
+    color: #AAFF00; line-height: 1.8; overflow-x: auto; margin-top: 16px;
+    white-space: pre;
   }
+  .c-comment { color: #555555; }
+  .c-keyword { color: #5599FF; }
+  .c-string { color: #FF9955; }
+  .c-func { color: #AAFF00; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
+  /* === CARD === */
+  .card {
+    background: #111111; border: 1px solid #2A2A2A; border-radius: 16px;
+    padding: 24px; margin-bottom: 20px;
   }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
 
-  th {
-    background: var(--surface2);
-    padding: 12px 16px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    white-space: nowrap;
+  /* === PLATFORM GRID === */
+  .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .platform-row {
+    background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 12px; padding: 16px;
   }
-
-  td {
-    padding: 14px 16px;
-    border-top: 1px solid var(--border);
-    color: var(--text);
+  .platform-name { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .platform-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .platform-input-wrap label { display: block; font-size: 10px; color: #777777; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .platform-input-wrap input {
+    width: 100%; background: #111111; border: 1px solid #2A2A2A; border-radius: 8px;
+    padding: 8px 10px; color: #F0F0F0; font-size: 13px; font-family: inherit;
+    outline: none; transition: border-color 0.2s;
   }
+  .platform-input-wrap input:focus { border-color: #0055FF; }
 
-  tr:hover td { background: rgba(255,255,255,0.02); }
+  /* === CHART === */
+  .chart-wrap { background: #111111; border: 1px solid #2A2A2A; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .chart-title { font-size: 15px; font-weight: 700; margin-bottom: 20px; }
 
-  .pill {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 600;
-  }
+  /* === PAGINATION === */
+  .pagination { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #2A2A2A; }
+  .page-info { font-size: 12px; color: #777777; flex: 1; }
 
-  .pill-green { background: rgba(52,199,89,0.15); color: var(--green); }
-  .pill-blue { background: rgba(0,85,255,0.15); color: #6B9FFF; }
-  .pill-red { background: rgba(255,59,48,0.15); color: var(--red); }
+  /* === EMPTY STATE === */
+  .empty-state { padding: 48px; text-align: center; color: #777777; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
 
-  /* SVG chart */
-  .chart-wrap {
-    background: var(--surface2);
-    border-radius: 12px;
-    padding: 20px;
-    margin-top: 20px;
-    overflow-x: auto;
-  }
+  /* === SKELETON === */
+  .skeleton { background: #1A1A1A; border-radius: 6px; animation: pulse 1.5s infinite; }
+  .skeleton-row { height: 44px; margin-bottom: 1px; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  .chart-title {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 16px;
-  }
-
-  /* Loading */
-  .loading {
-    color: var(--muted);
-    font-size: 14px;
-    padding: 24px;
-    text-align: center;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .sidebar { display: none; }
-    .main { margin-left: 0; }
-    .form-row { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-  }
-
-  /* Toast */
-  #toast-container {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
+  /* === TOAST === */
+  #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
   .toast {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 20px;
-    font-size: 13px;
-    color: var(--text);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    animation: slideIn 0.3s ease;
-    max-width: 320px;
+    background: #111111; border: 1px solid #2A2A2A; border-radius: 12px;
+    padding: 14px 18px; font-size: 13px; min-width: 280px; max-width: 360px;
+    display: flex; align-items: center; gap: 10px; pointer-events: auto;
+    animation: slideIn 0.3s ease; box-shadow: 0 8px 32px #00000080;
   }
+  .toast.success { border-color: #AAFF0050; }
+  .toast.error { border-color: #FF444450; }
+  .toast.info { border-color: #0055FF50; }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(40px); opacity: 0; } }
 
-  .toast.success { border-left: 3px solid var(--green); }
-  .toast.error { border-left: 3px solid var(--red); }
+  /* === DIVIDER === */
+  .divider { height: 1px; background: #2A2A2A; margin: 24px 0; }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Section header */
-  .section-header {
-    margin-bottom: 24px;
-  }
-
-  .section-header h1 {
-    font-size: 22px;
-    font-weight: 700;
-  }
-
-  .section-header p {
-    font-size: 14px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 24px 0;
-  }
+  /* === HIGHLIGHT ROW === */
+  .highlight-number { color: #AAFF00; font-weight: 700; }
 </style>
 </head>
 <body>
 
-<!-- ===== LOGIN SCREEN ===== -->
-<div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">PROOVD</div>
-    <div class="login-subtitle">Pannello Amministrazione</div>
-    <input type="password" id="login-pw" placeholder="Password admin" autocomplete="current-password">
-    <button class="btn btn-full" onclick="doLogin()">Accedi</button>
-    <div class="login-error" id="login-error">Password errata. Riprova.</div>
+<!-- === LOGIN PAGE === -->
+<div id="login-page">
+  <div class="login-card">
+    <div class="login-logo">PROOVD<span>.</span></div>
+    <div class="login-subtitle">Pannello di amministrazione — Accesso riservato</div>
+    <div class="form-group">
+      <label class="login-label">Password Admin</label>
+      <div class="input-wrap">
+        <input type="password" class="login-input" id="login-pass"
+          placeholder="Inserisci la password..."
+          onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="input-toggle" onclick="togglePass('login-pass',this)" type="button">👁</button>
+      </div>
+      <div class="login-error" id="login-error"></div>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">🔓 Accedi al Pannello</button>
   </div>
 </div>
 
-<!-- ===== ADMIN APP ===== -->
-<div id="admin-app">
-
+<!-- === ADMIN PANEL === -->
+<div id="admin-panel">
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <div class="sidebar">
     <div class="sidebar-logo">
-      PROOVD
-      <span>Admin Panel</span>
+      PROOVD<span>.</span>
+      <small>Admin Panel</small>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-item active" onclick="goTo('dashboard')">📊 Dashboard</div>
-      <div class="nav-item" onclick="goTo('apikey')">🔑 API Key</div>
-      <div class="nav-item" onclick="goTo('users')">👥 Utenti</div>
-      <div class="nav-item" onclick="goTo('config')">⚙️ Config Simulatore</div>
-      <div class="nav-item" onclick="goTo('stats')">📈 Statistiche</div>
+      <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard',this)">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" data-section="apikey" onclick="showSection('apikey',this)">
+        <span class="nav-icon">🔑</span> API Key
+      </div>
+      <div class="nav-item" data-section="users" onclick="showSection('users',this)">
+        <span class="nav-icon">👥</span> Utenti
+      </div>
+      <div class="nav-item" data-section="config" onclick="showSection('config',this)">
+        <span class="nav-icon">⚙️</span> Configurazione
+      </div>
+      <div class="nav-item" data-section="stats" onclick="showSection('stats',this)">
+        <span class="nav-icon">📈</span> Statistiche
+      </div>
     </nav>
     <div class="sidebar-footer">
-      <div class="logout-btn" onclick="doLogout()">🚪 Esci</div>
+      <div class="sidebar-version">PROOVD Admin v1.0.0</div>
     </div>
-  </aside>
+  </div>
 
-  <!-- Main -->
-  <div class="main">
+  <!-- Main wrap -->
+  <div class="main-wrap">
+    <!-- Header -->
     <div class="header">
       <div class="header-title" id="header-title">Dashboard</div>
-      <span class="badge-admin">Admin</span>
+      <button class="btn-logout" onclick="doLogout()">⬅ Esci</button>
     </div>
 
+    <!-- Content -->
     <div class="content">
 
-      <!-- ===== SECTION: DASHBOARD ===== -->
+      <!-- === SECTION: DASHBOARD === -->
       <div class="section active" id="section-dashboard">
         <div class="section-header">
-          <h1>Overview Piattaforma</h1>
-          <p>Statistiche aggregate di tutti gli utenti PROOVD</p>
+          <div class="section-title">Panoramica</div>
+          <div class="section-desc">Riepilogo generale della piattaforma PROOVD</div>
         </div>
 
-        <div class="stats-grid" id="dash-stats">
+        <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-label">Caricamento...</div>
-            <div class="stat-value">—</div>
+            <div id="stat-users" class="stat-skeleton"></div>
+            <div class="stat-label">Totale Utenti</div>
+          </div>
+          <div class="stat-card">
+            <div id="stat-tokens" class="stat-skeleton"></div>
+            <div class="stat-label">Token Medi</div>
+          </div>
+          <div class="stat-card">
+            <div id="stat-campaigns" class="stat-skeleton"></div>
+            <div class="stat-label">Campagne Totali</div>
+          </div>
+          <div class="stat-card">
+            <div id="stat-score" class="stat-skeleton"></div>
+            <div class="stat-label">Score Medio</div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Stato sistema</div>
-          <div class="card-desc">Connessione ai servizi</div>
-          <div id="system-status" class="loading">Verifica connessione...</div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <span>🕐 Attività Recente — ultimi 5 utenti</span>
+            <button class="btn-secondary btn-sm" onclick="initDashboard()">↺ Aggiorna</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Email / ID</th>
+                <th>Token</th>
+                <th>Score</th>
+                <th>Campagne</th>
+                <th>Registrato</th>
+              </tr>
+            </thead>
+            <tbody id="recent-users-body">
+              <tr><td colspan="5"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="5"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="5"><div class="skeleton skeleton-row"></div></td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- ===== SECTION: API KEY ===== -->
+      <!-- === SECTION: API KEY === -->
       <div class="section" id="section-apikey">
         <div class="section-header">
-          <h1>Gestione API Key</h1>
-          <p>Configura la Groq API Key usata dalla piattaforma per le funzionalità AI</p>
+          <div class="section-title">Gestione API Key Groq</div>
+          <div class="section-desc">La API key Groq viene usata dall'app principale per le risposte dell'AI coach.</div>
         </div>
 
         <div class="card">
-          <div class="card-title">Key attuale</div>
-          <div class="card-desc">API key salvata su Supabase (mascherata)</div>
-          <div id="current-key-display" class="status-box show info">Caricamento key da Supabase...</div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Imposta nuova API Key</div>
-          <div class="card-desc">La key verrà salvata nella tabella <code style="color:var(--lime)">settings</code> su Supabase</div>
-
+          <div class="card-title">🔑 Configurazione Chiave API</div>
           <div class="form-group">
             <label class="form-label">Groq API Key</label>
             <div class="input-wrap">
-              <input type="password" class="form-input" id="groq-key-input" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx" style="padding-right: 44px;">
-              <button class="toggle-vis" onclick="toggleVis('groq-key-input', this)" title="Mostra/nascondi">👁</button>
+              <input type="password" class="form-input" id="groq-key-input" placeholder="gsk_...">
+              <button class="input-toggle" onclick="togglePass('groq-key-input',this)" type="button">👁</button>
             </div>
           </div>
-
-          <div class="form-actions">
-            <button class="btn" onclick="saveGroqKey()">💾 Salva Key</button>
-            <button class="btn btn-outline" onclick="testGroqKey()">🔌 Testa Connessione</button>
+          <div class="btn-row">
+            <button class="btn-lime" onclick="saveGroqKey()">💾 Salva Key</button>
+            <button class="btn-secondary" onclick="testGroqKey()">🧪 Testa Connessione</button>
           </div>
+          <div class="status-box" id="groq-status">
+            <div class="status-dot" id="groq-dot"></div>
+            <span id="groq-status-text">In attesa di verifica...</span>
+          </div>
+        </div>
 
-          <div class="status-box" id="key-status"></div>
+        <div class="card">
+          <div class="card-title">📋 Integrazione in index.html</div>
+          <div class="section-desc" style="margin-bottom:12px">
+            Aggiungi questo codice a index.html per caricare automaticamente la chiave da Supabase all'avvio:
+          </div>
+          <div class="code-box" id="code-snippet"></div>
         </div>
       </div>
 
-      <!-- ===== SECTION: USERS ===== -->
+      <!-- === SECTION: UTENTI === -->
       <div class="section" id="section-users">
         <div class="section-header">
-          <h1>Gestione Utenti</h1>
-          <p>Lista profili registrati su PROOVD</p>
+          <div class="section-title">Gestione Utenti</div>
+          <div class="section-desc">Lista utenti registrati su PROOVD con i loro dati di gioco.</div>
         </div>
 
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div>
-              <div class="card-title">Tutti gli utenti</div>
-              <div class="card-desc" style="margin-bottom:0" id="users-count">Caricamento...</div>
-            </div>
-            <button class="btn btn-sm btn-outline" onclick="loadUsers()">🔄 Ricarica</button>
+        <div class="table-wrap">
+          <div class="table-header">
+            <span>👥 Utenti Registrati</span>
+            <span id="users-count" style="font-size:12px;color:#777777;font-weight:400"></span>
           </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Token</th>
-                  <th>Campagne</th>
-                  <th>Score</th>
-                  <th>Ultima attività</th>
-                  <th>Stato</th>
-                </tr>
-              </thead>
-              <tbody id="users-tbody">
-                <tr><td colspan="6" class="loading">Caricamento utenti...</td></tr>
-              </tbody>
-            </table>
+          <table>
+            <thead>
+              <tr>
+                <th>Email / ID</th>
+                <th>Token</th>
+                <th>Score</th>
+                <th>Campagne</th>
+                <th>Ultimo Accesso</th>
+                <th>Stato</th>
+              </tr>
+            </thead>
+            <tbody id="users-body">
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <span class="page-info" id="page-info">Pagina 1</span>
+            <button class="btn-secondary btn-sm" id="btn-prev" onclick="usersPage(-1)" disabled>← Precedente</button>
+            <button class="btn-secondary btn-sm" id="btn-next" onclick="usersPage(1)">Successivo →</button>
           </div>
         </div>
       </div>
 
-      <!-- ===== SECTION: CONFIG SIMULATORE ===== -->
+      <!-- === SECTION: CONFIG === -->
       <div class="section" id="section-config">
         <div class="section-header">
-          <h1>Config Simulatore</h1>
-          <p>Benchmark CPM/CTR/CVR per le principali piattaforme pubblicitarie</p>
+          <div class="section-title">Configurazione Simulatore</div>
+          <div class="section-desc">Imposta i benchmark CPM, CTR e CVR per ogni piattaforma pubblicitaria.</div>
         </div>
 
         <div class="card">
-          <div class="card-title">Parametri piattaforme</div>
-          <div class="card-desc">I valori vengono salvati in tabella <code style="color:var(--lime)">platform_config</code> e usati dal motore di simulazione</div>
-
-          <div id="platform-form"></div>
-
-          <div class="form-actions">
-            <button class="btn" onclick="savePlatformConfig()">💾 Salva Config</button>
-            <button class="btn btn-outline" onclick="loadPlatformConfig()">🔄 Ricarica da DB</button>
+          <div class="card-title">📡 Benchmark Piattaforme</div>
+          <div class="platform-grid" id="platform-grid">
+            <div style="grid-column:1/-1;text-align:center;padding:40px;color:#777777">
+              <div class="skeleton" style="height:20px;margin-bottom:12px"></div>
+              <div class="skeleton" style="height:20px;margin-bottom:12px"></div>
+              <div class="skeleton" style="height:20px"></div>
+            </div>
           </div>
-
-          <div class="status-box" id="config-status"></div>
+          <div class="divider"></div>
+          <div class="btn-row">
+            <button class="btn-lime" onclick="savePlatformConfig()">💾 Salva Configurazione</button>
+            <button class="btn-secondary" onclick="resetPlatformConfig()">↺ Ripristina Default</button>
+          </div>
         </div>
       </div>
 
-      <!-- ===== SECTION: STATISTICHE ===== -->
+      <!-- === SECTION: STATISTICHE === -->
       <div class="section" id="section-stats">
         <div class="section-header">
-          <h1>Statistiche Avanzate</h1>
-          <p>Top campagne per ROAS e distribuzione per piattaforma</p>
+          <div class="section-title">Statistiche Campagne</div>
+          <div class="section-desc">Analisi aggregata delle campagne su tutte le piattaforme.</div>
         </div>
 
-        <div class="card">
-          <div class="card-title">🏆 Top campagne per ROAS</div>
-          <div class="card-desc">Estratte dai game_state di tutti gli utenti</div>
-          <div class="table-wrap" style="margin-top:12px">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Utente</th>
-                  <th>Campagna</th>
-                  <th>Piattaforma</th>
-                  <th>Budget</th>
-                  <th>Revenue</th>
-                  <th>ROAS</th>
-                </tr>
-              </thead>
-              <tbody id="stats-campaigns-tbody">
-                <tr><td colspan="7" class="loading">Caricamento...</td></tr>
-              </tbody>
-            </table>
+        <div class="chart-wrap">
+          <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center">
+            <span>📊 Campagne per Piattaforma</span>
+            <button class="btn-secondary btn-sm" onclick="initStats()">↺ Aggiorna</button>
           </div>
+          <svg id="bar-chart" style="width:100%;height:280px;display:block" viewBox="0 0 720 280"></svg>
         </div>
 
-        <div class="card">
-          <div class="card-title">📊 Piattaforme più usate</div>
-          <div class="card-desc">Distribuzione campagne per piattaforma</div>
-          <div class="chart-wrap">
-            <svg id="platform-chart" width="100%" height="200" style="display:block;"></svg>
+        <div class="table-wrap">
+          <div class="table-header">
+            <span>🏆 Top 10 Campagne per ROAS</span>
           </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Utente</th>
+                <th>Piattaforma</th>
+                <th>Budget</th>
+                <th>ROAS</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="top-campaigns-body">
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+              <tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
     </div><!-- /content -->
-  </div><!-- /main -->
-
-</div><!-- /admin-app -->
+  </div><!-- /main-wrap -->
+</div><!-- /admin-panel -->
 
 <!-- Toast container -->
 <div id="toast-container"></div>
 
 <script>
-// === CONSTANTS ===
+// === CONFIGURAZIONE ===
 const SUPABASE_URL = 'https://mzbguicvbeitlukhxbqk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16Ymd1aWN2YmVpdGx1a2h4YnFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzM0NDAsImV4cCI6MjA5NzcwOTQ0MH0._VMZYdCCXn-OsgWRALTZ0PJsmKm6ryl-Ux-jy709u0I';
-const ADMIN_PW = 'proovd2024';
-
-const PLATFORMS_DEFAULT = [
-  { id: 'meta', name: 'Meta Ads', cpm: 8.5, ctr: 1.2, cvr: 2.5 },
-  { id: 'google_search', name: 'Google Search', cpm: 15.0, ctr: 3.5, cvr: 4.2 },
-  { id: 'youtube', name: 'YouTube Ads', cpm: 6.0, ctr: 0.5, cvr: 1.8 },
-  { id: 'tiktok', name: 'TikTok Ads', cpm: 5.5, ctr: 1.8, cvr: 2.0 },
-  { id: 'linkedin', name: 'LinkedIn Ads', cpm: 28.0, ctr: 0.8, cvr: 3.1 },
-];
+const ADMIN_PASSWORD = 'proovd-admin-2024';
 
 // === SUPABASE HELPER ===
-async function sbAdmin(path, opts = {}) {
-  try {
-    const res = await fetch(SUPABASE_URL + path, {
-      ...opts,
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': opts.prefer || '',
-        ...(opts.extraHeaders || {})
-      }
-    });
-    if (res.status === 204) return { ok: true };
-    const data = await res.json();
-    return res.ok ? data : null;
-  } catch (e) {
-    console.error('Supabase error:', e);
-    return null;
+async function supabaseQuery(table, options = {}) {
+  const { method = 'GET', filter = '', body = null, select = '*', prefer = '' } = options;
+  let url = `${SUPABASE_URL}/rest/v1/${table}?select=${select}${filter}`;
+  const defaultPrefer = method === 'POST' ? 'return=minimal' : 'count=exact';
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': prefer || defaultPrefer
+  };
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null
+  });
+  return res;
+}
+
+// === AUTH ===
+function checkAuth() {
+  if (sessionStorage.getItem('admin_auth') === 'true') {
+    showPanel();
   }
 }
 
-// === LOGIN ===
+function showPanel() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('admin-panel').classList.add('visible');
+  renderCodeSnippet();
+  initDashboard();
+  initApiKey();
+  initConfig();
+}
+
 function doLogin() {
-  const pw = document.getElementById('login-pw').value;
+  const pass = document.getElementById('login-pass').value;
   const errEl = document.getElementById('login-error');
-  const input = document.getElementById('login-pw');
-
-  if (pw === ADMIN_PW) {
-    sessionStorage.setItem('proovd_admin', '1');
-    input.classList.remove('error');
-    errEl.style.display = 'none';
-    showAdmin();
+  if (pass === ADMIN_PASSWORD) {
+    sessionStorage.setItem('admin_auth', 'true');
+    showPanel();
   } else {
-    input.classList.add('error');
-    errEl.style.display = 'block';
-    input.value = '';
-    input.focus();
+    errEl.textContent = '❌ Password errata. Riprova.';
+    const inp = document.getElementById('login-pass');
+    inp.style.borderColor = '#FF4444';
+    setTimeout(() => { errEl.textContent = ''; inp.style.borderColor = ''; }, 3000);
   }
 }
-
-document.getElementById('login-pw').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
 
 function doLogout() {
-  sessionStorage.removeItem('proovd_admin');
-  document.getElementById('admin-app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-pw').value = '';
-}
-
-function showAdmin() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('admin-app').style.display = 'flex';
-  goTo('dashboard');
-}
-
-// Auto-login if session present
-if (sessionStorage.getItem('proovd_admin') === '1') {
-  document.getElementById('login-screen').style.display = 'none';
-  document.body.style.display = 'block';
-  showAdmin();
-} else {
-  document.body.style.display = 'block';
+  sessionStorage.removeItem('admin_auth');
+  document.getElementById('admin-panel').classList.remove('visible');
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
 }
 
 // === ROUTER ===
 const SECTION_TITLES = {
   dashboard: 'Dashboard',
-  apikey: 'API Key',
+  apikey: 'Gestione API Key Groq',
   users: 'Utenti',
-  config: 'Config Simulatore',
-  stats: 'Statistiche',
+  config: 'Configurazione Piattaforme',
+  stats: 'Statistiche Campagne'
 };
 
-function goTo(section) {
-  // Nav items
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el => {
-    if (el.getAttribute('onclick').includes(section)) el.classList.add('active');
-  });
-
-  // Sections
-  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-  document.getElementById('section-' + section).classList.add('active');
-
-  // Header title
-  document.getElementById('header-title').textContent = SECTION_TITLES[section];
-
-  // Load data
-  if (section === 'dashboard') loadDashboard();
-  if (section === 'apikey') loadCurrentKey();
-  if (section === 'users') loadUsers();
-  if (section === 'config') loadPlatformConfig();
-  if (section === 'stats') loadStats();
+function showSection(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('section-' + name);
+  if (sec) sec.classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('header-title').textContent = SECTION_TITLES[name] || name;
+  if (name === 'users') initUsers();
+  if (name === 'stats') initStats();
 }
 
-// === TOAST ===
-function toast(msg, type = 'info') {
-  const container = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  el.textContent = msg;
-  container.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-
-// === UTIL ===
-function toggleVis(inputId, btn) {
+// === UTILITIES ===
+function togglePass(inputId, btn) {
   const input = document.getElementById(inputId);
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁';
-  }
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
 }
 
-function maskKey(k) {
-  if (!k || k.length < 8) return '—';
-  return k.slice(0, 6) + '•'.repeat(Math.max(0, k.length - 10)) + k.slice(-4);
+function showToast(msg, type = 'info') {
+  const tc = document.getElementById('toast-container');
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${msg}</span>`;
+  tc.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
 }
 
-function setStatus(elId, msg, type) {
-  const el = document.getElementById(elId);
-  el.textContent = msg;
-  el.className = 'status-box show ' + type;
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch { return '—'; }
 }
 
-// === SECTION: DASHBOARD ===
-async function loadDashboard() {
-  const grid = document.getElementById('dash-stats');
-  const sysEl = document.getElementById('system-status');
-  grid.innerHTML = '<div class="stat-card"><div class="stat-label">Caricamento...</div><div class="stat-value">⏳</div></div>';
+function formatCurrency(val) {
+  if (val === null || val === undefined || isNaN(val)) return '—';
+  return '€' + Number(val).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
 
-  const profiles = await sbAdmin('/rest/v1/profiles?select=id,email,game_state');
+function setStatCard(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'stat-number';
+  el.textContent = value;
+}
 
-  if (!profiles) {
-    grid.innerHTML = '<div class="stat-card"><div class="stat-label">Errore</div><div class="stat-value" style="color:var(--red)">—</div><div class="stat-sub">Impossibile caricare profili</div></div>';
-    sysEl.innerHTML = '❌ Connessione Supabase fallita';
-    return;
-  }
-
-  const total = profiles.length;
-  let tokenSum = 0, campaignCount = 0, scoreSum = 0, scoreCount = 0;
-
-  profiles.forEach(p => {
-    const gs = p.game_state || {};
-    if (typeof gs.tokens === 'number') tokenSum += gs.tokens;
-    if (Array.isArray(gs.campaigns)) campaignCount += gs.campaigns.length;
-    if (typeof gs.score === 'number') { scoreSum += gs.score; scoreCount++; }
+// === SECTION 1: DASHBOARD ===
+async function initDashboard() {
+  // Reset to skeleton
+  ['stat-users','stat-tokens','stat-campaigns','stat-score'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'stat-skeleton';
   });
 
-  const avgTokens = total ? Math.round(tokenSum / total) : 0;
-  const avgScore = scoreCount ? (scoreSum / scoreCount).toFixed(1) : '—';
+  try {
+    const res = await supabaseQuery('profiles', {
+      select: '*',
+      filter: '&order=created_at.desc&limit=100',
+      prefer: 'count=exact'
+    });
 
-  grid.innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Utenti totali</div>
-      <div class="stat-value">${total}</div>
-      <div class="stat-sub">profili registrati</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Token medi</div>
-      <div class="stat-value">€${avgTokens}</div>
-      <div class="stat-sub">per utente</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Campagne totali</div>
-      <div class="stat-value">${campaignCount}</div>
-      <div class="stat-sub">lanciate sulla piattaforma</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Score medio</div>
-      <div class="stat-value">${avgScore}</div>
-      <div class="stat-sub">PROOVD Score</div>
-    </div>
-  `;
+    // Parse count from Content-Range header
+    const rangeHeader = res.headers.get('Content-Range');
+    let totalUsers = '?';
+    if (rangeHeader) {
+      const parts = rangeHeader.split('/');
+      if (parts[1]) totalUsers = parseInt(parts[1]);
+    }
 
-  sysEl.innerHTML = `✅ Supabase connesso &nbsp;·&nbsp; ${total} profili caricati &nbsp;·&nbsp; DB risponde correttamente`;
-  sysEl.style.color = 'var(--green)';
-  sysEl.style.padding = '0';
-  sysEl.style.fontSize = '14px';
+    const profiles = await res.json();
+
+    // Compute averages from game_state
+    let sumTokens = 0, sumScore = 0, sumCampaigns = 0, n = 0;
+    profiles.forEach(p => {
+      const gs = p.game_state || {};
+      sumCampaigns += Array.isArray(gs.campaigns) ? gs.campaigns.length : 0;
+      if (typeof gs.tokens === 'number') { sumTokens += gs.tokens; n++; }
+      if (typeof gs.score === 'number') sumScore += gs.score;
+    });
+
+    const avgTokens = n > 0 ? Math.round(sumTokens / n) : 0;
+    const avgScore = n > 0 ? Math.round(sumScore / n) : 0;
+
+    setStatCard('stat-users', totalUsers);
+    setStatCard('stat-tokens', '€' + avgTokens);
+    setStatCard('stat-campaigns', sumCampaigns);
+    setStatCard('stat-score', avgScore + 'pt');
+
+    // Recent users table
+    const tbody = document.getElementById('recent-users-body');
+    const recent = profiles.slice(0, 5);
+    if (!recent.length) {
+      tbody.innerHTML = `<tr><td colspan="5">
+        <div class="empty-state">
+          <div class="empty-icon">👥</div>
+          <div class="empty-text">Nessun utente registrato</div>
+        </div>
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = recent.map(p => {
+      const gs = p.game_state || {};
+      const tokens = typeof gs.tokens === 'number' ? '€' + gs.tokens : '—';
+      const score = typeof gs.score === 'number' ? gs.score + 'pt' : '—';
+      const camps = Array.isArray(gs.campaigns) ? gs.campaigns.length : 0;
+      const email = p.email || (p.id ? p.id.substring(0,12) + '...' : '—');
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px">${email}</td>
+        <td class="highlight-number">${tokens}</td>
+        <td>${score}</td>
+        <td><span class="badge badge-blue">${camps}</span></td>
+        <td style="color:#777777">${formatDate(p.created_at)}</td>
+      </tr>`;
+    }).join('');
+
+  } catch (e) {
+    console.error('Dashboard error:', e);
+    ['stat-users','stat-tokens','stat-campaigns','stat-score'].forEach(id => setStatCard(id, '—'));
+    document.getElementById('recent-users-body').innerHTML =
+      `<tr><td colspan="5" style="text-align:center;color:#FF4444;padding:24px">Errore caricamento: ${e.message}</td></tr>`;
+    showToast('Errore caricamento dashboard', 'error');
+  }
 }
 
-// === SECTION: API KEY ===
-async function loadCurrentKey() {
-  const el = document.getElementById('current-key-display');
-  el.className = 'status-box show info';
-  el.textContent = 'Caricamento da Supabase...';
-
-  const data = await sbAdmin('/rest/v1/settings?key=eq.groq_api_key&select=value');
-  if (data && data.length > 0) {
-    const val = data[0].value;
-    el.className = 'status-box show success';
-    el.textContent = '✅ Key attuale: ' + maskKey(val);
-  } else {
-    el.className = 'status-box show error';
-    el.textContent = '⚠️ Nessuna API key trovata su Supabase. Inseriscila qui sotto.';
+// === SECTION 2: API KEY ===
+async function initApiKey() {
+  try {
+    const res = await supabaseQuery('settings', {
+      select: 'value',
+      filter: '&key=eq.groq_api_key',
+      prefer: 'count=exact'
+    });
+    const data = await res.json();
+    if (Array.isArray(data) && data[0]?.value) {
+      document.getElementById('groq-key-input').value = data[0].value;
+      setGroqStatus('connected', '✅ Chiave caricata dal database');
+    }
+  } catch (e) {
+    console.warn('Nessuna chiave trovata:', e.message);
   }
+}
+
+function setGroqStatus(state, msg) {
+  const dot = document.getElementById('groq-dot');
+  const text = document.getElementById('groq-status-text');
+  const box = document.getElementById('groq-status');
+  box.className = 'status-box';
+  dot.className = 'status-dot';
+  if (state === 'connected') { box.classList.add('connected'); dot.classList.add('green'); }
+  else if (state === 'error') { box.classList.add('error'); dot.classList.add('red'); }
+  else if (state === 'loading') { dot.classList.add('loading'); }
+  text.textContent = msg;
 }
 
 async function saveGroqKey() {
   const key = document.getElementById('groq-key-input').value.trim();
-  if (!key) { setStatus('key-status', '⚠️ Inserisci una API key valida.', 'error'); return; }
-
-  setStatus('key-status', '⏳ Salvataggio in corso...', 'info');
-
-  const body = JSON.stringify({ key: 'groq_api_key', value: key });
-  const res = await sbAdmin('/rest/v1/settings', {
-    method: 'POST',
-    body,
-    prefer: 'resolution=merge-duplicates',
-    extraHeaders: { 'Prefer': 'resolution=merge-duplicates' }
-  });
-
-  if (res !== null) {
-    setStatus('key-status', '✅ API key salvata correttamente su Supabase!', 'success');
-    toast('API key salvata!', 'success');
-    document.getElementById('groq-key-input').value = '';
-    loadCurrentKey();
-  } else {
-    setStatus('key-status', '❌ Errore nel salvataggio. Verifica che la tabella "settings" esista su Supabase.', 'error');
-    toast('Errore salvataggio key', 'error');
+  if (!key) { showToast('Inserisci una API key valida', 'error'); return; }
+  setGroqStatus('loading', '⏳ Salvataggio in corso...');
+  try {
+    const res = await supabaseQuery('settings', {
+      method: 'POST',
+      body: { key: 'groq_api_key', value: key, updated_at: new Date().toISOString() },
+      prefer: 'resolution=merge-duplicates,return=minimal'
+    });
+    if (res.ok || res.status === 201) {
+      setGroqStatus('connected', '✅ Chiave salvata con successo nel database');
+      showToast('API Key Groq salvata!', 'success');
+    } else {
+      const errTxt = await res.text();
+      setGroqStatus('error', '❌ Errore salvataggio: ' + errTxt.substring(0, 80));
+      showToast('Errore salvataggio key', 'error');
+    }
+  } catch (e) {
+    setGroqStatus('error', '❌ Errore di rete: ' + e.message);
+    showToast('Errore di rete: ' + e.message, 'error');
   }
 }
 
 async function testGroqKey() {
-  setStatus('key-status', '⏳ Recupero key e test connessione...', 'info');
-
-  // Get key from Supabase
-  const data = await sbAdmin('/rest/v1/settings?key=eq.groq_api_key&select=value');
-  const inputKey = document.getElementById('groq-key-input').value.trim();
-  const key = inputKey || (data && data.length > 0 ? data[0].value : null);
-
-  if (!key) {
-    setStatus('key-status', '❌ Nessuna key trovata. Inserisci e salva prima una API key.', 'error');
-    return;
-  }
-
+  const key = document.getElementById('groq-key-input').value.trim();
+  if (!key) { showToast('Inserisci prima una API key', 'error'); return; }
+  setGroqStatus('loading', '⏳ Test connessione in corso...');
   try {
     const res = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { 'Authorization': `Bearer ${key}` }
     });
-
     if (res.ok) {
-      const json = await res.json();
-      const count = json.data ? json.data.length : '?';
-      setStatus('key-status', `✅ Connessione Groq riuscita! ${count} modelli disponibili.`, 'success');
-      toast('Connessione Groq OK!', 'success');
+      const data = await res.json();
+      const modelCount = Array.isArray(data.data) ? data.data.length : '?';
+      setGroqStatus('connected', `✅ Connessa — ${modelCount} modelli disponibili`);
+      showToast('Connessione Groq verificata con successo!', 'success');
     } else {
-      const err = await res.json();
-      setStatus('key-status', `❌ Errore Groq: ${err.error?.message || res.status}`, 'error');
+      let errMsg = 'Chiave non valida';
+      try { const errData = await res.json(); errMsg = errData.error?.message || errMsg; } catch {}
+      setGroqStatus('error', '❌ Non valida: ' + errMsg);
+      showToast('Key Groq non valida: ' + errMsg, 'error');
     }
   } catch (e) {
-    setStatus('key-status', `❌ Impossibile raggiungere Groq: ${e.message}`, 'error');
+    setGroqStatus('error', '❌ Errore connessione: ' + e.message);
+    showToast('Errore connessione a Groq', 'error');
   }
 }
 
-// === SECTION: USERS ===
-async function loadUsers() {
-  document.getElementById('users-count').textContent = 'Caricamento...';
-  document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" class="loading">Caricamento utenti...</td></tr>';
+function renderCodeSnippet() {
+  const el = document.getElementById('code-snippet');
+  if (!el) return;
+  el.innerHTML = `<span class="c-comment">// === CARICAMENTO CONFIG DA SUPABASE ===</span>
+<span class="c-keyword">const</span> SUPABASE_URL = <span class="c-string">'https://mzbguicvbeitlukhxbqk.supabase.co'</span>;
+<span class="c-keyword">const</span> SUPABASE_KEY = <span class="c-string">'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'</span>;
 
-  const profiles = await sbAdmin('/rest/v1/profiles?select=id,email,game_state,updated_at');
-
-  if (!profiles) {
-    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" style="color:var(--red);padding:16px">Errore nel caricamento profili. Verifica che la tabella "profiles" esista.</td></tr>';
-    document.getElementById('users-count').textContent = 'Errore caricamento';
-    return;
-  }
-
-  document.getElementById('users-count').textContent = `${profiles.length} utenti registrati`;
-
-  if (profiles.length === 0) {
-    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:16px;text-align:center">Nessun utente ancora registrato</td></tr>';
-    return;
-  }
-
-  const rows = profiles.map(p => {
-    const gs = p.game_state || {};
-    const tokens = typeof gs.tokens === 'number' ? gs.tokens : 500;
-    const campaigns = Array.isArray(gs.campaigns) ? gs.campaigns.length : 0;
-    const score = typeof gs.score === 'number' ? gs.score : 0;
-    const lastActivity = p.updated_at ? new Date(p.updated_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
-    const email = p.email || p.id?.slice(0, 8) + '...';
-
-    let statusPill;
-    if (tokens <= 0) statusPill = '<span class="pill pill-red">Game Over</span>';
-    else if (tokens >= 1000) statusPill = '<span class="pill pill-green">Attivo</span>';
-    else statusPill = '<span class="pill pill-blue">In gioco</span>';
-
-    return `<tr>
-      <td>${email}</td>
-      <td>€${tokens.toFixed(0)}</td>
-      <td>${campaigns}</td>
-      <td>${score > 0 ? score.toFixed(1) : '—'}</td>
-      <td>${lastActivity}</td>
-      <td>${statusPill}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('users-tbody').innerHTML = rows;
+<span class="c-keyword">async function</span> <span class="c-func">loadGroqKey</span>() {
+  <span class="c-keyword">try</span> {
+    <span class="c-keyword">const</span> res = <span class="c-keyword">await</span> fetch(
+      SUPABASE_URL + <span class="c-string">'/rest/v1/settings?select=value&key=eq.groq_api_key'</span>,
+      { headers: {
+          <span class="c-string">'apikey'</span>: SUPABASE_KEY,
+          <span class="c-string">'Authorization'</span>: <span class="c-string">\`Bearer \${SUPABASE_KEY}\`</span>
+      }}
+    );
+    <span class="c-keyword">const</span> data = <span class="c-keyword">await</span> res.json();
+    <span class="c-keyword">if</span> (data[0]?.value) window.GROQ_API_KEY = data[0].value;
+  } <span class="c-keyword">catch</span> (e) { console.error(<span class="c-string">'Errore caricamento Groq key'</span>, e); }
 }
 
-// === SECTION: CONFIG SIMULATORE ===
-async function loadPlatformConfig() {
-  const formEl = document.getElementById('platform-form');
-  setStatus('config-status', '⏳ Caricamento config da Supabase...', 'info');
+<span class="c-keyword">async function</span> <span class="c-func">loadPlatformConfig</span>() {
+  <span class="c-keyword">try</span> {
+    <span class="c-keyword">const</span> res = <span class="c-keyword">await</span> fetch(
+      SUPABASE_URL + <span class="c-string">'/rest/v1/platform_config?select=*'</span>,
+      { headers: {
+          <span class="c-string">'apikey'</span>: SUPABASE_KEY,
+          <span class="c-string">'Authorization'</span>: <span class="c-string">\`Bearer \${SUPABASE_KEY}\`</span>
+      }}
+    );
+    <span class="c-keyword">const</span> platforms = <span class="c-keyword">await</span> res.json();
+    <span class="c-keyword">if</span> (Array.isArray(platforms) && platforms.length) {
+      window.PLATFORM_CONFIG = platforms;
+    }
+  } <span class="c-keyword">catch</span> (e) { console.error(<span class="c-string">'Errore caricamento config piattaforme'</span>, e); }
+}
 
-  const data = await sbAdmin('/rest/v1/platform_config?select=platform_id,cpm,ctr,cvr');
-  const existing = {};
-  if (data && Array.isArray(data)) {
-    data.forEach(row => existing[row.platform_id] = row);
+<span class="c-comment">// Chiama entrambe all'avvio, PRIMA di initApp()</span>
+Promise.all([<span class="c-func">loadGroqKey</span>(), <span class="c-func">loadPlatformConfig</span>()]).then(() => <span class="c-func">initApp</span>());`;
+}
+
+// === SECTION 3: UTENTI ===
+let usersCurrentPage = 0;
+const USERS_PER_PAGE = 20;
+let usersTotalCount = 0;
+
+async function initUsers() {
+  await fetchUsers(0);
+}
+
+async function fetchUsers(page) {
+  usersCurrentPage = page;
+  const offset = page * USERS_PER_PAGE;
+  const tbody = document.getElementById('users-body');
+  tbody.innerHTML = Array(5).fill(
+    '<tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>'
+  ).join('');
+  document.getElementById('users-count').textContent = '';
+
+  try {
+    const res = await supabaseQuery('profiles', {
+      select: '*',
+      filter: `&order=created_at.desc&limit=${USERS_PER_PAGE}&offset=${offset}`,
+      prefer: 'count=exact'
+    });
+
+    const rangeHeader = res.headers.get('Content-Range');
+    if (rangeHeader) {
+      const parts = rangeHeader.split('/');
+      usersTotalCount = parseInt(parts[1]) || 0;
+    }
+
+    const profiles = await res.json();
+    document.getElementById('users-count').textContent = `${usersTotalCount} utenti totali`;
+    updatePageInfo();
+
+    if (!profiles.length) {
+      tbody.innerHTML = `<tr><td colspan="6">
+        <div class="empty-state">
+          <div class="empty-icon">👥</div>
+          <div class="empty-text">Nessun utente trovato</div>
+        </div>
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = profiles.map(p => {
+      const gs = p.game_state || {};
+      const tokens = typeof gs.tokens === 'number' ? '€' + gs.tokens : '—';
+      const score = typeof gs.score === 'number' ? gs.score + 'pt' : '—';
+      const camps = Array.isArray(gs.campaigns) ? gs.campaigns.length : 0;
+      const email = p.email || (p.id ? p.id.substring(0, 16) + '...' : '—');
+      const lastSeen = formatDate(p.updated_at || p.created_at);
+      const isActive = typeof gs.tokens === 'number' ? gs.tokens > 0 : true;
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px">${email}</td>
+        <td class="highlight-number">${tokens}</td>
+        <td>${score}</td>
+        <td><span class="badge badge-blue">${camps}</span></td>
+        <td style="color:#777777">${lastSeen}</td>
+        <td><span class="badge ${isActive ? 'badge-green' : 'badge-red'}">${isActive ? 'Attivo' : 'Game Over'}</span></td>
+      </tr>`;
+    }).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#FF4444;padding:24px">
+      ❌ Errore: ${e.message}
+    </td></tr>`;
+    showToast('Errore caricamento utenti: ' + e.message, 'error');
   }
+}
 
-  const platforms = PLATFORMS_DEFAULT.map(p => ({
-    ...p,
-    ...(existing[p.id] ? { cpm: existing[p.id].cpm, ctr: existing[p.id].ctr, cvr: existing[p.id].cvr } : {})
-  }));
+function usersPage(dir) {
+  const newPage = usersCurrentPage + dir;
+  if (newPage < 0) return;
+  const maxPage = Math.max(0, Math.ceil(usersTotalCount / USERS_PER_PAGE) - 1);
+  if (newPage > maxPage) return;
+  fetchUsers(newPage);
+}
 
-  formEl.innerHTML = platforms.map(p => `
-    <div style="margin-bottom:20px;">
-      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text);">${p.name}</div>
-      <div class="form-row">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">CPM (€)</label>
-          <input type="number" class="form-input" id="cfg-${p.id}-cpm" value="${p.cpm}" step="0.1" min="0">
+function updatePageInfo() {
+  const totalPages = Math.max(1, Math.ceil(usersTotalCount / USERS_PER_PAGE));
+  document.getElementById('page-info').textContent =
+    `Pagina ${usersCurrentPage + 1} di ${totalPages} — ${usersTotalCount} utenti`;
+  document.getElementById('btn-prev').disabled = usersCurrentPage === 0;
+  document.getElementById('btn-next').disabled = (usersCurrentPage + 1) >= totalPages;
+}
+
+// === SECTION 4: CONFIGURAZIONE ===
+const DEFAULT_PLATFORMS = [
+  { name: 'Meta Ads',       icon: '📘', cpm: 8.50,  ctr: 1.2, cvr: 2.1 },
+  { name: 'Google Search',  icon: '🔍', cpm: 15.00, ctr: 3.5, cvr: 4.2 },
+  { name: 'Google Display', icon: '🖼️', cpm: 3.50,  ctr: 0.4, cvr: 1.8 },
+  { name: 'YouTube Ads',    icon: '▶️', cpm: 6.00,  ctr: 0.8, cvr: 1.5 },
+  { name: 'TikTok Ads',     icon: '🎵', cpm: 7.00,  ctr: 1.8, cvr: 2.8 },
+  { name: 'LinkedIn Ads',   icon: '💼', cpm: 28.00, ctr: 0.6, cvr: 3.5 },
+  { name: 'Pinterest Ads',  icon: '📌', cpm: 5.50,  ctr: 0.9, cvr: 1.9 },
+  { name: 'Snapchat Ads',   icon: '👻', cpm: 4.50,  ctr: 1.1, cvr: 1.6 },
+  { name: 'X Ads',          icon: '✖️', cpm: 6.50,  ctr: 0.7, cvr: 1.4 },
+  { name: 'Email Marketing',icon: '📧', cpm: 1.20,  ctr: 2.5, cvr: 3.8 },
+  { name: 'SEO Organico',   icon: '🌿', cpm: 0.80,  ctr: 4.2, cvr: 2.9 },
+  { name: 'Programmatic',   icon: '🤖', cpm: 2.80,  ctr: 0.3, cvr: 1.2 },
+];
+
+let currentPlatforms = [...DEFAULT_PLATFORMS];
+
+async function initConfig() {
+  renderPlatformGrid(DEFAULT_PLATFORMS);
+  try {
+    const res = await supabaseQuery('platform_config', { select: '*', prefer: 'count=exact' });
+    const saved = await res.json();
+    if (Array.isArray(saved) && saved.length > 0) {
+      const merged = DEFAULT_PLATFORMS.map(p => {
+        const found = saved.find(s => s.platform_name === p.name);
+        return found ? { ...p, cpm: parseFloat(found.cpm), ctr: parseFloat(found.ctr), cvr: parseFloat(found.cvr) } : p;
+      });
+      currentPlatforms = merged;
+      renderPlatformGrid(merged);
+    }
+  } catch (e) {
+    console.warn('Config piattaforme non trovata, uso default:', e.message);
+  }
+}
+
+function renderPlatformGrid(platforms) {
+  const grid = document.getElementById('platform-grid');
+  grid.innerHTML = platforms.map((p, i) => `
+    <div class="platform-row">
+      <div class="platform-name">${p.icon} ${p.name}</div>
+      <div class="platform-inputs">
+        <div class="platform-input-wrap">
+          <label>CPM (€)</label>
+          <input type="number" step="0.01" min="0" id="cfg-cpm-${i}" value="${p.cpm}">
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">CTR (%)</label>
-          <input type="number" class="form-input" id="cfg-${p.id}-ctr" value="${p.ctr}" step="0.1" min="0">
+        <div class="platform-input-wrap">
+          <label>CTR (%)</label>
+          <input type="number" step="0.01" min="0" id="cfg-ctr-${i}" value="${p.ctr}">
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">CVR (%)</label>
-          <input type="number" class="form-input" id="cfg-${p.id}-cvr" value="${p.cvr}" step="0.1" min="0">
+        <div class="platform-input-wrap">
+          <label>CVR (%)</label>
+          <input type="number" step="0.01" min="0" id="cfg-cvr-${i}" value="${p.cvr}">
         </div>
       </div>
     </div>
-    <div class="divider" style="margin:16px 0;"></div>
   `).join('');
-
-  const statusMsg = data && Array.isArray(data) && data.length > 0
-    ? `✅ Config caricata da Supabase (${data.length} piattaforme)`
-    : '⚠️ Nessuna config trovata su DB, usando valori di default';
-  const statusType = data && Array.isArray(data) && data.length > 0 ? 'success' : 'info';
-  setStatus('config-status', statusMsg, statusType);
 }
 
 async function savePlatformConfig() {
-  setStatus('config-status', '⏳ Salvataggio in corso...', 'info');
-
-  const rows = PLATFORMS_DEFAULT.map(p => ({
-    platform_id: p.id,
+  const rows = DEFAULT_PLATFORMS.map((p, i) => ({
     platform_name: p.name,
-    cpm: parseFloat(document.getElementById(`cfg-${p.id}-cpm`)?.value) || p.cpm,
-    ctr: parseFloat(document.getElementById(`cfg-${p.id}-ctr`)?.value) || p.ctr,
-    cvr: parseFloat(document.getElementById(`cfg-${p.id}-cvr`)?.value) || p.cvr,
+    cpm: parseFloat(document.getElementById(`cfg-cpm-${i}`)?.value || p.cpm) || p.cpm,
+    ctr: parseFloat(document.getElementById(`cfg-ctr-${i}`)?.value || p.ctr) || p.ctr,
+    cvr: parseFloat(document.getElementById(`cfg-cvr-${i}`)?.value || p.cvr) || p.cvr,
+    updated_at: new Date().toISOString()
   }));
 
-  const res = await sbAdmin('/rest/v1/platform_config', {
-    method: 'POST',
-    body: JSON.stringify(rows),
-    prefer: 'resolution=merge-duplicates',
-    extraHeaders: { 'Prefer': 'resolution=merge-duplicates' }
-  });
-
-  if (res !== null) {
-    setStatus('config-status', `✅ Config salvata per ${rows.length} piattaforme!`, 'success');
-    toast('Config simulatore salvata!', 'success');
-  } else {
-    setStatus('config-status', '❌ Errore nel salvataggio. Verifica che la tabella "platform_config" esista su Supabase.', 'error');
-    toast('Errore salvataggio config', 'error');
-  }
-}
-
-// === SECTION: STATISTICHE ===
-async function loadStats() {
-  document.getElementById('stats-campaigns-tbody').innerHTML = '<tr><td colspan="7" class="loading">Caricamento...</td></tr>';
-
-  const profiles = await sbAdmin('/rest/v1/profiles?select=email,game_state');
-
-  if (!profiles) {
-    document.getElementById('stats-campaigns-tbody').innerHTML = '<tr><td colspan="7" style="color:var(--red);padding:16px">Errore caricamento dati</td></tr>';
-    return;
-  }
-
-  // Collect all campaigns
-  const allCampaigns = [];
-  const platformCounts = {};
-
-  profiles.forEach(p => {
-    const gs = p.game_state || {};
-    const email = p.email || 'Utente anonimo';
-    if (Array.isArray(gs.campaigns)) {
-      gs.campaigns.forEach(c => {
-        const revenue = c.revenue || 0;
-        const budget = c.budget || 1;
-        const roas = revenue / budget;
-        allCampaigns.push({ email, campaign: c, roas });
-
-        const platform = c.platform || 'Sconosciuta';
-        platformCounts[platform] = (platformCounts[platform] || 0) + 1;
-      });
+  try {
+    const res = await supabaseQuery('platform_config', {
+      method: 'POST',
+      body: rows,
+      prefer: 'resolution=merge-duplicates,return=minimal'
+    });
+    if (res.ok || res.status === 201) {
+      showToast('Configurazione piattaforme salvata!', 'success');
+    } else {
+      const errTxt = await res.text();
+      showToast('Errore salvataggio: ' + errTxt.substring(0, 100), 'error');
     }
-  });
-
-  // Sort by ROAS desc
-  allCampaigns.sort((a, b) => b.roas - a.roas);
-
-  const top20 = allCampaigns.slice(0, 20);
-
-  if (top20.length === 0) {
-    document.getElementById('stats-campaigns-tbody').innerHTML = '<tr><td colspan="7" style="color:var(--muted);padding:16px;text-align:center">Nessuna campagna trovata</td></tr>';
-  } else {
-    document.getElementById('stats-campaigns-tbody').innerHTML = top20.map((item, i) => {
-      const c = item.campaign;
-      const roasColor = item.roas >= 3 ? 'var(--green)' : item.roas >= 1 ? 'var(--lime)' : 'var(--red)';
-      return `<tr>
-        <td>${i + 1}</td>
-        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.email}</td>
-        <td>${c.name || c.id || '—'}</td>
-        <td>${c.platform || '—'}</td>
-        <td>€${(c.budget || 0).toFixed(0)}</td>
-        <td>€${(c.revenue || 0).toFixed(0)}</td>
-        <td style="color:${roasColor};font-weight:700">${item.roas.toFixed(2)}x</td>
-      </tr>`;
-    }).join('');
+  } catch (e) {
+    showToast('Errore di rete: ' + e.message, 'error');
   }
-
-  // Draw SVG chart
-  drawPlatformChart(platformCounts);
 }
 
-function drawPlatformChart(platformCounts) {
-  const svg = document.getElementById('platform-chart');
-  const entries = Object.entries(platformCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+function resetPlatformConfig() {
+  currentPlatforms = [...DEFAULT_PLATFORMS];
+  renderPlatformGrid(DEFAULT_PLATFORMS);
+  showToast('Valori ripristinati ai default', 'info');
+}
 
-  if (entries.length === 0) {
-    svg.innerHTML = '<text x="50%" y="50%" fill="#777" text-anchor="middle" font-family="Inter">Nessun dato campagne</text>';
+// === SECTION 5: STATISTICHE ===
+async function initStats() {
+  // Reset
+  document.getElementById('top-campaigns-body').innerHTML =
+    Array(3).fill('<tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>').join('');
+  document.getElementById('bar-chart').innerHTML =
+    '<text x="360" y="140" text-anchor="middle" fill="#555555" font-family="Inter,sans-serif" font-size="13">Caricamento...</text>';
+
+  try {
+    const res = await supabaseQuery('profiles', {
+      select: 'game_state,email',
+      filter: '&limit=200',
+      prefer: 'count=exact'
+    });
+    const profiles = await res.json();
+
+    const platformCounts = {};
+    const allCampaigns = [];
+
+    profiles.forEach(p => {
+      const gs = p.game_state || {};
+      const camps = Array.isArray(gs.campaigns) ? gs.campaigns : [];
+      camps.forEach(c => {
+        const pl = c.platform || 'Altro';
+        platformCounts[pl] = (platformCounts[pl] || 0) + 1;
+        allCampaigns.push({
+          ...c,
+          userEmail: p.email || (p.id ? p.id.substring(0, 8) + '...' : '—')
+        });
+      });
+    });
+
+    renderBarChart(platformCounts);
+    renderTopCampaigns(allCampaigns);
+
+  } catch (e) {
+    document.getElementById('bar-chart').innerHTML =
+      `<text x="360" y="140" text-anchor="middle" fill="#FF4444" font-family="Inter,sans-serif" font-size="13">Errore: ${e.message}</text>`;
+    document.getElementById('top-campaigns-body').innerHTML =
+      `<tr><td colspan="6" style="text-align:center;color:#FF4444;padding:24px">Errore: ${e.message}</td></tr>`;
+    showToast('Errore caricamento statistiche', 'error');
+  }
+}
+
+function renderBarChart(platformCounts) {
+  const svg = document.getElementById('bar-chart');
+  const entries = Object.entries(platformCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+
+  if (!entries.length) {
+    svg.innerHTML = `<text x="360" y="140" text-anchor="middle" fill="#777777" font-family="Inter,sans-serif" font-size="14">Nessun dato disponibile</text>`;
     return;
   }
 
-  const max = Math.max(...entries.map(e => e[1]));
-  const W = 700;
-  const H = 180;
-  const barW = Math.min(60, Math.floor((W - 60) / entries.length) - 12);
-  const gap = Math.floor((W - 40) / entries.length);
-  const colors = ['#AAFF00', '#0055FF', '#FF6B35', '#A855F7', '#EC4899', '#14B8A6', '#F59E0B', '#6366F1'];
+  const W = 720, H = 280, padL = 20, padR = 20, padT = 30, padB = 50;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const maxVal = Math.max(...entries.map(e => e[1]));
+  const barW = Math.max(20, Math.floor(chartW / entries.length) - 8);
 
-  const bars = entries.map((entry, i) => {
-    const [name, count] = entry;
-    const x = 30 + i * gap;
-    const barH = Math.max(4, Math.round((count / max) * 130));
-    const y = H - barH - 28;
-    const color = colors[i % colors.length];
-    const label = name.length > 10 ? name.slice(0, 9) + '…' : name;
-    return `
-      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="${color}" opacity="0.85"/>
-      <text x="${x + barW / 2}" y="${y - 6}" fill="${color}" font-size="12" font-weight="700" text-anchor="middle" font-family="Inter">${count}</text>
-      <text x="${x + barW / 2}" y="${H - 10}" fill="#777" font-size="10" text-anchor="middle" font-family="Inter">${label}</text>
+  let svgContent = `<g transform="translate(${padL},${padT})">`;
+
+  // Grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = chartH - (i / 4) * chartH;
+    const val = Math.round((i / 4) * maxVal);
+    svgContent += `<line x1="0" y1="${y}" x2="${chartW}" y2="${y}" stroke="#2A2A2A" stroke-width="1"/>`;
+    svgContent += `<text x="-4" y="${y + 4}" text-anchor="end" fill="#555555" font-family="Inter,sans-serif" font-size="10">${val}</text>`;
+  }
+
+  entries.forEach(([name, count], i) => {
+    const barH = Math.max(4, Math.round((count / maxVal) * chartH));
+    const x = i * (barW + 8);
+    const y = chartH - barH;
+    const shortName = name
+      .replace(' Ads', '')
+      .replace(' Marketing', '')
+      .replace(' Organico', '')
+      .replace('Google ', 'G.')
+      .replace('Programmatic', 'Prog.')
+      .substring(0, 10);
+
+    // Gradient effect via opacity
+    svgContent += `
+      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="#0055FF" opacity="0.9"/>
+      <rect x="${x}" y="${y}" width="${barW}" height="${Math.min(barH, 20)}" rx="4" fill="#AAAAFF" opacity="0.3"/>
+      <text x="${x + barW/2}" y="${y - 6}" text-anchor="middle" fill="#AAFF00" font-family="Inter,sans-serif" font-size="11" font-weight="700">${count}</text>
+      <text x="${x + barW/2}" y="${chartH + 16}" text-anchor="middle" fill="#777777" font-family="Inter,sans-serif" font-size="9"
+        transform="rotate(-25 ${x + barW/2} ${chartH + 16})">${shortName}</text>
     `;
-  }).join('');
+  });
 
-  svg.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${bars}</svg>`;
+  svgContent += `</g>`;
+  svg.innerHTML = svgContent;
 }
+
+function renderTopCampaigns(campaigns) {
+  const tbody = document.getElementById('top-campaigns-body');
+
+  const withRoas = campaigns.filter(c => typeof c.roas === 'number' || typeof c.revenue === 'number');
+  if (!withRoas.length) {
+    tbody.innerHTML = `<tr><td colspan="6">
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">Nessuna campagna con dati ROAS disponibili</div>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  const sorted = withRoas
+    .sort((a, b) => (b.roas || 0) - (a.roas || 0))
+    .slice(0, 10);
+
+  tbody.innerHTML = sorted.map((c, i) => {
+    const roas = typeof c.roas === 'number' ? c.roas.toFixed(2) + 'x' : '—';
+    const revenue = typeof c.revenue === 'number' ? formatCurrency(c.revenue) : '—';
+    const budget = typeof c.budget === 'number' ? formatCurrency(c.budget) : '—';
+    const roasNum = parseFloat(c.roas) || 0;
+    const raosBadge = roasNum >= 3 ? 'badge-green' : roasNum >= 1 ? 'badge-blue' : 'badge-red';
+    const rank = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    return `<tr>
+      <td>${rank}</td>
+      <td style="font-family:monospace;font-size:12px;color:#777777">${c.userEmail || '—'}</td>
+      <td>${c.platform || '—'}</td>
+      <td>${budget}</td>
+      <td><span class="badge ${raosBadge}">${roas}</span></td>
+      <td class="highlight-number">${revenue}</td>
+    </tr>`;
+  }).join('');
+}
+
+// === INIT ===
+checkAuth();
 </script>
 </body>
 </html>
