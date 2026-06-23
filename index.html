@@ -321,13 +321,68 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .onboarding-step-dot.active{background:var(--lime)}
 /* === MEDIA === */
 @media(max-width:768px){
-  #sidebar{display:none}
-  #mobile-nav{display:flex}
-  .view{padding:16px;padding-bottom:80px}
-  .kpi-grid{grid-template-columns:1fr 1fr}
-  .platform-grid{grid-template-columns:1fr 1fr}
-  #header{padding:0 16px}
-  .score-layout{grid-template-columns:1fr}
+  /* Layout base */
+  #sidebar{display:none!important}
+  #mobile-nav{display:flex!important}
+  #main,#app-main,.main-content{margin-left:0!important;padding-bottom:80px}
+  .view{padding:12px!important;padding-bottom:88px!important}
+
+  /* Header compatto */
+  #header{padding:0 12px!important;height:52px}
+  #header .header-right>*:not(#token-display):not([onclick*="toggleCoach"]){display:none!important}
+  #header h1,[class*="header-title"]{font-size:16px!important}
+
+  /* Griglie → 1 o 2 colonne */
+  .kpi-grid{grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .platform-grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .score-layout{grid-template-columns:1fr!important}
+  .report-builder-layout{grid-template-columns:1fr!important}
+  [style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr 1fr!important}
+  [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr 1fr!important}
+  [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
+
+  /* Cards */
+  .card{border-radius:12px!important;padding:14px!important}
+  [style*="font-size:28px"]{font-size:22px!important}
+  [style*="font-size:32px"]{font-size:24px!important}
+
+  /* Campaign Builder stepper */
+  .step-label{display:none!important}
+  .stepper,.step-bar{overflow-x:auto;padding-bottom:4px}
+
+  /* Form full width */
+  input,textarea,select{width:100%!important;box-sizing:border-box!important}
+  .btn-row{flex-direction:column!important;gap:8px!important}
+  .btn-row button,.btn-row a{width:100%!important}
+
+  /* Tabelle scrollabili */
+  table{display:block!important;overflow-x:auto!important;width:100%!important;-webkit-overflow-scrolling:touch}
+
+  /* Toast sopra bottom nav */
+  #toast-container{bottom:88px!important;left:12px!important;right:12px!important;width:auto!important}
+
+  /* Modali bottom-sheet */
+  .modal-overlay{align-items:flex-end!important}
+  .modal-card{border-radius:20px 20px 0 0!important;width:100%!important;max-width:100%!important;max-height:88vh!important;overflow-y:auto!important;margin:0!important}
+
+  /* AI Coach panel */
+  #coach-panel{width:calc(100vw - 24px)!important;max-width:100%!important;right:12px!important;bottom:88px!important}
+  #ai-coach-bubble{bottom:88px!important;right:16px!important}
+
+  /* Tab bar scrollabili */
+  [style*="display:flex"][style*="gap"][style*="border-bottom"]{overflow-x:auto!important;flex-wrap:nowrap!important;-webkit-overflow-scrolling:touch}
+
+  /* Pill buttons wrap */
+  [style*="display:flex"][style*="flex-wrap:wrap"]{gap:6px!important}
+
+  /* Journey map orizzontale */
+  .journey-map,[id*="journey"]{overflow-x:auto!important}
+
+  /* Spider chart ridotto */
+  [id*="spider"]{max-width:100%}
+
+  /* Nascondi decorativi pesanti */
+  [style*="font-size:48px"]{font-size:36px!important}
 }
 </style>
 </head>
