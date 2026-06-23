@@ -329,77 +329,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   #header{padding:0 16px}
   .score-layout{grid-template-columns:1fr}
 }
-/* === PREMIUM UI ENHANCEMENTS === */
-/* --- Typography Hierarchy --- */
-.text-hero{font-size:32px;font-weight:800;letter-spacing:-0.5px;line-height:1.2}
-.text-title{font-size:20px;font-weight:700;letter-spacing:-0.3px}
-.text-label{font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#777}
-.text-mono{font-family:'SF Mono','Fira Code',monospace;font-size:13px}
-/* --- Enhanced Cards --- */
-.card{background:#111111;border:1px solid #2A2A2A;border-radius:16px;padding:20px;transition:border-color 0.2s,box-shadow 0.2s,transform 0.2s;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
-.card:hover:not(.no-hover){border-color:#3A3A3A;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
-.card-highlight{background:linear-gradient(135deg,#111111 0%,#0a1020 100%);border-color:rgba(0,85,255,0.3)}
-.card-lime{background:linear-gradient(135deg,#111111 0%,#0a1208 100%);border-color:rgba(170,255,0,0.3)}
-/* --- Enhanced Buttons --- */
-.btn-primary{background:var(--blue);color:#fff;border:none;border-radius:100px;padding:10px 20px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s;letter-spacing:0.2px}
-.btn-primary:hover{background:#0044DD;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,85,255,0.4)}
-.btn-primary:active{transform:scale(0.97)}
-.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
-.btn-lime{background:var(--lime);color:#000;border:none;border-radius:100px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s}
-.btn-lime:hover{background:#99EE00;transform:translateY(-1px);box-shadow:0 4px 16px rgba(170,255,0,0.3)}
-.btn-lime:active{transform:scale(0.97)}
-.btn-lime:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
-.btn-ghost{background:transparent;color:#F0F0F0;border:1px solid #2A2A2A;border-radius:100px;padding:9px 18px;font-weight:500;font-size:13px;cursor:pointer;transition:all 0.2s}
-.btn-ghost:hover{border-color:#555;background:#1A1A1A}
-/* --- Enhanced KPI Cards --- */
-.kpi-card{background:#111;border:1px solid #2A2A2A;border-radius:16px;padding:20px;transition:all 0.2s;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#0055FF,#AAFF00);opacity:0;transition:opacity 0.2s}
-.kpi-card:hover::before{opacity:1}
-.kpi-card:hover{transform:translateY(-2px);border-color:#3a3a3a;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
-.kpi-value{font-size:28px;font-weight:800;letter-spacing:-0.5px;line-height:1;margin-bottom:8px}
-.kpi-label{font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#777;margin-top:4px;margin-bottom:8px}
-.kpi-delta-up{color:#00C853;font-size:12px;font-weight:600}
-.kpi-delta-down{color:#FF3B3B;font-size:12px;font-weight:600}
-/* --- Enhanced Inputs --- */
-.input-field{width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:11px 14px;color:#F0F0F0;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box}
-.input-field:focus{border-color:#0055FF;box-shadow:0 0 0 3px rgba(0,85,255,0.15)}
-.input-label{display:block;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#777;margin-bottom:6px}
-/* --- Badge/Tag Components --- */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;letter-spacing:0.3px}
-.badge-blue{background:rgba(0,85,255,0.15);color:#4488FF;border:1px solid rgba(0,85,255,0.3)}
-.badge-lime{background:rgba(170,255,0,0.12);color:#AAFF00;border:1px solid rgba(170,255,0,0.3)}
-.badge-green{background:rgba(0,200,83,0.12);color:#00C853;border:1px solid rgba(0,200,83,0.3)}
-.badge-red{background:rgba(255,59,59,0.12);color:#FF6B6B;border:1px solid rgba(255,59,59,0.3)}
-.badge-gray{background:rgba(255,255,255,0.06);color:#999;border:1px solid #2A2A2A}
-/* --- Enhanced Nav Items --- */
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;transition:all 0.15s;color:#777;font-size:13px;font-weight:500;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;white-space:nowrap;overflow:hidden;position:relative}
-.nav-item:hover{background:#1A1A1A;color:#F0F0F0;transform:none}
-.nav-item.active{background:rgba(0,85,255,0.15);color:#4488FF;font-weight:600;border-left:2px solid var(--blue);padding-left:12px}
-.nav-item svg{flex-shrink:0;width:20px;height:20px}
-.nav-item .nav-icon{font-size:16px;width:20px;text-align:center}
-/* --- Glassmorphism Modal --- */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn 200ms ease}
-.modal-box{background:#111;border:1px solid #2A2A2A;border-radius:20px;padding:28px;max-width:480px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,0.6);animation:modalIn 0.2s ease}
-@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-/* --- Module View Transitions --- */
-.module-view{animation:fadeSlideIn 0.2s ease}
-@keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-/* --- Better Scrollbar --- */
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#2A2A2A;border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:#444}
-/* --- Progress Bar --- */
-.progress-bar{height:6px;background:#1A1A1A;border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#0055FF,#4488FF);transition:width 0.5s ease}
-.progress-fill.lime{background:linear-gradient(90deg,#7ACC00,#AAFF00)}
-/* --- Enhanced Skeleton --- */
-.skeleton{background:linear-gradient(90deg,#1A1A1A 25%,#222 50%,#1A1A1A 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-/* --- Enhanced Toast --- */
-.toast.success{border-left:3px solid #00C853}
-.toast.error{border-left:3px solid #FF3B3B}
-.toast.info{border-left:3px solid #0055FF}
 </style>
 </head>
 <body>
@@ -499,7 +428,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
       <div id="view-reporting" class="view"></div>
       <div id="view-audience" class="view"></div>
       <div id="view-interview" class="view"></div>
-      <div id="view-academy" class="view"></div>
       <div id="view-score" class="view"></div>
     </div>
   </main>
@@ -579,6 +507,9 @@ const DEFAULT_STATE = {
   proovdDimensions: { strategy: 0, dataLiteracy: 0, creative: 0, optimization: 0, interview: 0 },
   aiCallCount: 0, reportsGenerated: 0, flashcardXP: 0,
   coachHistory: [], currentModule: 'dashboard',
+  wizardDone: false, wizardStep: 0, wizardAnswers: {},
+  liveView: 'cards',
+  activeLearningPath: null, academyCompleted: [],
 };
 let AppState = { ...DEFAULT_STATE };
 
@@ -764,99 +695,15 @@ async function callClaude(systemPrompt, userMessage, containerId) {
     return { error: e.message };
   }
 }
-const MARKETING_KB = `KNOWLEDGE BASE - DIGITAL MARKETING MASTER (Talent Garden / WPP Media):
-
-## SEARCH ADS (Google Ads)
-- SEM = tutte le attività sui motori di ricerca per generare traffico qualificato
-- SEA = annunci a pagamento (sponsorizzati) nella SERP, si paga per clic (CPC)
-- SEO = risultati organici, non a pagamento
-- Google detiene 92.8% market share in Italia, 89.8% mondiale
-- Ad Rank = Offerta Massima × Quality Score → determina posizione e CPC effettivo
-- Quality Score (1-10) = CTR previsto + Pertinenza annuncio + Esperienza landing page
-- QS alto = costi più bassi: QS=9 costa ~0.5€/click, QS=1 può costare 3€+
-- Match Type keyword: [Esatta]=controllo max/volumi limitati, "Frase"=via di mezzo, Generica=volumi max/AI gestisce
-- Keyword negative: escludono ricerche non pertinenti, fondamentali per ROI
-- RSA (Responsive Search Ads): 3-15 titoli (30 car.) + 2-4 descrizioni (90 car.), AI sceglie combo migliore per ogni utente
-- Struttura account: Account → Campagna (obiettivo/budget/geo) → Ad Group (tema) → Keywords+Annunci+LP
-- Approccio AI-based: meno campagne, più dati per singola campagna → migliore performance algoritmo
-- Brand keywords: proteggono da competitor, sempre da attivare
-- Keyword generiche: upper funnel awareness; Brand keywords: lower funnel conversione
-
-## BUDGET & MEDIA PLANNING
-- Mercato pubblicitario digitale Italia 2025: ~7.6 miliardi €, +7.6% YoY
-- GAMT (Google, Amazon, Meta, TikTok) = 49% del mercato totale (con PMI)
-- Distribuzione digital: Display 37.7%, Video 32.1%, Search 28.2%, Classified 2%
-- Video (+8.4% YoY) e Search (+8.2%) sono i canali in maggiore crescita
-- Funnel obiettivi: Awareness (Reach) → Consideration (Affinity) → Engagement (Involvement) → Conversion/Loyalty (Lead/Sales)
-- Formati per obiettivo: Awareness→Video lungo/Display high impact/Audio; Consideration→Social/Search; Conversion→Search/Social/Display
-- Budget allocation: partire dall'obiettivo di business, poi scegliere canali, poi formati
-- ROAS (Return on Ad Spend) = Ricavi da campagna / Spesa pubblicitaria × 100
-- CPA (Cost Per Acquisition) = Budget / Numero conversioni
-- CPM (Cost Per Mille) = costo per 1000 impressioni, tipico per awareness
-- CPC (Cost Per Click) = costo per singolo click, tipico per conversione
-- CTR (Click Through Rate) = Click / Impressioni × 100
-- CVR (Conversion Rate) = Conversioni / Click × 100
-
-## META ADS (Facebook/Instagram)
-- Campagne per obiettivo: Awareness, Traffico, Engagement, Lead, App, Vendite
-- Struttura: Campagna → Adset (audience/budget/posizionamento) → Annuncio (creativo)
-- Targeting: interessi, comportamenti, lookalike (1-3% simili a clienti), custom audience da CRM/pixel
-- Meta Pixel: traccia eventi sul sito (ViewContent, AddToCart, Purchase) per ottimizzare e creare audience
-- CPM medio Meta: €8-15 per awareness, più alto per conversion
-- Frequency: tenerla sotto 3-4 per settimana per evitare ad fatigue
-- A/B test: testare sempre 3+ creatività diverse, vincitore scala budget
-
-## TIKTOK ADS
-- Formato principale: video verticale 9:16, durata ottimale 15-30 secondi
-- Hook nei primi 3 secondi è fondamentale per il CTR
-- CPM TikTok più basso di Meta (~€5-12) ma audience più giovane (18-34)
-- Formati: TopView, In-Feed Ads, Branded Hashtag Challenge, Spark Ads
-- Best practice: contenuto nativo che sembra UGC, non pubblicità classica
-
-## LINKEDIN ADS
-- Targeting B2B: job title, seniority, azienda, settore, competenze
-- CPM più alto (~€25-60) ma qualità lead superiore per B2B
-- Formati: Sponsored Content, Message Ads, Dynamic Ads, Lead Gen Forms
-- Ideale per: SaaS, consulenza, HR, education, finance, servizi B2B
-
-## GOOGLE DISPLAY & YOUTUBE
-- GDN (Google Display Network): 90%+ utenti internet, CPM basso (~€1-5)
-- Targeting: contesto, interessi, remarketing, placement specifici
-- YouTube: pre-roll skippable (paga solo se visto 30s+), bumper 6s non skippabili
-- CPV (Cost Per View) YouTube: €0.01-0.05 per view completata
-
-## KPI E BENCHMARK (valori di riferimento mercato)
-- Google Search: CTR medio 3-5%, CPC €0.5-3, CVR 2-5%
-- Meta Ads: CTR 0.9-1.5%, CPM €8-12, CVR 1-3%
-- Google Display: CTR 0.1-0.5%, CPM €2-5
-- TikTok: CTR 1-3%, CPM €5-10, CVR 0.5-2%
-- LinkedIn: CTR 0.3-0.6%, CPM €30-50, CVR 0.5-2%
-- YouTube: View Rate 25-40%, CPV €0.02-0.05
-- Email Marketing: Open Rate 20-30%, CTR 2-5%, CVR 1-3%
-- ROAS buono: >3x (300%), ottimo: >5x (500%), eccellente: >8x (800%)
-- CAC (Customer Acquisition Cost) deve essere < LTV (Customer Lifetime Value)
-
-## REGOLE D'ORO DEL DIGITAL MARKETING
-1. Inizia sempre dall'obiettivo di business, poi scegli il canale
-2. Budget ridotto? Concentrati su 1-2 canali dove il tuo target è più presente
-3. Test → Misura → Ottimizza → Scala: il ciclo fondamentale
-4. Creative testing: la creatività impatta 70%+ della performance di una campagna
-5. Landing page coerente con l'annuncio = Quality Score alto = costi bassi
-6. Remarketing: converte 3-5x meglio del cold traffic
-7. Full funnel: abbina canali awareness + conversion per risultati ottimali
-8. Attribution: considera sempre il customer journey completo, non solo last click
-9. Stagionalità: Q4 (ottobre-dicembre) è il periodo più competitivo e costoso
-10. Frequenza: troppa esposizione (>5 volte/settimana) crea ad fatigue e abbassa CTR
-`;
 const COACH_SYSTEM = {
-  dashboard: MARKETING_KB + '\n\nSei PROOVD AI Coach, mentore esperto di digital marketing. Sei nell\'area Dashboard. Analizza le metriche mostrate, identifica anomalie, suggerisci ottimizzazioni concrete basandoti sui benchmark reali. Parla come un senior marketer in un\'agenzia. Max 180 parole.',
-  builder: MARKETING_KB + '\n\nSei PROOVD AI Coach esperto di digital marketing. Stai aiutando a configurare una campagna ADV. Valuta le scelte di piattaforma, targeting e budget come farebbe un Media Planner senior di WPP. Dai consigli pratici e specifici sul prodotto/settore scelto. Max 180 parole.',
-  live: MARKETING_KB + '\n\nSei PROOVD AI Coach. Stai analizzando campagne attive. Comportati come un Campaign Manager che monitora dashboard in tempo reale. Dai 3 raccomandazioni di ottimizzazione concrete (bid, creative, targeting) con numeri specifici. Max 180 parole.',
-  analytics: MARKETING_KB + '\n\nSei PROOVD AI Coach esperto di analytics e KPI. Aiuta l\'utente a interpretare dati, calcolare metriche (ROAS, CPA, CTR, CVR) e capire cosa ottimizzare. Usa benchmark reali di mercato. Max 180 parole.',
-  reporting: MARKETING_KB + '\n\nSei PROOVD AI Coach. Aiuta a creare report professionali come si fa nelle agenzie. Suggerisci struttura, insight chiave, visualizzazioni e come presentare i risultati al cliente. Max 180 parole.',
-  audience: MARKETING_KB + '\n\nSei PROOVD AI Coach esperto di audience e targeting. Analizza buyer persona, suggerisci segmentazioni, lookalike e messaggi per ogni fase del funnel. Max 180 parole.',
-  interview: MARKETING_KB + '\n\nSei un Senior Digital Marketing Manager che fa colloqui tecnici. Valuta le risposte del candidato (junior marketer) su concetti come ROAS, Quality Score, targeting, funnel. Dai feedback costruttivo e concreto come faresti in un\'agenzia reale. Max 200 parole.',
-  score: MARKETING_KB + '\n\nSei PROOVD AI Coach. Analizza il profilo competenze dell\'utente e suggerisci un piano di miglioramento concreto per diventare un digital marketer competitivo nel mercato attuale. Max 180 parole.',
+  dashboard: 'Sei PROOVD AI Coach, mentore di digital marketing italiano. Sei nell\'area Dashboard. Guida l\'utente a capire le metriche e migliorare le performance. Max 150 parole.',
+  builder: 'Sei PROOVD AI Coach. Stai aiutando a configurare una campagna ADV. Valuta le scelte fatte e suggerisci miglioramenti specifici. Max 150 parole.',
+  live: 'Sei PROOVD AI Coach. Stai analizzando campagne attive. Dai 3 raccomandazioni pratiche per ottimizzare. Max 150 parole.',
+  analytics: 'Sei PROOVD AI Coach. Sei nel modulo Analytics Lab. Aiuta l\'utente a interpretare i dati e i KPI. Max 150 parole.',
+  reporting: 'Sei PROOVD AI Coach. Stai aiutando a creare un report professionale. Suggerisci come strutturarlo e quali insight evidenziare. Max 150 parole.',
+  audience: 'Sei PROOVD AI Coach. Stai analizzando audience e buyer persona. Dai suggerimenti pratici su targeting e messaggi. Max 150 parole.',
+  interview: 'Sei PROOVD AI Coach. Stai preparando l\'utente a un colloquio di digital marketing. Valuta e dai feedback costruttivi. Max 150 parole.',
+  score: 'Sei PROOVD AI Coach. Stai analizzando il PROOVD Score dell\'utente. Suggerisci come migliorare ogni dimensione. Max 150 parole.',
 };
 function toggleCoach() {
   const panel = document.getElementById('ai-coach-panel');
@@ -1098,11 +945,10 @@ const MODULES = [
   { id:'analytics', label:'Analytics Lab', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' },
   { id:'reporting', label:'Reporting Studio', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' },
   { id:'audience', label:'Audience Studio', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
-  { id:'academy', label:'PROOVD Academy', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>' },
   { id:'interview', label:'Interview Coach', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
   { id:'score', label:'PROOVD Score', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
 ];
-const MODULE_TITLES = { dashboard:'Dashboard', builder:'Campaign Builder', live:'Live Manager', analytics:'Analytics Lab', reporting:'Reporting Studio', audience:'Audience Studio', academy:'PROOVD Academy', interview:'Interview Coach', score:'PROOVD Score' };
+const MODULE_TITLES = { dashboard:'Dashboard', builder:'Campaign Builder', live:'Live Manager', analytics:'Analytics Lab', reporting:'Reporting Studio', audience:'Audience Studio', interview:'Interview Coach', score:'PROOVD Score' };
 const MODULE_RENDERERS = {};
 
 function registerRenderer(id, fn) { MODULE_RENDERERS[id] = fn; }
@@ -1153,7 +999,6 @@ const PALETTE_COMMANDS = [
   { label:'Analytics Lab', icon:'📈', action:()=>navigateTo('analytics') },
   { label:'Reporting Studio', icon:'📋', action:()=>navigateTo('reporting') },
   { label:'Audience Studio', icon:'👥', action:()=>navigateTo('audience') },
-  { label:'PROOVD Academy', icon:'📚', action:()=>navigateTo('academy') },
   { label:'Interview Coach', icon:'🎤', action:()=>navigateTo('interview') },
   { label:'PROOVD Score', icon:'⭐', action:()=>navigateTo('score') },
   { label:'Cambia tema', icon:'🌙', action:toggleTheme },
@@ -1306,8 +1151,6 @@ async function doAuth() {
   const errEl = document.getElementById('auth-error');
   const btn = document.getElementById('auth-btn');
   if (!email || !password) { errEl.textContent = 'Inserisci email e password'; errEl.style.display = 'block'; return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = '❌ Inserisci un\'email valida (es. nome@dominio.com)'; errEl.style.display = 'block'; return; }
-  if (password.length < 6) { errEl.textContent = '❌ La password deve essere di almeno 6 caratteri'; errEl.style.display = 'block'; return; }
   btn.textContent = '...'; btn.disabled = true;
   try {
     let r;
@@ -1325,8 +1168,7 @@ async function doAuth() {
       }
     }
     if (!r.ok || r.data?.error) {
-      const rawMsg = r.data?.error_description || r.data?.message || r.data?.error || '';
-      const msg = rawMsg.includes('Invalid login') ? '❌ Email o password errata. Riprova.' : rawMsg.includes('already registered') ? '❌ Email già registrata. Prova ad accedere.' : rawMsg.includes('invalid') ? '❌ Email non valida. Usa un\'email reale.' : rawMsg || '❌ Errore di accesso. Riprova.';
+      const msg = r.data?.error_description || r.data?.message || r.data?.error || 'Errore di accesso';
       errEl.textContent = msg; errEl.style.display = 'block';
       btn.textContent = _authTab === 'login' ? 'Accedi' : 'Crea account'; btn.disabled = false; return;
     }
@@ -1375,7 +1217,6 @@ function hideAuthScreen() {
     if (typeof renderAnalyticsLab === 'function') registerRenderer('analytics', renderAnalyticsLab);
     if (typeof renderReportingStudio === 'function') registerRenderer('reporting', renderReportingStudio);
     if (typeof renderAudienceStudio === 'function') registerRenderer('audience', renderAudienceStudio);
-    if (typeof renderAcademy === 'function') registerRenderer('academy', renderAcademy);
     if (typeof renderInterviewCoach === 'function') registerRenderer('interview', renderInterviewCoach);
     if (typeof renderProovdScore === 'function') registerRenderer('score', renderProovdScore);
   };
@@ -1432,6 +1273,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // === MODULE: DASHBOARD ===
 
+// === CAMPAIGN WIZARD ===
+function recommendPlatforms(goal, budget, audience) {
+  const recs = {
+    'vendite_micro_b2c': ['Meta Ads', 'TikTok Ads', 'Pinterest Ads'],
+    'vendite_piccolo_b2c': ['Meta Ads', 'Google Search', 'YouTube Ads'],
+    'vendite_medio_b2c': ['Meta Ads', 'Google Search', 'Google Display'],
+    'lead_micro_b2b': ['LinkedIn Ads', 'Google Search', 'Email Marketing'],
+    'lead_piccolo_b2b': ['LinkedIn Ads', 'Google Search', 'Meta Ads'],
+    'lead_medio_b2b': ['LinkedIn Ads', 'Google Search', 'YouTube Ads'],
+    'visibilita_micro_b2c': ['TikTok Ads', 'Meta Ads', 'Pinterest Ads'],
+    'visibilita_piccolo_b2c': ['YouTube Ads', 'Meta Ads', 'TikTok Ads'],
+    'visibilita_medio_b2c': ['YouTube Ads', 'Meta Ads', 'Google Display'],
+    'appinstalls_micro_b2c': ['Meta Ads', 'TikTok Ads', 'Google Search'],
+    'appinstalls_piccolo_b2c': ['Meta Ads', 'Google Search', 'YouTube Ads'],
+    'appinstalls_medio_b2c': ['Google Search', 'Meta Ads', 'YouTube Ads'],
+    'lead_micro_entrambi': ['Meta Ads', 'Google Search', 'Email Marketing'],
+    'visibilita_micro_b2b': ['LinkedIn Ads', 'Google Search', 'YouTube Ads'],
+  };
+  const key = goal + '_' + budget + '_' + audience;
+  return recs[key] || ['Meta Ads', 'Google Search', 'TikTok Ads'];
+}
+
+function wizardSelectAnswer(field, value) {
+  AppState.wizardAnswers[field] = value;
+  AppState.wizardStep = (AppState.wizardStep || 0) + 1;
+  saveState();
+  renderDashboard();
+}
+
+function dismissWizard() {
+  AppState.wizardDone = true;
+  saveState();
+  renderDashboard();
+}
+
+function renderWizardCard() {
+  if (AppState.wizardDone) return '';
+  const step = AppState.wizardStep || 0;
+  const answers = AppState.wizardAnswers || {};
+  const platMotivations = {
+    'Meta Ads': 'Alto volume, targeting preciso, ottimo per conversioni',
+    'TikTok Ads': 'Costo basso, virale, ideale per brand awareness giovane',
+    'Pinterest Ads': "Alta intenzione d'acquisto, ottimo per e-commerce",
+    'Google Search': 'Intercetta domanda attiva, conversioni alte',
+    'YouTube Ads': 'Video storytelling, brand recall elevato',
+    'Google Display': 'Retargeting e awareness a basso costo',
+    'LinkedIn Ads': 'B2B preciso, decision maker, lead quality alta',
+    'Email Marketing': 'ROI altissimo, nurturing, costo minimo'
+  };
+
+  let content = '';
+  if (step === 0) {
+    content = '<p style="margin:0 0 12px;font-size:14px;color:#ccc">Qual è il tuo obiettivo?</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      ['🛒 Vendite|vendite', '🎯 Lead|lead', '👀 Visibilità|visibilita', '📱 App installs|appinstalls'].map(function(item) {
+        var parts = item.split('|'); var label = parts[0]; var val = parts[1];
+        return '<button onclick="wizardSelectAnswer(\'goal\',\'' + val + '\')" style="padding:8px 18px;border-radius:100px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0F0F0;font-size:13px;cursor:pointer">' + label + '</button>';
+      }).join('') + '</div>';
+  } else if (step === 1) {
+    content = '<p style="margin:0 0 12px;font-size:14px;color:#ccc">Qual è il tuo budget?</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      ['Micro (&lt;€100)|micro', 'Piccolo (€100-500)|piccolo', 'Medio (€500+)|medio'].map(function(item) {
+        var parts = item.split('|'); var label = parts[0]; var val = parts[1];
+        return '<button onclick="wizardSelectAnswer(\'budget\',\'' + val + '\')" style="padding:8px 18px;border-radius:100px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0F0F0;font-size:13px;cursor:pointer">' + label + '</button>';
+      }).join('') + '</div>';
+  } else if (step === 2) {
+    content = '<p style="margin:0 0 12px;font-size:14px;color:#ccc">Qual è il tuo pubblico?</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      ['🛍️ Consumer (B2C)|b2c', '💼 Business (B2B)|b2b', '🌍 Entrambi|entrambi'].map(function(item) {
+        var parts = item.split('|'); var label = parts[0]; var val = parts[1];
+        return '<button onclick="wizardSelectAnswer(\'audience\',\'' + val + '\')" style="padding:8px 18px;border-radius:100px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0F0F0;font-size:13px;cursor:pointer">' + label + '</button>';
+      }).join('') + '</div>';
+  } else {
+    // Show recommendations
+    var platforms = recommendPlatforms(answers.goal, answers.budget, answers.audience);
+    content = '<p style="margin:0 0 16px;font-size:14px;color:#AAFF00;font-weight:600">🎯 Piattaforme consigliate per te:</p>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+      platforms.map(function(p, i) {
+        return '<div style="background:#1A1A1A;border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">' +
+          '<div><span style="font-weight:700;font-size:14px">' + (i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉') + ' ' + p + '</span>' +
+          '<div style="font-size:12px;color:#777;margin-top:4px">' + (platMotivations[p] || '') + '</div></div>' +
+          '<button onclick="AppState.preselectedPlatform=\'' + p + '\';navigateTo(\'builder\')" style="padding:6px 14px;border-radius:100px;border:none;background:#0055FF;color:#fff;font-size:12px;cursor:pointer;white-space:nowrap">Crea campagna →</button>' +
+          '</div>';
+      }).join('') + '</div>';
+  }
+
+  var steps = step >= 3 ? 3 : step;
+  var progressBar = '<div style="display:flex;gap:4px;margin-bottom:16px">' +
+    [0,1,2].map(function(i) {
+      return '<div style="flex:1;height:3px;border-radius:2px;background:' + (i < steps ? '#0055FF' : (i === steps && step < 3 ? '#0055FF44' : '#2A2A2A')) + '"></div>';
+    }).join('') + '</div>';
+
+  return '<div id="campaign-wizard-card" class="card" style="margin-bottom:20px;background:linear-gradient(135deg,#0055FF11,#AAFF0011);border:1px solid #0055FF33">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+    '<div style="font-size:15px;font-weight:700">🚀 Wizard — Trova la piattaforma giusta</div>' +
+    '<button onclick="dismissWizard()" style="background:none;border:none;color:#777;font-size:18px;cursor:pointer;padding:0 4px">×</button>' +
+    '</div>' + progressBar + content + '</div>';
+}
+
 function renderDashboard() {
   const view = document.getElementById('view-dashboard');
   if (!view) return;
@@ -1440,8 +1380,6 @@ function renderDashboard() {
   const avgRoas = campaigns.length
     ? campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length
     : 0;
-
-  const welcomed = localStorage.getItem('proovd_welcomed');
 
   view.innerHTML = `
     <div class="dashboard-header">
@@ -1454,15 +1392,7 @@ function renderDashboard() {
       </button>
     </div>
 
-    ${!welcomed ? `
-    <div id="welcome-banner" style="background:linear-gradient(135deg,#0055FF15,#AAFF0010);border:1px solid #0055FF44;border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:flex-start;gap:16px">
-      <div style="font-size:36px;flex-shrink:0">🚀</div>
-      <div style="flex:1">
-        <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:#F0F0F0">Benvenuto in PROOVD!</div>
-        <div style="font-size:14px;color:#ccc;line-height:1.6">Sei appena entrato come <strong style="color:#AAFF00">Junior Digital Marketer</strong> in un\'agenzia. Il tuo responsabile ti ha dato <strong style="color:#AAFF00">€500 di budget virtuale</strong> per gestire le prime campagne. Dimostra che sai cosa fare!</div>
-      </div>
-      <button onclick="localStorage.setItem(\'proovd_welcomed\',\'1\');document.getElementById(\'welcome-banner\').style.display=\'none\'" style="background:none;border:none;color:#777;font-size:20px;cursor:pointer;flex-shrink:0;padding:0;line-height:1" title="Chiudi">×</button>
-    </div>` : ''}
+    ${renderWizardCard()}
 
     <div class="kpi-grid" id="kpi-grid"></div>
 
@@ -2098,29 +2028,15 @@ function renderStep1() {
     </div>`;
 }
 
-const PLATFORM_TIPS = {
-  meta: "Per un budget sotto €100, usa Advantage+ Shopping o campagne di conversione con audience lookalike 1-3%. Inizia con un budget di test €20-30/giorno.",
-  google_search: "Inizia con parole chiave a corrispondenza esatta per controllare i costi. Il Quality Score è fondamentale: punta a 7+ per abbassare il CPC.",
-  tiktok: "Il hook nei primi 3 secondi è tutto. Il video deve sembrare nativo, non una pubblicità tradizionale. Budget minimo consigliato: €50/giorno.",
-  linkedin: "CPM alto (€30-60) ma qualità lead superiore per B2B. Usa Lead Gen Forms per ridurre il CPA del 30-50%.",
-  youtube: "Usa TrueView for Action con target intent per massimizzare le conversioni. I primi 5 secondi devono catturare l'attenzione prima dello skip.",
-  pinterest: "Ottimo per discovery e prodotti visuali. Le campagne shopping hanno ROAS medio 2-3x per e-commerce lifestyle.",
-  google_display: "Usa il remarketing per recuperare visitatori. CTR basso è normale (0.1-0.3%) — conta la frequenza di esposizione.",
-  x_ads: "Funziona meglio per brand awareness e engagement. CPC variabile, targeting per keyword conversazione molto efficace.",
-};
-
 function renderPlatformContext(platformId) {
   const p = PLATFORMS.find(pl => pl.id === platformId);
   if (!p) return '';
-
-  const tip = PLATFORM_TIPS[platformId];
 
   return `
     <div class="card" style="position:sticky;top:80px">
       <div style="font-size:32px;margin-bottom:10px">${p.emoji}</div>
       <h3 style="font-size:16px;font-weight:700;margin:0 0 8px">${p.name}</h3>
       <p style="font-size:13px;color:#ccc;line-height:1.6;margin:0 0 16px">${p.when}</p>
-      ${tip ? `<div style="background:#AAFF0008;border:1px solid #AAFF0030;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#AAFF00;line-height:1.6"><strong>💡 Consiglio pro:</strong> ${tip}</div>` : ''}
       <div style="margin-bottom:12px">
         <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">KPI principali</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -3077,7 +2993,7 @@ function launchCampaign() {
 // === AI CAMPAIGN ENGINE ===
 async function generateCampaignWithAI(campaign) {
   const bench = platformBenchmarks?.[campaign.platform] || { cpm: 5, ctr: 1.2, cvr: 2, cpc: 0.5 };
-  const systemPrompt = MARKETING_KB + '\n\nSei un esperto di performance marketing digitale. Analizza la campagna e rispondi SOLO con JSON valido, nessun testo extra.';
+  const systemPrompt = `Sei un esperto di performance marketing digitale. Analizza la campagna e rispondi SOLO con JSON valido, nessun testo extra.`;
   const userMessage = `Analizza questa campagna paid marketing e genera una previsione realistica.
 
 Campagna:
@@ -3130,7 +3046,7 @@ Rispondi SOLO con questo JSON:
 }
 
 async function generateDailyInsight(campaign) {
-  const systemPrompt = MARKETING_KB + '\n\nSei un AI coach di performance marketing. Rispondi in italiano con massimo 2 frasi concise.';
+  const systemPrompt = `Sei un AI coach di performance marketing. Rispondi in italiano con massimo 2 frasi concise.`;
   const roas = campaign.roas?.toFixed(2) || '0';
   const ctr = campaign.ctr?.toFixed(2) || '0';
   const bench = platformBenchmarks?.[campaign.platform] || { ctr: 1.2 };
@@ -3291,64 +3207,27 @@ function renderLiveManager() {
         </div>
       </div>
 
-      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-        ${[['all','Tutte'],['active','Attive'],['paused','In pausa'],['completed','Completate']].map(([val,label]) => `
-          <button class="pill ${AppState.liveFilter === val ? 'active' : ''}"
-            style="cursor:pointer;background:${AppState.liveFilter === val ? '#0055FF' : '#1A1A1A'};color:${AppState.liveFilter === val ? '#fff' : '#777777'};border:1px solid ${AppState.liveFilter === val ? '#0055FF' : '#2A2A2A'};padding:6px 16px;border-radius:100px;font-size:13px;"
-            onclick="AppState.liveFilter='${val}';renderCampaignTable();">${label}</button>
-        `).join('')}
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${[['all','Tutte'],['active','Attive'],['paused','In pausa'],['completed','Completate']].map(([val,label]) => `
+            <button class="pill ${AppState.liveFilter === val ? 'active' : ''}"
+              style="cursor:pointer;background:${AppState.liveFilter === val ? '#0055FF' : '#1A1A1A'};color:${AppState.liveFilter === val ? '#fff' : '#777777'};border:1px solid ${AppState.liveFilter === val ? '#0055FF' : '#2A2A2A'};padding:6px 16px;border-radius:100px;font-size:13px;"
+              onclick="AppState.liveFilter='${val}';renderCampaignTable();">${label}</button>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="AppState.liveView='cards';renderLiveManager()" style="padding:6px 16px;border-radius:100px;border:1px solid ${(AppState.liveView||'cards')==='cards'?'#0055FF':'#2A2A2A'};background:${(AppState.liveView||'cards')==='cards'?'#0055FF':'#1A1A1A'};color:${(AppState.liveView||'cards')==='cards'?'#fff':'#777'};font-size:13px;cursor:pointer">🃏 Cards</button>
+          <button onclick="AppState.liveView='table';renderLiveManager()" style="padding:6px 16px;border-radius:100px;border:1px solid ${(AppState.liveView||'cards')==='table'?'#0055FF':'#2A2A2A'};background:${(AppState.liveView||'cards')==='table'?'#0055FF':'#1A1A1A'};color:${(AppState.liveView||'cards')==='table'?'#fff':'#777'};font-size:13px;cursor:pointer">📋 Tabella</button>
+        </div>
       </div>
 
       <div id="campaign-table-container">
-        ${renderCampaignTableHTML()}
+        ${(AppState.liveView||'cards')==='cards' ? renderCampaignCardsHTML(campaigns) : renderCampaignTableHTML()}
       </div>
-
-      ${renderCampaignAlerts(campaigns)}
 
       ${renderAICampaignIntelligence(campaigns)}
     </div>
   `;
-}
-
-function renderCampaignAlerts(campaigns) {
-  const alerts = [];
-  (campaigns || []).forEach(c => {
-    if (c.status !== 'active') return;
-    const impressions = c.impressions || 0;
-    const clicks = c.clicks || 0;
-    const ctr = impressions > 0 ? (clicks / impressions * 100) : 0;
-    const spent = c.spent || 0;
-    const revenue = c.revenue || 0;
-    const roas = spent > 0 ? revenue / spent : 0;
-    const conversions = c.conversions || 0;
-    const dayCount = c.dayCount || ((c.duration || 0) - (c.daysLeft || 0));
-    const name = c.name || c.platform;
-
-    if (impressions > 500 && ctr < 0.5) {
-      alerts.push(`<div style="display:flex;align-items:flex-start;gap:12px;background:#FFB80010;border:1px solid #FFB80040;border-radius:12px;padding:14px 16px">
-        <span style="font-size:18px;flex-shrink:0">⚠️</span>
-        <div><strong style="color:#FFB800">${name}</strong> — CTR basso <strong style="color:#FFB800">${ctr.toFixed(2)}%</strong>: prova a rinnovare le creatività o restringere il targeting.</div>
-      </div>`);
-    }
-    if (spent > 10 && roas < 1) {
-      alerts.push(`<div style="display:flex;align-items:flex-start;gap:12px;background:#FF444410;border:1px solid #FF444440;border-radius:12px;padding:14px 16px">
-        <span style="font-size:18px;flex-shrink:0">🔴</span>
-        <div><strong style="color:#FF4444">${name}</strong> — Campagna in perdita: ROAS <strong style="color:#FF4444">${roas.toFixed(2)}x</strong> sotto soglia. Considera di mettere in pausa e ottimizzare.</div>
-      </div>`);
-    }
-    if (dayCount > 7 && conversions === 0 && spent > 5) {
-      alerts.push(`<div style="display:flex;align-items:flex-start;gap:12px;background:#FFB30010;border:1px solid #FFB30040;border-radius:12px;padding:14px 16px">
-        <span style="font-size:18px;flex-shrink:0">💡</span>
-        <div><strong style="color:#FFB300">${name}</strong> — Nessuna conversione dopo 7 giorni. Verifica la landing page e il pixel di tracciamento.</div>
-      </div>`);
-    }
-  });
-  if (alerts.length === 0) return '';
-  return `
-    <div style="margin-top:24px;margin-bottom:8px">
-      <h2 style="font-size:16px;font-weight:700;margin-bottom:12px;color:#F0F0F0">⚡ Alert campagne</h2>
-      <div style="display:flex;flex-direction:column;gap:10px">${alerts.join('')}</div>
-    </div>`;
 }
 
 function renderAICampaignIntelligence(campaigns) {
@@ -3409,9 +3288,41 @@ function regenerateCampaignAI(campaignId) {
   generateCampaignWithAI(c);
 }
 
+function renderCampaignCardsHTML(campaigns) {
+  const filter = AppState.liveFilter || 'all';
+  const benchmarkCTR = {'Meta Ads':1.5,'Google Search':3.0,'YouTube Ads':0.5,'TikTok Ads':1.2,'LinkedIn Ads':0.8,'Google Display':0.35,'Pinterest Ads':0.5,'Snapchat Ads':0.8,'X Ads':0.9,'Email Marketing':2.5,'SEO/SEM Organico':2.0,'Programmatic/DSP':0.3};
+  const filtered = filter === 'all' ? campaigns : campaigns.filter(c => c.status === filter);
+  if (filtered.length === 0) return '<div style="text-align:center;padding:48px;color:#777">Nessuna campagna trovata.</div>';
+  return '<div style="display:grid;gap:16px">' + filtered.map(function(c) {
+    var statusColor = c.status === 'active' ? '#AAFF00' : c.status === 'paused' ? '#FFB800' : '#777';
+    var statusLabel = c.status === 'active' ? 'Attiva' : c.status === 'paused' ? 'In pausa' : 'Completata';
+    var ctr = c.ctr || 0;
+    var roas = c.roas || 0;
+    var bench = benchmarkCTR[c.platform] || 1;
+    var ctrColor = ctr >= bench ? '#AAFF00' : ctr < bench * 0.5 ? '#FF4444' : '#FFB800';
+    var roasColor = roas >= 3 ? '#AAFF00' : roas < 1 ? '#FF4444' : '#FFB800';
+    var warnings = '';
+    if (ctr < bench * 0.5) warnings += '<div style="background:#FF444415;border:1px solid #FF444430;border-radius:8px;padding:8px 12px;font-size:12px;color:#FF8888;margin-top:10px">⚠️ CTR basso vs benchmark — prova a rinnovare le creatività</div>';
+    if (roas < 1) warnings += '<div style="background:#FF000015;border:1px solid #FF000030;border-radius:8px;padding:8px 12px;font-size:12px;color:#FF6666;margin-top:6px">🔴 ROAS negativo — valuta di mettere in pausa</div>';
+    return '<div class="card" style="border-left:3px solid ' + statusColor + ';padding:16px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div><span style="font-weight:700;font-size:15px">' + getPlatformEmoji(c.platform) + ' ' + c.name + '</span>' +
+      '<span style="font-size:12px;color:#777;margin-left:8px">' + c.platform + ' · Giorno ' + (c.day||1) + '/' + (c.duration||30) + '</span></div>' +
+      '<span style="font-size:11px;padding:3px 10px;border-radius:100px;background:' + statusColor + '22;color:' + statusColor + ';font-weight:600">' + statusLabel + '</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">' +
+      '<div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center"><div style="font-size:11px;color:#777;margin-bottom:4px">CTR</div><div style="font-size:18px;font-weight:700;color:' + ctrColor + '">' + ctr.toFixed(2) + '%</div></div>' +
+      '<div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center"><div style="font-size:11px;color:#777;margin-bottom:4px">ROAS</div><div style="font-size:18px;font-weight:700;color:' + roasColor + '">' + roas.toFixed(2) + 'x</div></div>' +
+      '<div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center"><div style="font-size:11px;color:#777;margin-bottom:4px">Speso/Budget</div><div style="font-size:15px;font-weight:700;color:#F0F0F0">€' + (c.spent||0).toFixed(0) + '/€' + (c.budget||0) + '</div></div>' +
+      '</div>' + warnings + '</div>';
+  }).join('') + '</div>';
+}
+
 function renderCampaignTable() {
   const container = document.getElementById('campaign-table-container');
-  if (container) container.innerHTML = renderCampaignTableHTML();
+  if (!container) return;
+  const campaigns = AppState.campaigns || [];
+  container.innerHTML = (AppState.liveView||'cards')==='cards' ? renderCampaignCardsHTML(campaigns) : renderCampaignTableHTML();
 }
 
 function renderCampaignTableHTML() {
@@ -4120,119 +4031,7 @@ function renderKPICalculator() {
         </div>
       </div>
     </div>
-
-    <div style="margin-top:32px">
-      <h3 style="color:#F0F0F0;font-size:16px;font-weight:600;margin-bottom:16px;">Calcolatori rapidi</h3>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
-
-        <!-- ROAS Calculator -->
-        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
-          <div style="font-size:13px;font-weight:700;color:#AAFF00;margin-bottom:14px">📊 ROAS</div>
-          <div style="margin-bottom:10px">
-            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Revenue (€)</label>
-            <input type="number" id="qc-roas-revenue" placeholder="es. 1500" oninput="calcQuickROAS()" style="margin-top:4px;padding:8px 10px;font-size:13px">
-          </div>
-          <div style="margin-bottom:12px">
-            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Budget (€)</label>
-            <input type="number" id="qc-roas-budget" placeholder="es. 500" oninput="calcQuickROAS()" style="margin-top:4px;padding:8px 10px;font-size:13px">
-          </div>
-          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:10px;color:#777;margin-bottom:4px">ROAS</div>
-            <div id="qc-roas-result" style="font-size:24px;font-weight:700;color:#AAFF00">—</div>
-          </div>
-        </div>
-
-        <!-- CPA Calculator -->
-        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
-          <div style="font-size:13px;font-weight:700;color:#0055FF;margin-bottom:14px">💰 CPA</div>
-          <div style="margin-bottom:10px">
-            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Budget (€)</label>
-            <input type="number" id="qc-cpa-budget" placeholder="es. 500" oninput="calcQuickCPA()" style="margin-top:4px;padding:8px 10px;font-size:13px">
-          </div>
-          <div style="margin-bottom:12px">
-            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Conversioni</label>
-            <input type="number" id="qc-cpa-conv" placeholder="es. 25" oninput="calcQuickCPA()" style="margin-top:4px;padding:8px 10px;font-size:13px">
-          </div>
-          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:10px;color:#777;margin-bottom:4px">CPA</div>
-            <div id="qc-cpa-result" style="font-size:24px;font-weight:700;color:#0055FF">—</div>
-          </div>
-        </div>
-
-        <!-- CTR Calculator -->
-        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
-          <div style="font-size:13px;font-weight:700;color:#FFB300;margin-bottom:14px">🖱️ CTR</div>
-          <div style="margin-bottom:10px">
-            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Click</label>
-            <input type="number" id="qc-ctr-clicks" placeholder="es. 300" oninput="calcQuickCTR()" style="margin-top:4px;padding:8px 10px;font-size:13px">
-          </div>
-          <div style="margin-bottom:12px">
-            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Impressioni</label>
-            <input type="number" id="qc-ctr-imp" placeholder="es. 20000" oninput="calcQuickCTR()" style="margin-top:4px;padding:8px 10px;font-size:13px">
-          </div>
-          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:10px;color:#777;margin-bottom:4px">CTR</div>
-            <div id="qc-ctr-result" style="font-size:24px;font-weight:700;color:#FFB300">—</div>
-          </div>
-        </div>
-
-        <!-- Break-even ROAS -->
-        <div class="card" style="padding:20px;background:#111111;border:1px solid #2A2A2A;border-radius:16px">
-          <div style="font-size:13px;font-weight:700;color:#FF6B6B;margin-bottom:14px">⚖️ Break-even ROAS</div>
-          <div style="margin-bottom:12px">
-            <label style="color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Margine prodotto (%)</label>
-            <input type="number" id="qc-be-margin" placeholder="es. 40" min="1" max="99" oninput="calcQuickBE()" style="margin-top:4px;padding:8px 10px;font-size:13px">
-          </div>
-          <div style="background:#1A1A1A;border-radius:10px;padding:12px;text-align:center;margin-top:34px">
-            <div style="font-size:10px;color:#777;margin-bottom:4px">ROAS minimo</div>
-            <div id="qc-be-result" style="font-size:24px;font-weight:700;color:#FF6B6B">—</div>
-            <div style="font-size:10px;color:#555;margin-top:4px">per non perdere soldi</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
   `;
-}
-
-function calcQuickROAS() {
-  const rev = parseFloat(document.getElementById('qc-roas-revenue')?.value) || 0;
-  const bud = parseFloat(document.getElementById('qc-roas-budget')?.value) || 0;
-  const el = document.getElementById('qc-roas-result');
-  if (!el) return;
-  if (bud > 0 && rev > 0) {
-    const r = (rev / bud).toFixed(2);
-    el.textContent = r + 'x';
-    el.style.color = parseFloat(r) >= 3 ? '#AAFF00' : parseFloat(r) >= 1 ? '#FFB300' : '#FF4444';
-  } else { el.textContent = '—'; el.style.color = '#AAFF00'; }
-}
-
-function calcQuickCPA() {
-  const bud = parseFloat(document.getElementById('qc-cpa-budget')?.value) || 0;
-  const conv = parseFloat(document.getElementById('qc-cpa-conv')?.value) || 0;
-  const el = document.getElementById('qc-cpa-result');
-  if (!el) return;
-  if (bud > 0 && conv > 0) { el.textContent = '€' + (bud / conv).toFixed(2); }
-  else { el.textContent = '—'; }
-}
-
-function calcQuickCTR() {
-  const clicks = parseFloat(document.getElementById('qc-ctr-clicks')?.value) || 0;
-  const imp = parseFloat(document.getElementById('qc-ctr-imp')?.value) || 0;
-  const el = document.getElementById('qc-ctr-result');
-  if (!el) return;
-  if (imp > 0 && clicks >= 0) { el.textContent = (clicks / imp * 100).toFixed(2) + '%'; }
-  else { el.textContent = '—'; }
-}
-
-function calcQuickBE() {
-  const margin = parseFloat(document.getElementById('qc-be-margin')?.value) || 0;
-  const el = document.getElementById('qc-be-result');
-  if (!el) return;
-  if (margin > 0 && margin < 100) {
-    const be = (100 / margin).toFixed(2);
-    el.textContent = be + 'x';
-  } else { el.textContent = '—'; }
 }
 
 function updateKPICalculator() {
@@ -5693,19 +5492,6 @@ const COMPANY_TYPES = [
   { id: 'corporate', name: 'Corporate', context: 'una grande azienda con team marketing strutturato' },
 ];
 
-const INTERVIEW_QUESTION_BANK = [
-  "Cos'è il ROAS e come si calcola?",
-  "Differenza tra CPM, CPC e CPV?",
-  "Cos'è il Quality Score di Google Ads e da cosa è composto?",
-  "Come struttureresti una campagna Meta Ads per un e-commerce di moda?",
-  "Cosa sono le keyword negative e quando si usano?",
-  "Cos'è il remarketing e perché converte meglio del cold traffic?",
-  "Come misuri il successo di una campagna awareness vs una conversion?",
-  "Cos'è il funnel di marketing e come si scelgono i canali per ogni fase?",
-  "Spiega la differenza tra targeting per interesse e lookalike audience",
-  "Cos'è l'A/B test e come lo applicheresti a una campagna Meta?",
-];
-
 let interviewState = {
   active: false,
   role: null,
@@ -5717,229 +5503,56 @@ let interviewState = {
   totalScore: 0,
 };
 
-// === PROOVD ACADEMY ===
-const ACADEMY_MODULES = [
-  {
-    id: 'search',
-    icon: '🔍',
-    title: 'Search Ads',
-    subtitle: 'Google Ads, SEA, keyword strategy',
-    color: '#0055FF',
-    topics: [
-      { title: 'Cos\'è il SEM e la SEA', content: 'SEM (Search Engine Marketing) comprende tutte le attività sui motori di ricerca. SEA (Search Engine Advertising) sono gli annunci a pagamento nella SERP — si distinguono con la dicitura "Sponsorizzato" e si paga per click (CPC). Google ha il 92.8% del mercato italiano.' },
-      { title: 'Come funziona l\'asta di Google Ads', content: 'Le keyword non si comprano: si fa un\'offerta. Ad Rank = Offerta Massima × Quality Score. Il vincitore non paga la sua offerta ma quella dell\'inserzionista successivo +0.01€. Obiettivo: massimo posizionamento al costo più basso.' },
-      { title: 'Quality Score (QS)', content: 'Punteggio 1-10 che misura qualità e pertinenza. Composto da: CTR previsto (probabilità di click) + Pertinenza annuncio (coerenza con la query) + Esperienza landing page (velocità, contenuto, affidabilità). QS alto = CPC più basso: QS 9 può costare 0.50€ vs QS 1 che costa 3€+.' },
-      { title: 'Match Type delle Keyword', content: '[Esatta]: massimo controllo, volumi limitati — annuncio solo per ricerche con stesso significato. "Frase": via di mezzo — include varianti del significato. Generica: volumi massimi, AI gestisce — trova ricerche pertinenti basandosi sull\'intento. Keyword Negative: escludono ricerche non volute.' },
-      { title: 'Annunci RSA', content: 'Responsive Search Ads: fornisci 3-15 titoli (30 car.) + 2-4 descrizioni (90 car.). L\'AI di Google testa migliaia di combinazioni e mostra quella più pertinente per ogni utente in ogni asta. Feedback asset: Basso/Buono/Migliore/In Apprendimento.' },
-      { title: 'Struttura Account Google Ads', content: 'Account → Campagna (obiettivo/budget/geo/lingua) → Ad Group (cluster tematico) → Keyword + Annunci + Landing Page. Approccio AI-based: meno campagne più grandi = più dati per l\'algoritmo = performance migliore.' },
-    ]
-  },
-  {
-    id: 'budget',
-    icon: '💰',
-    title: 'Budget & Media Planning',
-    subtitle: 'Strategia, allocazione budget, funnel',
-    color: '#AAFF00',
-    topics: [
-      { title: 'Il mercato pubblicitario digitale', content: 'Italia 2025: ~7.6 miliardi € di advertising digitale, +7.6% YoY. GAMT (Google, Amazon, Meta, TikTok) = 49% del mercato totale. Distribuzione: Display 37.7%, Video 32.1%, Search 28.2%. Video (+8.4%) e Search (+8.2%) crescono di più.' },
-      { title: 'Gli obiettivi del funnel', content: 'Awareness (parte alta): conoscenza brand → obiettivo Reach, formati video lungo/display impattante. Consideration: l\'utente vuole saperne di più → obiettivo Affinity. Engagement: coinvolgimento emotivo → Involvement. Conversion/Loyalty: vendite e clienti fedeli → Lead/Sales, formati Search/Social conversion.' },
-      { title: 'Come allocare il budget', content: '1) Definisci obiettivo di business. 2) Scegli canali dove il tuo target è presente. 3) Alloca budget in base a funnel: 60-70% su conversion, 20-30% su consideration, 10% awareness (per budget ridotti). 4) Testa, misura, ottimizza, scala.' },
-      { title: 'KPI fondamentali', content: 'CPM = costo per 1000 impressioni (awareness). CPC = costo per click (traffico). CPA = costo per acquisizione = Budget/Conversioni. ROAS = ricavi/spesa × 100 (es. ROAS 300% = recuperi 3€ per ogni €1 speso). CTR = click/impressioni × 100. CVR = conversioni/click × 100.' },
-      { title: 'Benchmark di mercato', content: 'Google Search: CTR 3-5%, CPC 0.5-3€, CVR 2-5%. Meta Ads: CTR 0.9-1.5%, CPM 8-12€, CVR 1-3%. TikTok: CTR 1-3%, CPM 5-10€. LinkedIn: CTR 0.3-0.6%, CPM 30-50€. YouTube: View Rate 25-40%, CPV 0.02-0.05€. ROAS buono >3x, ottimo >5x, eccellente >8x.' },
-    ]
-  },
-  {
-    id: 'meta',
-    icon: '📘',
-    title: 'Meta Ads',
-    subtitle: 'Facebook, Instagram, Audience Network',
-    color: '#0055FF',
-    topics: [
-      { title: 'Struttura campagne Meta', content: 'Campagna (obiettivo: Awareness/Traffico/Engagement/Lead/Vendite) → Adset (audience, budget giornaliero/totale, posizionamento, scheduling) → Annuncio (creativo: immagine/video/carosello + copy + CTA). Ogni livello ha un ruolo preciso.' },
-      { title: 'Targeting Meta Ads', content: 'Interessi e comportamenti: persone interessate a topic specifici. Custom Audience: da CRM, pixel, video views. Lookalike: 1-3% simili ai tuoi migliori clienti (il più potente). Remarketing: chi ha visitato il sito o interagito. Advantage+: AI di Meta gestisce targeting automaticamente.' },
-      { title: 'Meta Pixel', content: 'Codice JS da installare sul sito. Traccia eventi: PageView, ViewContent, AddToCart, InitiateCheckout, Purchase. Permette: ottimizzazione per conversioni, creazione custom audience, remarketing dinamico. Fondamentale per campagne di conversione efficaci.' },
-      { title: 'Best Practice Creative', content: 'Video performa meglio delle immagini statiche del 20-30%. Hook nei primi 3 secondi. Testo breve sopra il video (125 caratteri visibili). A/B test: testa sempre 3+ creatività. Frequency: tienila sotto 3-4/settimana per evitare ad fatigue. Rinnovare le creative ogni 2-3 settimane.' },
-      { title: 'Ottimizzazione budget Meta', content: 'CBO (Campaign Budget Optimization): budget a livello campagna, Meta lo distribuisce automaticamente. ABO (Adset Budget Optimization): controllo manuale per adset. Regola: inizia con €20-30/giorno per adset in test, scala i vincitori del 20% ogni 2-3 giorni.' },
-    ]
-  },
-  {
-    id: 'tiktok',
-    icon: '🎵',
-    title: 'TikTok Ads',
-    subtitle: 'Short video, giovani, UGC',
-    color: '#AAFF00',
-    topics: [
-      { title: 'Perché TikTok Ads', content: 'CPM più basso di Meta (~5-12€ vs 8-15€). Audience 18-34 anni molto coinvolta. L\'algoritmo premia i contenuti di qualità indipendentemente dai follower. Ideale per: ecommerce giovani, beauty, food, gaming, moda, entertainment.' },
-      { title: 'Formati TikTok Ads', content: 'In-Feed Ads: nel feed "Per Te", skippabili dopo 5s. TopView: primo annuncio all\'apertura app, max visibilità. Branded Hashtag Challenge: sfida virale con hashtag sponsor. Spark Ads: boost di contenuti organici esistenti (il più nativo). Branded Effects: filtri AR personalizzati.' },
-      { title: 'Best Practice Creative TikTok', content: 'Formato verticale 9:16 obbligatorio. Durata ottimale: 15-30 secondi. Hook nei PRIMI 3 SECONDI: domanda, scena d\'azione, testo provocatorio. Il contenuto deve sembrare UGC (User Generated Content), non pubblicità classica. Usa audio trend della piattaforma. CTA chiara a fine video.' },
-      { title: 'Targeting TikTok', content: 'Demografico: età, genere, localizzazione. Interessi: categorie ampie (Beauty, Gaming, Food...). Comportamento: interazioni con video/creator specifici. Custom Audience: da pixel, CRM, engagement. Lookalike. Automatic Targeting: AI di TikTok gestisce tutto (consigliato per iniziare).' },
-    ]
-  },
-  {
-    id: 'linkedin',
-    icon: '💼',
-    title: 'LinkedIn Ads',
-    subtitle: 'B2B, lead generation, professional',
-    color: '#0055FF',
-    topics: [
-      { title: 'Quando usare LinkedIn Ads', content: 'LinkedIn è il canale #1 per B2B. CPM alto (30-60€) ma qualità lead superiore. Ideale per: SaaS, consulenza, HR/recruiting, education, finance, servizi professionali. Se il tuo cliente è un\'azienda o un professionista, LinkedIn è imprescindibile.' },
-      { title: 'Targeting B2B unico', content: 'Job Title: ruolo esatto (es. "Marketing Manager"). Seniority: Junior/Senior/Director/VP/C-Level. Azienda: nome specifico o dimensione (1-10, 11-50, 51-200...). Settore: Finance, Technology, Healthcare... Competenze: skill dichiarate nel profilo. Degree: livello istruzione.' },
-      { title: 'Formati LinkedIn', content: 'Sponsored Content: post sponsorizzati nel feed (immagine/video/carosello). Message Ads: messaggi diretti in InMail (alta visibilità, open rate 50%+). Lead Gen Forms: form precompilati dentro LinkedIn, riducono CPA del 30-50%. Dynamic Ads: personalizzati con foto profilo dell\'utente.' },
-      { title: 'Ottimizzare campagne LinkedIn', content: 'Budget minimo consigliato: €50/giorno. Usa Lead Gen Forms invece di mandare al sito (CVR 3-5x migliore). Testa targeting per Job Title vs Seniority+Settore. Rotazione creative ogni 2 settimane. Retargeting su chi ha visitato il sito è molto efficace. Document Ads per contenuti educativi hanno alto engagement.' },
-    ]
-  },
-  {
-    id: 'youtube',
-    icon: '▶️',
-    title: 'YouTube & Display',
-    subtitle: 'Video advertising, GDN, awareness',
-    color: '#AAFF00',
-    topics: [
-      { title: 'YouTube Ads formati', content: 'Skippable In-Stream: skippabili dopo 5s, si paga solo se visto 30s+ (CPV 0.02-0.05€). Non-Skippable: 15-20s, non si può saltare, pagamento CPM. Bumper Ads: 6 secondi non skippabili, ideali per brand recall. Discovery Ads: appaiono nei risultati di ricerca YouTube. Shorts Ads: nel feed Shorts.' },
-      { title: 'Google Display Network (GDN)', content: 'Reach di oltre il 90% degli utenti internet. Banner su milioni di siti e app partner di Google. CPM molto basso (1-5€). Targeting: contesto (argomento pagina), interessi, remarketing, placement specifici, audience personalizzate. Ideale per: awareness, remarketing, branding a basso costo.' },
-      { title: 'Strategia Video Funnel', content: 'Awareness: YouTube bumper/non-skippable per massima reach. Consideration: video 15-30s con storytelling del prodotto. Conversion: remarketing su chi ha visto il video + landing page ottimizzata. Sequencing: mostra prima video lungo poi bumper di recall a chi ha visto il precedente.' },
-    ]
-  },
-  {
-    id: 'analytics',
-    icon: '📊',
-    title: 'Analytics & Misurazione',
-    subtitle: 'KPI, attribution, reporting',
-    color: '#0055FF',
-    topics: [
-      { title: 'Le metriche che contano', content: 'Non tutte le metriche sono uguali. Vanity metrics (like, impressioni) vs Business metrics (CPA, ROAS, revenue). Focus su: ROAS (ritorno sulla spesa), CPA (costo acquisizione), CVR (tasso conversione), LTV (lifetime value cliente). Il CTR alto con CVR basso indica problema di landing page o targeting sbagliato.' },
-      { title: 'Attribution Models', content: 'Last Click: tutto il credito all\'ultimo touchpoint (default, ma limitante). First Click: credito al primo contatto. Linear: distribuito uguale su tutti i touchpoint. Time Decay: più peso ai touchpoint recenti. Data-Driven: AI assegna credito in base ai dati reali. Il customer journey è raramente lineare: considera sempre l\'assisted conversion.' },
-      { title: 'Come creare un report professionale', content: 'Struttura: Executive Summary (1 pagina) → Performance overview KPI → Analisi per canale → Top/Bottom performer → Insights e anomalie → Raccomandazioni priorità → Next steps. Usa grafici semplici. Parla sempre di business impact, non solo di metriche digitali. Confronta con periodo precedente e benchmark.' },
-      { title: 'Ottimizzazione continua', content: 'Il ciclo del digital marketer: Analizza (cosa sta succedendo?) → Ipotesi (perché?) → Test (cosa cambio?) → Misura (ha funzionato?) → Scala (replica il successo) o Itera (prova altro). Non cambiare mai più di una variabile alla volta nei test. Aspetta sempre dati statisticamente significativi prima di decidere.' },
-    ]
-  },
+const LEARNING_PATHS = [
+  { id: 'ecommerce', icon: '📦', title: 'E-commerce Path', steps: ['Budget & Strategy', 'Meta Ads', 'Google Search', 'Analytics', 'Reporting'] },
+  { id: 'b2b', icon: '🏢', title: 'B2B/Lead Gen Path', steps: ['LinkedIn Ads', 'Google Search', 'Email Marketing', 'Analytics', 'Reporting'] },
+  { id: 'social', icon: '📱', title: 'Social Media Path', steps: ['Meta Ads', 'TikTok Ads', 'YouTube Ads', 'Analytics', 'Audience Studio'] },
 ];
 
-function renderAcademy() {
-  document.getElementById('page-title').textContent = 'PROOVD Academy';
-  const main = document.getElementById('view-academy');
-  if (!main) return;
+const PATH_STEP_MODULES = {
+  'Meta Ads': 'builder', 'Google Search': 'builder', 'TikTok Ads': 'builder',
+  'LinkedIn Ads': 'builder', 'YouTube Ads': 'builder', 'Email Marketing': 'builder',
+  'Google Display': 'builder', 'Analytics': 'analytics', 'Reporting': 'reporting',
+  'Budget & Strategy': 'builder', 'Audience Studio': 'audience',
+};
 
-  const openTopic = AppState.academyOpenTopic || null;
-  const openModule = AppState.academyOpenModule || null;
-  const chatHistory = AppState.academyChatHistory || {};
-
-  main.innerHTML = `
-    <div style="padding:24px">
-      <div style="margin-bottom:24px">
-        <h2 style="font-size:22px;font-weight:700;margin:0 0 8px">📚 PROOVD Academy</h2>
-        <p style="color:var(--muted);font-size:14px;margin:0">Studia i fondamentali del digital marketing. Approfondisci ogni argomento e chiedi all'AI tutto quello che non è chiaro.</p>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:32px">
-        ${ACADEMY_MODULES.map(m => `
-          <div class="card" style="cursor:pointer;border:1px solid ${openModule===m.id?m.color:'var(--border)'};transition:all .2s" onclick="openAcademyModule('${m.id}')">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-              <div style="font-size:28px">${m.icon}</div>
-              <div>
-                <div style="font-weight:700;font-size:15px">${m.title}</div>
-                <div style="color:var(--muted);font-size:12px">${m.subtitle}</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              ${m.topics.map(t=>`<span style="background:var(--surface-inner);border:1px solid var(--border);border-radius:100px;padding:2px 10px;font-size:11px;color:var(--muted)">${t.title}</span>`).join('')}
-            </div>
-            <div style="margin-top:12px;font-size:12px;color:${m.color};font-weight:600">${m.topics.length} argomenti →</div>
-          </div>
-        `).join('')}
-      </div>
-
-      ${openModule ? renderAcademyModuleDetail(openModule, openTopic, chatHistory) : ''}
-    </div>
-  `;
-}
-
-function openAcademyModule(moduleId) {
-  AppState.academyOpenModule = moduleId;
-  AppState.academyOpenTopic = null;
-  renderAcademy();
-}
-
-function openAcademyTopic(moduleId, topicIndex) {
-  AppState.academyOpenModule = moduleId;
-  AppState.academyOpenTopic = topicIndex;
-  renderAcademy();
-}
-
-function renderAcademyModuleDetail(moduleId, openTopic, chatHistory) {
-  const mod = ACADEMY_MODULES.find(m => m.id === moduleId);
-  if (!mod) return '';
-  const topicIdx = openTopic !== null ? parseInt(openTopic) : 0;
-  const topic = mod.topics[topicIdx];
-  const topicKey = moduleId + '_' + topicIdx;
-  const messages = chatHistory[topicKey] || [];
-
-  return `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden">
-      <div style="background:var(--surface-inner);padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
-        <span style="font-size:22px">${mod.icon}</span>
-        <div>
-          <div style="font-weight:700">${mod.title}</div>
-          <div style="color:var(--muted);font-size:12px">${mod.subtitle}</div>
-        </div>
-        <button onclick="AppState.academyOpenModule=null;renderAcademy()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button>
-      </div>
-      <div style="display:grid;grid-template-columns:220px 1fr;min-height:500px">
-        <div style="border-right:1px solid var(--border);padding:12px">
-          ${mod.topics.map((t,i) => `
-            <div onclick="openAcademyTopic('${moduleId}',${i})" style="padding:10px 12px;border-radius:10px;cursor:pointer;margin-bottom:4px;background:${i===topicIdx?mod.color:'transparent'};color:${i===topicIdx?'#000':'var(--text)'};font-size:13px;font-weight:${i===topicIdx?'600':'400'};transition:all .15s">
-              ${t.title}
-            </div>
-          `).join('')}
-        </div>
-        <div style="padding:24px;display:flex;flex-direction:column;gap:20px">
-          <div>
-            <h3 style="font-size:18px;font-weight:700;margin:0 0 12px">${topic.title}</h3>
-            <div style="background:var(--surface-inner);border-radius:12px;padding:16px;font-size:14px;line-height:1.8;color:var(--text)">${topic.content}</div>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
-            <div style="background:var(--surface-inner);padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">💬 Chiedi all'AI su questo argomento</div>
-            <div id="academy-chat-${topicKey}" style="padding:16px;min-height:80px;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
-              ${messages.length === 0 ? `<p style="color:var(--muted);font-size:13px;margin:0">Hai dubbi? Scrivi una domanda su "${topic.title}" e ti rispondo subito.</p>` : ''}
-              ${messages.map(m=>`<div style="padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;max-width:85%;${m.role==='user'?'background:var(--blue);color:#fff;align-self:flex-end':'background:var(--surface-inner);border:1px solid var(--border);align-self:flex-start'}">${m.text.replace(/\n/g,'<br>')}</div>`).join('')}
-            </div>
-            <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
-              <input id="academy-input-${topicKey}" type="text" placeholder="Es: Come calcolo il CPC effettivo?" style="flex:1;background:var(--surface-inner);border:1px solid var(--border);border-radius:100px;padding:8px 16px;color:var(--text);font-size:13px" onkeydown="if(event.key==='Enter')sendAcademyMessage('${moduleId}',${topicIdx})">
-              <button onclick="sendAcademyMessage('${moduleId}',${topicIdx})" style="background:var(--blue);color:#fff;border:none;border-radius:100px;padding:8px 18px;font-size:13px;cursor:pointer;font-weight:600">Invia</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-async function sendAcademyMessage(moduleId, topicIdx) {
-  const mod = ACADEMY_MODULES.find(m => m.id === moduleId);
-  const topic = mod.topics[topicIdx];
-  const topicKey = moduleId + '_' + topicIdx;
-  const input = document.getElementById('academy-input-' + topicKey);
-  const msg = input?.value?.trim();
-  if (!msg) return;
-  input.value = '';
-
-  if (!AppState.academyChatHistory) AppState.academyChatHistory = {};
-  if (!AppState.academyChatHistory[topicKey]) AppState.academyChatHistory[topicKey] = [];
-  AppState.academyChatHistory[topicKey].push({ role: 'user', text: msg });
-  renderAcademy();
-
-  const systemPrompt = `Sei PROOVD AI Coach, esperto di digital marketing. L'utente sta studiando il modulo "${mod.title}", argomento "${topic.title}". Contesto dell'argomento: ${topic.content}. Rispondi in italiano, in modo chiaro e pratico come un formatore esperto. Max 120 parole.`;
-  const response = await callClaude(systemPrompt, msg, null);
-  const text = typeof response === 'string' ? response : 'Errore nella risposta AI.';
-
-  if (!AppState.academyChatHistory[topicKey]) AppState.academyChatHistory[topicKey] = [];
-  AppState.academyChatHistory[topicKey].push({ role: 'ai', text });
-  renderAcademy();
-
-  setTimeout(() => {
-    const chat = document.getElementById('academy-chat-' + topicKey);
-    if (chat) chat.scrollTop = chat.scrollHeight;
-  }, 100);
+function renderLearningPathsSection() {
+  const completed = AppState.academyCompleted || [];
+  const active = AppState.activeLearningPath || null;
+  let banner = '';
+  if (active) {
+    const path = LEARNING_PATHS.find(function(p) { return p.id === active; });
+    if (path) {
+      const nextStep = path.steps.find(function(s) { return completed.indexOf(s) === -1; });
+      banner = '<div style="background:linear-gradient(135deg,#0055FF22,#AAFF0011);border:1px solid #0055FF44;border-radius:16px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">' +
+        '<div><div style="font-size:12px;color:#AAFF00;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Percorso attivo: ' + path.icon + ' ' + path.title + '</div>' +
+        '<div style="font-size:14px;color:#F0F0F0">' + (nextStep ? 'Prossimo step: <strong>' + nextStep + '</strong>' : '🎉 Percorso completato!') + '</div></div>' +
+        (nextStep ? '<button onclick="navigateTo(\'' + (PATH_STEP_MODULES[nextStep]||'builder') + '\')" style="padding:8px 18px;border-radius:100px;border:none;background:#0055FF;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap">Continua →</button>' : '') +
+        '</div>';
+    }
+  }
+  var pathCards = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:32px">' +
+    LEARNING_PATHS.map(function(path) {
+      var isActive = active === path.id;
+      return '<div class="card" style="border:1px solid ' + (isActive ? '#0055FF' : '#2A2A2A') + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<div style="font-size:15px;font-weight:700">' + path.icon + ' ' + path.title + '</div>' +
+        (isActive ? '<span style="font-size:11px;padding:2px 8px;border-radius:100px;background:#0055FF22;color:#0055FF">Attivo</span>' : '') + '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">' +
+        path.steps.map(function(step, i) {
+          var done = completed.indexOf(step) !== -1;
+          var isNext = !done && (i === 0 || completed.indexOf(path.steps[i-1]) !== -1);
+          var color = done ? '#AAFF00' : isNext ? '#0055FF' : '#2A2A2A';
+          var textColor = done ? '#AAFF00' : isNext ? '#F0F0F0' : '#555';
+          return '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div style="width:18px;height:18px;border-radius:50%;border:2px solid ' + color + ';display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;color:' + color + '">' + (done ? '✓' : (i+1)) + '</div>' +
+            '<span style="font-size:13px;color:' + textColor + '">' + step + '</span></div>';
+        }).join('') +
+        '</div>' +
+        '<button onclick="AppState.activeLearningPath=\'' + path.id + '\';saveState();renderInterviewCoach()" style="width:100%;padding:8px;border-radius:100px;border:1px solid ' + (isActive ? '#0055FF' : '#2A2A2A') + ';background:' + (isActive ? '#0055FF' : 'transparent') + ';color:' + (isActive ? '#fff' : '#777') + ';font-size:13px;cursor:pointer">' + (isActive ? '✓ Percorso scelto' : 'Segui questo percorso') + '</button>' +
+        '</div>';
+    }).join('') + '</div>';
+  return banner + '<h3 style="font-size:16px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;gap:8px">🗺️ Learning Path</h3>' + pathCards;
 }
 
 function renderInterviewCoach() {
@@ -5950,6 +5563,7 @@ function renderInterviewCoach() {
       <h2>Interview Coach</h2>
       <p class="muted">Preparati al tuo prossimo colloquio in digital marketing</p>
     </div>
+    ${renderLearningPathsSection()}
     <div class="tab-bar" style="display:flex;gap:8px;margin-bottom:24px;">
       <button class="tab-btn active" id="itab-interview" onclick="switchInterviewTab('interview')">🎤 Colloquio</button>
       <button class="tab-btn" id="itab-flashcard" onclick="switchInterviewTab('flashcard')">📚 Flashcard</button>
@@ -6077,7 +5691,6 @@ async function startInterview() {
   interviewState.answers = [];
   interviewState.totalScore = 0;
   interviewState.currentQuestion = '';
-  interviewState.shuffledBank = null;
 
   renderInterviewSession();
   await askNextQuestion();
@@ -6124,18 +5737,6 @@ async function askNextQuestion() {
   const role = INTERVIEW_ROLES.find(r => r.id === interviewState.role);
   const company = COMPANY_TYPES.find(c => c.id === interviewState.company);
   if (!role || !company) return;
-
-  // Use predefined question bank for 'base' difficulty to ensure realistic questions
-  if (interviewState.difficulty === 'base' && interviewState.questionIndex < INTERVIEW_QUESTION_BANK.length) {
-    // Shuffle bank once at start (stored on state)
-    if (!interviewState.shuffledBank) {
-      interviewState.shuffledBank = [...INTERVIEW_QUESTION_BANK].sort(() => Math.random() - 0.5);
-    }
-    const question = interviewState.shuffledBank[interviewState.questionIndex];
-    addInterviewMessage('recruiter', question);
-    interviewState.currentQuestion = question;
-    return;
-  }
 
   const systemPrompt = `Sei un recruiter/responsabile marketing che sta intervistando un candidato per il ruolo di ${role.name} in ${company.context}.
 Difficoltà: ${interviewState.difficulty}.
