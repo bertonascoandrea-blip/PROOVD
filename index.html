@@ -537,6 +537,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
       <div id="view-audience" class="view"></div>
       <div id="view-interview" class="view"></div>
       <div id="view-score" class="view"></div>
+      <div id="view-creative-studio" class="view"></div>
     </div>
   </main>
 
@@ -1055,8 +1056,9 @@ const MODULES = [
   { id:'audience', label:'Audience Studio', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
   { id:'interview', label:'Interview Coach', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
   { id:'score', label:'PROOVD Score', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
+  { id:'creative-studio', label:'Creative Studio', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' },
 ];
-const MODULE_TITLES = { dashboard:'Dashboard', builder:'Campaign Builder', live:'Live Manager', analytics:'Analytics Lab', reporting:'Reporting Studio', audience:'Audience Studio', interview:'Interview Coach', score:'PROOVD Score' };
+const MODULE_TITLES = { dashboard:'Dashboard', builder:'Campaign Builder', live:'Live Manager', analytics:'Analytics Lab', reporting:'Reporting Studio', audience:'Audience Studio', interview:'Interview Coach', score:'PROOVD Score', 'creative-studio':'Creative Studio' };
 const MODULE_RENDERERS = {};
 
 function registerRenderer(id, fn) { MODULE_RENDERERS[id] = fn; }
@@ -1327,6 +1329,7 @@ function hideAuthScreen() {
     if (typeof renderAudienceStudio === 'function') registerRenderer('audience', renderAudienceStudio);
     if (typeof renderInterviewCoach === 'function') registerRenderer('interview', renderInterviewCoach);
     if (typeof renderProovdScore === 'function') registerRenderer('score', renderProovdScore);
+    if (typeof renderCreativeStudio === 'function') registerRenderer('creative-studio', renderCreativeStudio);
   };
   register();
   const hash = window.location.hash.replace('#','') || 'dashboard';
@@ -6685,6 +6688,267 @@ function exportProovdCard() {
   } else {
     if (typeof showToast === 'function') showToast('Abilita i popup per esportare la card', 'warning');
   }
+}
+
+// === CREATIVE STUDIO ===
+function renderCreativeStudio() {
+  const el = document.getElementById('view-creative-studio');
+  if (!el) return;
+  const history = JSON.parse(localStorage.getItem('cs_history') || '[]');
+  el.innerHTML = `
+    <div style="padding:24px;max-width:1100px;margin:0 auto">
+      <div style="margin-bottom:28px">
+        <h1 style="font-size:22px;font-weight:700;color:var(--text);margin:0 0 6px">Creative Studio</h1>
+        <p style="color:var(--muted);font-size:14px;margin:0">Carica le tue creative pubblicitarie e ricevi un'analisi AI professionale</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px">
+            <div id="cs-drop-zone" onclick="document.getElementById('cs-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--blue)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleCreativeDrop(event)" style="border:2px dashed var(--border);border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface2)">
+              <div id="cs-preview-area">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" style="margin-bottom:12px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <p style="color:var(--muted);font-size:14px;margin:0 0 4px">Trascina un'immagine qui o clicca per caricare</p>
+                <p style="color:var(--muted);font-size:12px;margin:0;opacity:0.6">JPG, PNG, GIF, WebP — max 10MB</p>
+              </div>
+            </div>
+            <input type="file" id="cs-file-input" accept="image/*" style="display:none" onchange="handleCreativeUpload(event)">
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+            <h3 style="font-size:14px;font-weight:600;color:var(--text);margin:0 0 16px">Dettagli campagna</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">Piattaforma</label>
+                <select id="cs-platform" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px">
+                  <option value="meta">Meta Ads (Facebook/Instagram)</option>
+                  <option value="google">Google Display</option>
+                  <option value="tiktok">TikTok Ads</option>
+                  <option value="linkedin">LinkedIn Ads</option>
+                  <option value="youtube">YouTube Ads</option>
+                  <option value="pinterest">Pinterest Ads</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">Formato</label>
+                <select id="cs-format" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px">
+                  <option value="feed">Feed post (1:1 / 4:5)</option>
+                  <option value="story">Story / Reel (9:16)</option>
+                  <option value="banner">Banner orizzontale (16:9)</option>
+                  <option value="carousel">Carosello</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">Obiettivo</label>
+                <select id="cs-objective" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px">
+                  <option value="awareness">Brand Awareness</option>
+                  <option value="traffic">Traffico</option>
+                  <option value="conversion">Conversioni</option>
+                  <option value="engagement">Engagement</option>
+                  <option value="leads">Lead Generation</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">Settore</label>
+                <select id="cs-industry" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px">
+                  <option value="ecommerce">E-commerce</option>
+                  <option value="saas">SaaS / Tech</option>
+                  <option value="fashion">Fashion / Beauty</option>
+                  <option value="food">Food &amp; Beverage</option>
+                  <option value="finance">Finance</option>
+                  <option value="travel">Travel</option>
+                  <option value="health">Health &amp; Wellness</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">Descrivi la creative (copy, prodotto, CTA visiva)</label>
+              <textarea id="cs-description" placeholder="Es: Immagine prodotto su sfondo bianco con testo 'Sconto 30% solo oggi' e bottone rosso 'Acquista ora'" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;min-height:80px;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+            <button onclick="analyzeCreative()" style="margin-top:16px;width:100%;background:var(--blue);color:#fff;border:none;border-radius:100px;padding:12px;font-size:14px;font-weight:600;cursor:pointer">Analizza con AI</button>
+          </div>
+          <div id="cs-result" style="margin-top:20px"></div>
+        </div>
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
+            <h3 style="font-size:13px;font-weight:600;color:var(--text);margin:0 0 14px">Best Practice per Piattaforma</h3>
+            <div id="cs-platform-guide">${renderCreativePlatformGuide('meta')}</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+            <h3 style="font-size:13px;font-weight:600;color:var(--text);margin:0 0 14px">Analisi Recenti</h3>
+            <div id="cs-history">${history.length === 0 ? '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Nessuna analisi ancora</p>' : history.slice(-5).reverse().map(h => `<div style="padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick='showCreativeHistoryItem(${JSON.stringify(JSON.stringify(h))})'>
+              <div style="font-size:12px;font-weight:600;color:var(--text)">${h.platform.toUpperCase()} — ${h.objective}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">${new Date(h.date).toLocaleDateString('it-IT')} • Score: <span style="color:${h.score >= 7 ? 'var(--lime)' : h.score >= 5 ? '#FBBF24' : '#F87171'}">${h.score}/10</span></div>
+            </div>`).join('')}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('cs-platform').addEventListener('change', function() {
+    document.getElementById('cs-platform-guide').innerHTML = renderCreativePlatformGuide(this.value);
+  });
+}
+
+function renderCreativePlatformGuide(platform) {
+  const guides = {
+    meta: [{icon:'📐',tip:'Rapporto 4:5 per feed, 9:16 per Stories'},{icon:'✍️',tip:'Testo < 20% dell\'immagine'},{icon:'🎯',tip:'CTA chiara nei primi 3 secondi'},{icon:'🎨',tip:'Colori vivaci battono il minimalismo'}],
+    google: [{icon:'📐',tip:'300x250, 728x90, 160x600 più usati'},{icon:'✍️',tip:'Headline ≤ 30 caratteri'},{icon:'🎯',tip:'Logo sempre visibile'},{icon:'🎨',tip:'Contrasto alto per la leggibilità'}],
+    tiktok: [{icon:'📐',tip:'Solo verticale 9:16, full screen'},{icon:'✍️',tip:'Hook nei primi 1-2 secondi'},{icon:'🎯',tip:'Stile nativo, non pubblicità classica'},{icon:'🎨',tip:'Musica e testo animato performano meglio'}],
+    linkedin: [{icon:'📐',tip:'1200x627 per single image'},{icon:'✍️',tip:'Tono professionale e informativo'},{icon:'🎯',tip:'Dati e statistiche aumentano CTR'},{icon:'🎨',tip:'Blu e grigio scuro funzionano meglio'}],
+    youtube: [{icon:'📐',tip:'16:9 obbligatorio, 1920x1080'},{icon:'✍️',tip:'Skip previsto dopo 5s: hook immediato'},{icon:'🎯',tip:'CTA verbale + scheda cliccabile'},{icon:'🎨',tip:'Thumbnail di impatto è metà del lavoro'}],
+    pinterest: [{icon:'📐',tip:'2:3 o 1:1, verticale vince'},{icon:'✍️',tip:'Testo overlay con value proposition'},{icon:'🎯',tip:'Stagionalità e lifestyle performano'},{icon:'🎨',tip:'Colori chiari e palette coerente'}],
+  };
+  const g = guides[platform] || guides.meta;
+  return g.map(({icon,tip}) => `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px"><span style="font-size:16px;flex-shrink:0">${icon}</span><span style="font-size:12px;color:var(--muted);line-height:1.4">${tip}</span></div>`).join('');
+}
+
+function handleCreativeUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('cs-preview-area').innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:contain">
+      <p style="color:var(--muted);font-size:12px;margin:8px 0 0">${file.name} — ${(file.size/1024).toFixed(0)}KB</p>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleCreativeDrop(event) {
+  event.preventDefault();
+  event.currentTarget.style.borderColor = 'var(--border)';
+  const file = event.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const fakeEvent = { target: { files: [file] } };
+  handleCreativeUpload(fakeEvent);
+}
+
+async function analyzeCreative() {
+  const platform = document.getElementById('cs-platform').value;
+  const format = document.getElementById('cs-format').value;
+  const objective = document.getElementById('cs-objective').value;
+  const industry = document.getElementById('cs-industry').value;
+  const description = document.getElementById('cs-description').value;
+  const resultEl = document.getElementById('cs-result');
+
+  if (!description.trim()) {
+    showToast('Descrivi la creative prima di analizzare', 'warn');
+    return;
+  }
+
+  resultEl.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(0,85,255,0.1);display:flex;align-items:center;justify-content:center">
+        <div style="width:16px;height:16px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+      </div>
+      <span style="color:var(--muted);font-size:14px">Analisi AI in corso…</span>
+    </div>
+    ${[...Array(4)].map(() => `<div style="height:14px;background:var(--surface2);border-radius:4px;margin-bottom:10px;animation:pulse 1.5s ease infinite"></div>`).join('')}
+  </div>`;
+
+  const prompt = `Sei un esperto di digital marketing e creative advertising. Analizza questa creative pubblicitaria e fornisci un'analisi strutturata.
+
+Piattaforma: ${platform}
+Formato: ${format}
+Obiettivo: ${objective}
+Settore: ${industry}
+Descrizione creative: ${description}
+
+Fornisci l'analisi in questo formato JSON esatto:
+{
+  "overall_score": <numero 1-10>,
+  "hook_score": <numero 1-10>,
+  "copy_score": <numero 1-10>,
+  "cta_score": <numero 1-10>,
+  "brand_score": <numero 1-10>,
+  "platform_fit_score": <numero 1-10>,
+  "summary": "<2-3 frasi di valutazione generale>",
+  "strengths": ["<punto di forza 1>", "<punto di forza 2>", "<punto di forza 3>"],
+  "improvements": ["<miglioramento 1>", "<miglioramento 2>", "<miglioramento 3>"],
+  "ab_test_idea": "<idea concreta per un A/B test>"
+}`;
+
+  try {
+    const apiKey = localStorage.getItem('groq_api_key') || (typeof AppState !== 'undefined' && AppState.groqKey) || '';
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 800,
+        response_format: { type: 'json_object' }
+      })
+    });
+    const data = await res.json();
+    const analysis = JSON.parse(data.choices[0].message.content);
+    showCreativeAnalysisResult(analysis, { platform, format, objective, industry, description });
+  } catch(err) {
+    resultEl.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center">
+      <p style="color:#F87171;font-size:14px;margin:0 0 12px">Errore durante l'analisi. Verifica la chiave API.</p>
+      <button onclick="analyzeCreative()" style="background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:8px 20px;color:var(--text);font-size:13px;cursor:pointer">Riprova</button>
+    </div>`;
+  }
+}
+
+function showCreativeAnalysisResult(a, meta) {
+  const scoreColor = s => s >= 8 ? 'var(--lime)' : s >= 6 ? '#FBBF24' : '#F87171';
+  const scoreBar = (label, score) => `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--muted)">${label}</span>
+        <span style="font-size:12px;font-weight:600;color:${scoreColor(score)}">${score}/10</span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
+        <div style="height:100%;width:${score*10}%;background:${scoreColor(score)};border-radius:100px;transition:width 0.8s ease"></div>
+      </div>
+    </div>`;
+
+  const resultEl = document.getElementById('cs-result');
+  resultEl.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+        <div style="text-align:center">
+          <div style="font-size:40px;font-weight:800;color:${scoreColor(a.overall_score)};line-height:1">${a.overall_score}</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">/10</div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">Score Complessivo</div>
+          <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.5">${a.summary}</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <h4 style="font-size:13px;font-weight:600;color:var(--text);margin:0 0 14px">Score per categoria</h4>
+          ${scoreBar('Hook / Attenzione', a.hook_score)}
+          ${scoreBar('Copy / Testo', a.copy_score)}
+          ${scoreBar('CTA / Call to Action', a.cta_score)}
+          ${scoreBar('Brand Consistency', a.brand_score)}
+          ${scoreBar('Platform Fit', a.platform_fit_score)}
+        </div>
+        <div>
+          <div style="margin-bottom:16px">
+            <h4 style="font-size:13px;font-weight:600;color:var(--lime);margin:0 0 10px">Punti di forza</h4>
+            ${a.strengths.map(s => `<div style="font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border)">${s}</div>`).join('')}
+          </div>
+          <div style="margin-bottom:16px">
+            <h4 style="font-size:13px;font-weight:600;color:#FBBF24;margin:0 0 10px">Da migliorare</h4>
+            ${a.improvements.map(s => `<div style="font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border)">${s}</div>`).join('')}
+          </div>
+          <div style="background:rgba(0,85,255,0.08);border-radius:8px;padding:12px">
+            <h4 style="font-size:12px;font-weight:600;color:var(--blue);margin:0 0 6px">Idea A/B Test</h4>
+            <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.5">${a.ab_test_idea}</p>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  const history = JSON.parse(localStorage.getItem('cs_history') || '[]');
+  history.push({ ...meta, ...a, date: new Date().toISOString(), score: a.overall_score });
+  localStorage.setItem('cs_history', JSON.stringify(history.slice(-20)));
+}
+
+function showCreativeHistoryItem(jsonStr) {
+  const item = JSON.parse(jsonStr);
+  showCreativeAnalysisResult(item, item);
 }
 
 // === INITIALIZATION ===
