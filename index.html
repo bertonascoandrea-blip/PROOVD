@@ -1862,14 +1862,24 @@ function renderCampaignBuilder() {
   }
 
   view.innerHTML = `
-    <div style="max-width:900px;margin:0 auto">
-      <div style="margin-bottom:24px">
-        <h1 style="font-size:24px;font-weight:700;margin:0 0 4px">Campaign Builder</h1>
-        <p style="color:#777;margin:0">Costruisci la tua campagna in 7 step guidati</p>
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap">
+        <div>
+          <h1 style="font-size:24px;font-weight:700;margin:0 0 4px">Campaign Builder</h1>
+          <p style="color:#777;margin:0">Configura e lancia una campagna realistica in 7 step</p>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="navigate('dashboard')" style="flex-shrink:0">← Dashboard</button>
       </div>
-      <div id="stepper-container"></div>
-      <div id="step-content" style="margin-top:24px"></div>
-      <div id="step-nav" style="display:flex;justify-content:space-between;margin-top:24px"></div>
+
+      <div id="stepper-container" style="margin-bottom:24px"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+        <div>
+          <div id="step-content"></div>
+          <div id="step-nav" style="display:flex;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid #2A2A2A"></div>
+        </div>
+        <div style="position:sticky;top:72px;display:flex;flex-direction:column;gap:12px" id="builder-sidebar"></div>
+      </div>
     </div>`;
 
   renderBuilderStep();
@@ -1883,6 +1893,70 @@ function renderBuilderStep() {
   if (renderers[step]) renderers[step]();
 
   renderStepNav(step);
+  renderBuilderSidebar(step);
+}
+
+function renderBuilderSidebar(step) {
+  const sidebar = document.getElementById('builder-sidebar');
+  if (!sidebar) return;
+
+  const tips = {
+    1: {icon:'💡', title:'Definisci il prodotto', text:'Un brief chiaro è la base di ogni campagna vincente. Più sei specifico sul prodotto e gli obiettivi, più l\'AI potrà aiutarti con raccomandazioni precise.'},
+    2: {icon:'🎯', title:'Scegli la piattaforma', text:'Ogni piattaforma raggiunge segmenti diversi. Meta è ideale per B2C, LinkedIn per B2B, Google Search per domanda consapevole, TikTok per brand awareness giovane.'},
+    3: {icon:'✍️', title:'Brief e obiettivi', text:'L\'obiettivo della campagna determina come l\'algoritmo ottimizza la spesa. Awareness → CPM, Traffico → CPC, Conversioni → CPA, Lead → CPL.'},
+    4: {icon:'🎨', title:'Creative performance', text:'Il formato del copy varia per piattaforma. Su Meta usa hook emotivo + benefit + CTA. Su Google Search: keyword match + USP unica + CTA urgente.'},
+    5: {icon:'👥', title:'Targeting audience', text:'Un targeting preciso riduce il CPM e aumenta il CTR. Inizia con lookalike o retargeting se hai dati, altrimenti testa audience broad prima di restringere.'},
+    6: {icon:'💰', title:'Budget ottimale', text:'Regola aurea: min €10/giorno per dati significativi in 3-5 giorni. Budget troppo basso = learning phase non completata = performance bassa.'},
+    7: {icon:'🚀', title:'Revisiona tutto', text:'Controlla la logica della campagna: il target giusto vede la creative giusta con il budget adeguato per l\'obiettivo scelto?'},
+  };
+  const tip = tips[step] || tips[1];
+  const c = AppState.activeCampaign || {};
+  const platformId = c.platform;
+  const platformObj = platformId ? PLATFORMS.find(p => p.id === platformId) : null;
+
+  sidebar.innerHTML = `
+    <div class="card no-hover" style="border-left:3px solid #0055FF;padding:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:18px">${tip.icon}</span>
+        <div style="font-size:12px;font-weight:700;color:#0055FF">${tip.title}</div>
+      </div>
+      <div style="font-size:12px;color:#777;line-height:1.6">${tip.text}</div>
+    </div>
+
+    ${step > 1 ? `
+    <div class="card no-hover" style="padding:16px">
+      <div style="font-size:12px;font-weight:700;color:#F0F0F0;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">📋 Riepilogo</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+        ${c.product && c.product.name ? `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#777;flex-shrink:0">Prodotto</span><span style="font-weight:500;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${c.product.name}</span></div>` : ''}
+        ${platformObj ? `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#777;flex-shrink:0">Piattaforma</span><span style="font-weight:600;color:#AAFF00">${platformObj.emoji} ${platformObj.name}</span></div>` : ''}
+        ${c.objective ? `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#777;flex-shrink:0">Obiettivo</span><span style="font-weight:500;text-transform:capitalize">${c.objective}</span></div>` : ''}
+        ${c.name ? `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#777;flex-shrink:0">Nome</span><span style="font-weight:500;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${c.name}</span></div>` : ''}
+        ${c.budget ? `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#777;flex-shrink:0">Budget</span><span style="font-weight:700;color:#AAFF00">€${c.budget}</span></div>` : ''}
+        ${c.duration ? `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#777;flex-shrink:0">Durata</span><span style="font-weight:500">${c.duration} giorni</span></div>` : ''}
+      </div>
+    </div>
+    ` : ''}
+
+    ${platformId ? `
+    <div class="card no-hover" style="padding:16px">
+      <div style="font-size:12px;font-weight:700;color:#F0F0F0;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📊 Benchmark ${platformObj ? platformObj.name : ''}</div>
+      ${getBenchmarkPreview(platformId)}
+    </div>
+    ` : ''}
+  `;
+}
+
+function getBenchmarkPreview(platformId) {
+  const b = PLATFORM_BENCHMARKS[platformId] || {};
+  const rows = [];
+  if (b.cpm !== undefined && b.cpm > 0) rows.push(['CPM', '€' + b.cpm.toFixed(2)]);
+  if (b.cpc !== undefined) rows.push(['CPC', '€' + b.cpc.toFixed(2)]);
+  if (b.cpv !== undefined) rows.push(['CPV', '€' + b.cpv.toFixed(3)]);
+  if (b.ctr !== undefined) rows.push(['CTR', b.ctr.toFixed(1) + '%']);
+  if (b.cvr !== undefined) rows.push(['CVR', b.cvr.toFixed(1) + '%']);
+  if (b.vtr !== undefined) rows.push(['VTR', b.vtr + '%']);
+  if (!rows.length) return '<div style="font-size:12px;color:#777">Nessun benchmark disponibile</div>';
+  return rows.map(function(r) { return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1A1A1A;font-size:12px"><span style="color:#777;text-transform:uppercase;letter-spacing:0.05em;font-size:10px">' + r[0] + '</span><span style="font-weight:600;color:#AAFF00">' + r[1] + '</span></div>'; }).join('');
 }
 
 function renderStepper(currentStep) {
@@ -1895,21 +1969,20 @@ function renderStepper(currentStep) {
         const stepNum = i + 1;
         const isCompleted = stepNum < currentStep;
         const isActive = stepNum === currentStep;
-        const isFuture = stepNum > currentStep;
 
-        const dotColor = isCompleted ? '#34D399' : isActive ? '#4F6EF7' : '#2A2A2A';
-        const textColor = isCompleted ? '#34D399' : isActive ? '#F0F0F0' : '#555';
-        const borderStyle = isActive ? '2px solid #4F6EF7' : isCompleted ? '2px solid #34D399' : '2px solid #2A2A2A';
+        const textColor = isCompleted ? '#AAFF00' : isActive ? '#F0F0F0' : '#555';
+        const borderStyle = isActive ? '2px solid #0055FF' : isCompleted ? '2px solid #AAFF00' : '2px solid #2A2A2A';
+        const bgColor = isCompleted ? '#AAFF0022' : isActive ? '#0055FF22' : 'transparent';
 
         return `
           <div style="display:flex;align-items:center;flex:1;min-width:0">
             <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
-              <div style="width:32px;height:32px;border-radius:50%;border:${borderStyle};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:${isCompleted ? '#34D39922' : isActive ? '#4F6EF722' : 'transparent'};color:${textColor}">
+              <div style="width:34px;height:34px;border-radius:50%;border:${borderStyle};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:${bgColor};color:${textColor};transition:all .2s">
                 ${isCompleted ? '✓' : stepNum}
               </div>
-              <div style="font-size:10px;color:${textColor};margin-top:4px;white-space:nowrap;text-align:center">${label}</div>
+              <div style="font-size:10px;color:${textColor};margin-top:5px;white-space:nowrap;text-align:center;font-weight:${isActive ? '600' : '400'}">${label}</div>
             </div>
-            ${i < STEP_LABELS.length - 1 ? `<div style="flex:1;height:2px;background:${isCompleted ? '#34D399' : '#2A2A2A'};margin:0 4px;margin-bottom:18px"></div>` : ''}
+            ${i < STEP_LABELS.length - 1 ? `<div style="flex:1;height:2px;background:${isCompleted ? '#AAFF00' : '#2A2A2A'};margin:0 6px;margin-bottom:20px;transition:background .3s"></div>` : ''}
           </div>`;
       }).join('')}
     </div>`;
@@ -1923,8 +1996,11 @@ function renderStepNav(step) {
   const isLast = step === 7;
 
   nav.innerHTML = `
-    <button class="btn-secondary" onclick="prevStep()" ${isFirst ? 'disabled style="opacity:.4"' : ''}>← Indietro</button>
-    ${!isLast ? `<button class="btn-primary" id="next-btn" onclick="nextStep()">Avanti →</button>` : ''}`;
+    ${!isFirst ? `<button class="btn-secondary" onclick="prevStep()">← Indietro</button>` : '<div></div>'}
+    ${!isLast
+      ? `<button class="btn-primary" id="next-btn" onclick="nextStep()">Continua →</button>`
+      : `<button class="btn-lime" onclick="typeof launchCampaign !== 'undefined' ? launchCampaign() : nextStep()">🚀 Lancia campagna</button>`
+    }`;
 }
 
 function renderStepProduct() {
