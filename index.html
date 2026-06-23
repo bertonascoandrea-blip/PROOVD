@@ -3511,72 +3511,7 @@ function showLMDetail(id) {
   document.body.appendChild(modal);
 }
 
-  const campaigns = AppState.campaigns || [];
 
-  if (campaigns.length === 0) {
-    view.innerHTML = `
-      <div class="empty-state">
-        <div style="font-size:48px;margin-bottom:16px;">📊</div>
-        <h2 style="color:#F0F0F0;margin-bottom:8px;">Nessuna campagna attiva</h2>
-        <p style="color:#777777;margin-bottom:24px;">Lancia la tua prima campagna per vedere i dati in tempo reale.</p>
-        <button class="btn btn-primary" onclick="navigateTo('campaign-builder')">Crea campagna</button>
-      </div>
-    `;
-    return;
-  }
-
-  const active = campaigns.filter(c => c.status === 'active').length;
-  const totalSpend = campaigns.reduce((s, c) => s + (c.spent || 0), 0);
-  const totalImpressions = campaigns.reduce((s, c) => s + (c.impressions || 0), 0);
-  const avgROAS = campaigns.length > 0
-    ? campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length
-    : 0;
-
-  view.innerHTML = `
-    <div style="padding:24px;">
-      <h1 style="color:#F0F0F0;font-size:24px;font-weight:700;margin-bottom:20px;">Live Campaign Manager</h1>
-
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
-        <div class="card" style="padding:20px;">
-          <div style="color:#777777;font-size:12px;margin-bottom:6px;">CAMPAGNE ATTIVE</div>
-          <div style="color:#34D399;font-size:28px;font-weight:700;">${active}</div>
-        </div>
-        <div class="card" style="padding:20px;">
-          <div style="color:#777777;font-size:12px;margin-bottom:6px;">SPESA TOTALE</div>
-          <div style="color:#F0F0F0;font-size:28px;font-weight:700;">${formatCurrency(totalSpend)}</div>
-        </div>
-        <div class="card" style="padding:20px;">
-          <div style="color:#777777;font-size:12px;margin-bottom:6px;">IMPRESSIONI TOTALI</div>
-          <div style="color:#F0F0F0;font-size:28px;font-weight:700;">${formatNumber(totalImpressions)}</div>
-        </div>
-        <div class="card" style="padding:20px;">
-          <div style="color:#777777;font-size:12px;margin-bottom:6px;">ROAS MEDIO</div>
-          <div style="color:${avgROAS >= 3 ? '#34D399' : avgROAS >= 1 ? '#FFB800' : '#FF4444'};font-size:28px;font-weight:700;">${avgROAS.toFixed(2)}x</div>
-        </div>
-      </div>
-
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          ${[['all','Tutte'],['active','Attive'],['paused','In pausa'],['completed','Completate']].map(([val,label]) => `
-            <button class="pill ${AppState.liveFilter === val ? 'active' : ''}"
-              style="cursor:pointer;background:${AppState.liveFilter === val ? '#4F6EF7' : '#1A1A1A'};color:${AppState.liveFilter === val ? '#fff' : '#777777'};border:1px solid ${AppState.liveFilter === val ? '#4F6EF7' : '#2A2A2A'};padding:6px 16px;border-radius:100px;font-size:13px;"
-              onclick="AppState.liveFilter='${val}';renderCampaignTable();">${label}</button>
-          `).join('')}
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="AppState.liveView='cards';renderLiveManager()" style="padding:6px 16px;border-radius:100px;border:1px solid ${(AppState.liveView||'cards')==='cards'?'#4F6EF7':'#2A2A2A'};background:${(AppState.liveView||'cards')==='cards'?'#4F6EF7':'#1A1A1A'};color:${(AppState.liveView||'cards')==='cards'?'#fff':'#777'};font-size:13px;cursor:pointer">🃏 Cards</button>
-          <button onclick="AppState.liveView='table';renderLiveManager()" style="padding:6px 16px;border-radius:100px;border:1px solid ${(AppState.liveView||'cards')==='table'?'#4F6EF7':'#2A2A2A'};background:${(AppState.liveView||'cards')==='table'?'#4F6EF7':'#1A1A1A'};color:${(AppState.liveView||'cards')==='table'?'#fff':'#777'};font-size:13px;cursor:pointer">📋 Tabella</button>
-        </div>
-      </div>
-
-      <div id="campaign-table-container">
-        ${(AppState.liveView||'cards')==='cards' ? renderCampaignCardsHTML(campaigns) : renderCampaignTableHTML()}
-      </div>
-
-      ${renderAICampaignIntelligence(campaigns)}
-    </div>
-  `;
-}
 
 // === MODULE: ANALYTICS LAB ===
 
@@ -3925,7 +3860,7 @@ function renderReportingStudio() {
           {title:'Executive Summary',desc:'Overview con KPI principali, trend e raccomandazioni strategiche',icon:'📊',tag:'C-Level'},
           {title:'Performance Deep Dive',desc:'Analisi dettagliata per piattaforma con breakdown per metrica',icon:'🔬',tag:'Marketing Team'},
           {title:'Client Presentation',desc:'Formato clean e visivo pensato per presentazioni al cliente',icon:'🎯',tag:'Cliente'},
-          {title:'ROI Analysis',desc:'Focus su costi, ricavi e ritorno sull'investimento pubblicitario',icon:'💰',tag:'Finance'},
+          {title:'ROI Analysis',desc:'Focus su costi, ricavi e ritorno sull\'investimento pubblicitario',icon:'💰',tag:'Finance'},
         ].map(({title,desc,icon,tag}) => `
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;gap:14px;align-items:flex-start">
             <div style="font-size:28px;flex-shrink:0">${icon}</div>
