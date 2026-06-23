@@ -3344,11 +3344,184 @@ function getPlatformName(platformId) {
 // === MODULE: LIVE MANAGER ===
 
 function renderLiveManager() {
-  const view = document.getElementById('view-live');
-  if (!view) return;
+  const el = document.getElementById('view-live');
+  if (!el) return;
+  const campaigns = AppState.campaigns || [];
+  const active = campaigns.filter(c => c.status === 'active');
+  const paused = campaigns.filter(c => c.status === 'paused');
+  const completed = campaigns.filter(c => c.status === 'completed');
 
-  if (!AppState.expandedRows) AppState.expandedRows = new Set();
-  if (!AppState.liveFilter) AppState.liveFilter = 'all';
+  const totalBudget = campaigns.reduce((s,c) => s + (c.budget||0), 0);
+  const totalSpent = campaigns.reduce((s,c) => s + (c.spent||0), 0);
+  const totalClicks = campaigns.reduce((s,c) => s + (c.clicks||0), 0);
+  const totalImpressions = campaigns.reduce((s,c) => s + (c.impressions||0), 0);
+
+  el.innerHTML = `
+    <div style="padding:24px;max-width:1200px;margin:0 auto">
+      <div style="margin-bottom:24px">
+        <h1 style="font-size:22px;font-weight:700;color:var(--text);margin:0 0 6px">Live Manager</h1>
+        <p style="color:var(--muted);font-size:14px;margin:0">Gestisci e monitora le tue campagne in tempo reale</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+        ${[
+          {label:'Campagne Attive', value: active.length, icon:'▶', color:'var(--accent-text)'},
+          {label:'Budget Totale', value:'€'+totalBudget.toFixed(0), icon:'💰', color:'var(--primary)'},
+          {label:'Speso', value:'€'+totalSpent.toFixed(0), icon:'📊', color:'var(--yellow)'},
+          {label:'Click Totali', value:totalClicks.toLocaleString('it-IT'), icon:'👆', color:'var(--text)'},
+        ].map(({label,value,icon,color}) => `
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+            <div style="font-size:20px;margin-bottom:8px">${icon}</div>
+            <div style="font-size:22px;font-weight:700;color:${color}">${value}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${label}</div>
+          </div>`).join('')}
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:20px" id="lm-tabs">
+        ${[['all','Tutte',campaigns.length],['active','Attive',active.length],['paused','In Pausa',paused.length],['completed','Completate',completed.length]]
+          .map(([id,label,count],i) => `<button onclick="lmFilter('${id}')" id="lm-tab-${id}" style="background:${i===0?'var(--primary)':'var(--surface)'};border:1px solid ${i===0?'var(--primary)':'var(--border)'};border-radius:var(--radius-pill);padding:7px 16px;color:${i===0?'#fff':'var(--muted)'};font-size:13px;cursor:pointer">${label} <span style="opacity:0.7">(${count})</span></button>`).join('')}
+      </div>
+
+      <div id="lm-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
+        ${campaigns.length === 0 ? `
+          <div style="grid-column:1/-1;text-align:center;padding:60px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+            <div style="font-size:32px;margin-bottom:12px">📊</div>
+            <p style="color:var(--muted);font-size:14px;margin:0 0 16px">Nessuna campagna ancora. Crea la tua prima campagna!</p>
+            <button onclick="navigateTo('campaign-builder')" style="background:var(--primary);color:#fff;border:none;border-radius:var(--radius-pill);padding:10px 24px;font-size:14px;cursor:pointer">Crea Campagna</button>
+          </div>` : campaigns.map(c => renderLMCard(c)).join('')}
+      </div>
+    </div>`;
+
+  window._lmCurrentFilter = 'all';
+}
+
+function renderLMCard(c) {
+  const spent = c.spent || 0;
+  const budget = c.budget || 1;
+  const pct = Math.min(100, (spent/budget)*100).toFixed(0);
+  const roas = spent > 0 ? ((c.revenue||0)/spent) : 0;
+  const statusColors = {active:'var(--accent-text)',paused:'var(--yellow)',completed:'var(--muted)'};
+  const statusLabels = {active:'Attiva',paused:'In Pausa',completed:'Completata'};
+  const platformColors = {
+    'Meta Ads':'#1877F2','Google Search':'#4285F4','TikTok':'#000000',
+    'LinkedIn':'#0A66C2','YouTube':'#FF0000','Pinterest':'#E60023'
+  };
+  const platColor = platformColors[c.platform] || 'var(--primary)';
+
+  return `<div id="lm-card-${c.id}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color 0.2s"
+    onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name||'Campagna'}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${platColor}"></span>
+          <span style="font-size:12px;color:var(--muted)">${c.platform||'Meta Ads'}</span>
+        </div>
+      </div>
+      <span style="font-size:11px;font-weight:500;color:${statusColors[c.status]||'var(--muted)'};background:${statusColors[c.status]||'var(--muted)'}18;padding:3px 10px;border-radius:100px;flex-shrink:0">${statusLabels[c.status]||c.status}</span>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted)">Budget consumato</span>
+        <span style="font-size:11px;color:var(--muted)">€${spent.toFixed(0)} / €${budget.toFixed(0)}</span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${pct>85?'var(--red)':pct>60?'var(--yellow)':'var(--primary)'};border-radius:100px"></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      ${[
+        {label:'CTR',value:(c.ctr||0).toFixed(2)+'%'},
+        {label:'CPM',value:'€'+(c.cpm||0).toFixed(2)},
+        {label:'ROAS',value:roas.toFixed(2)+'x'}
+      ].map(({label,value}) => `<div style="text-align:center;background:var(--surface2);border-radius:8px;padding:8px">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${value}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${label}</div>
+      </div>`).join('')}
+    </div>
+
+    <div style="display:flex;gap:8px">
+      ${c.status === 'active' ?
+        `<button onclick="pauseCampaign('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:7px;font-size:12px;color:var(--muted);cursor:pointer">⏸ Pausa</button>` :
+        c.status === 'paused' ?
+        `<button onclick="resumeCampaign('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:7px;font-size:12px;color:var(--muted);cursor:pointer">▶ Riprendi</button>` :
+        `<div style="flex:1"></div>`}
+      <button onclick="showLMDetail('${c.id}')" style="flex:1;background:var(--primary-dim);border:1px solid var(--primary);border-radius:var(--radius-pill);padding:7px;font-size:12px;color:var(--primary);cursor:pointer">Dettaglio →</button>
+    </div>
+  </div>`;
+}
+
+function lmFilter(filter) {
+  window._lmCurrentFilter = filter;
+  const campaigns = AppState.campaigns || [];
+  const filtered = filter === 'all' ? campaigns : campaigns.filter(c => {
+    if (filter === 'active') return c.status === 'active';
+    if (filter === 'paused') return c.status === 'paused';
+    if (filter === 'completed') return c.status === 'completed';
+    return true;
+  });
+  const cardsEl = document.getElementById('lm-cards');
+  if (cardsEl) cardsEl.innerHTML = filtered.length === 0 ?
+    `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:14px">Nessuna campagna in questa categoria</div>` :
+    filtered.map(c => renderLMCard(c)).join('');
+
+  document.querySelectorAll('[id^="lm-tab-"]').forEach(btn => {
+    const isActive = btn.id === `lm-tab-${filter}`;
+    btn.style.background = isActive ? 'var(--primary)' : 'var(--surface)';
+    btn.style.borderColor = isActive ? 'var(--primary)' : 'var(--border)';
+    btn.style.color = isActive ? '#fff' : 'var(--muted)';
+  });
+}
+
+function pauseCampaign(id) {
+  const c = (AppState.campaigns||[]).find(x => x.id === id);
+  if (c && c.status !== 'completed') {
+    c.status = c.status === 'active' ? 'paused' : 'active';
+    saveState();
+    renderLiveManager();
+    showToast(c.status === 'paused' ? 'Campagna messa in pausa' : 'Campagna riattivata', 'info');
+  }
+}
+
+function resumeCampaign(id) {
+  const c = (AppState.campaigns||[]).find(x => x.id === id);
+  if (c) { c.status = 'active'; saveState(); renderLiveManager(); showToast('Campagna riattivata', 'success'); }
+}
+
+function showLMDetail(id) {
+  const c = (AppState.campaigns||[]).find(x => x.id === id);
+  if (!c) return;
+  const roas = c.spent > 0 ? ((c.revenue||0)/c.spent) : 0;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = (e) => { if(e.target===modal) modal.remove(); };
+  modal.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;max-width:580px;width:100%;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:18px;font-weight:700;color:var(--text);margin:0">${c.name}</h2>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      ${[
+        {label:'Impressioni',value:(c.impressions||0).toLocaleString('it-IT')},
+        {label:'Click',value:(c.clicks||0).toLocaleString('it-IT')},
+        {label:'CTR',value:(c.ctr||0).toFixed(2)+'%'},
+        {label:'Budget',value:'€'+(c.budget||0).toFixed(2)},
+        {label:'Speso',value:'€'+(c.spent||0).toFixed(2)},
+        {label:'ROAS',value:roas.toFixed(2)+'x'},
+        {label:'Revenue',value:'€'+(c.revenue||0).toFixed(2)},
+        {label:'CPC',value:'€'+(c.cpc||0).toFixed(2)},
+        {label:'CPM',value:'€'+(c.cpm||0).toFixed(2)},
+      ].map(({label,value}) => `<div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:16px;font-weight:700;color:var(--text)">${value}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${label}</div>
+      </div>`).join('')}
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin:0">Piattaforma: <strong style="color:var(--text)">${c.platform}</strong> · Obiettivo: <strong style="color:var(--text)">${c.objective||'—'}</strong> · Giorni simulati: <strong style="color:var(--text)">${c.days||0}</strong></p>
+  </div>`;
+  document.body.appendChild(modal);
+}
 
   const campaigns = AppState.campaigns || [];
 
@@ -3417,8 +3590,11 @@ function renderLiveManager() {
   `;
 }
 
-function renderAICampaignIntelligence(campaigns) {
-  const withAI = campaigns.filter(c => c.aiAnalysis || c.latestInsight);
+// === MODULE: ANALYTICS LAB ===
+
+function renderAICampaignIntelligence_REMOVED() {
+  // removed — replaced by new Live Manager
+  const withAI = [];
   if (withAI.length === 0) return '';
   return `
     <div style="margin-top:32px">
