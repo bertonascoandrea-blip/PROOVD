@@ -762,7 +762,7 @@ function hideSkeleton(containerId) {
 }
 async function callClaude(systemPrompt, userMessage, containerId) {
   let apiKey = AppState.apiKey || localStorage.getItem('proovd_api_key') || '';
-  // Prova a caricare la key dall'admin Supabase se non disponibile localmente
+  // Prova a caricare la key dall\'admin Supabase se non disponibile localmente
   if (!apiKey) {
     try {
       const r = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.groq_api_key&select=value`, { headers: { 'apikey': SUPABASE_KEY } });
@@ -875,7 +875,7 @@ function simulateCampaignDay(campaign) {
   const bench = platformBenchmarks[campaign.platform] || platformBenchmarks.meta;
   const mod = calculateModifiers(campaign);
   const variance = 0.85 + Math.random() * 0.30;
-  // Se l'AI ha generato una previsione, usa quei target come base
+  // Se l\'AI ha generato una previsione, usa quei target come base
   const aiForecast = campaign.aiAnalysis?.forecast;
 
   // Curva di performance realistica: learning → ottimizzazione → regime
@@ -1426,7 +1426,7 @@ function renderWizardCard() {
   const platMotivations = {
     'Meta Ads': 'Alto volume, targeting preciso, ottimo per conversioni',
     'TikTok Ads': 'Costo basso, virale, ideale per brand awareness giovane',
-    'Pinterest Ads': "Alta intenzione d'acquisto, ottimo per e-commerce",
+    'Pinterest Ads': "Alta intenzione d\'acquisto, ottimo per e-commerce",
     'Google Search': 'Intercetta domanda attiva, conversioni alte',
     'YouTube Ads': 'Video storytelling, brand recall elevato',
     'Google Display': 'Retargeting e awareness a basso costo',
@@ -1693,7 +1693,7 @@ function renderActiveCampaignsList() {
           </div>
           <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
             <span style="font-size:24px">🔍</span>
-            <div><div style="font-size:13px;font-weight:600">Google Search</div><div style="font-size:12px;color:#777">Intercetta utenti con alta intenzione d'acquisto</div></div>
+            <div><div style="font-size:13px;font-weight:600">Google Search</div><div style="font-size:12px;color:#777">Intercetta utenti con alta intenzione d\'acquisto</div></div>
           </div>
           <div style="background:#1A1A1A;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="navigateTo('builder')">
             <span style="font-size:24px">🎵</span>
@@ -1742,7 +1742,7 @@ async function loadDailyTip() {
     : 'Nessuna campagna ancora lanciata.';
 
   const systemPrompt = `Sei un coach esperto di digital marketing che aiuta junior marketer a crescere. Dai consigli pratici, concreti e motivanti. Rispondi SEMPRE in italiano. Sii breve (max 3 frasi).`;
-  const userMessage = `L'utente ha ${formatCurrency(tokens)} token rimasti. ${campaignInfo}. Dai un consiglio pratico e motivante per oggi.`;
+  const userMessage = `L\'utente ha ${formatCurrency(tokens)} token rimasti. ${campaignInfo}. Dai un consiglio pratico e motivante per oggi.`;
 
   container.innerHTML = `
     <div class="skeleton" style="height:12px;border-radius:6px;margin-bottom:8px"></div>
@@ -2305,7 +2305,7 @@ function renderStep2() {
         <h3 style="font-size:14px;font-weight:600;margin:0 0 16px">Audience & Budget</h3>
 
         <div style="margin-bottom:14px">
-          <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Fascia d'età: <span id="age-label">${c.ageMin}-${c.ageMax} anni</span></label>
+          <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Fascia d\'età: <span id="age-label">${c.ageMin}-${c.ageMax} anni</span></label>
           <div style="display:flex;gap:8px;align-items:center">
             <input type="range" min="13" max="65" value="${c.ageMin}" oninput="AppState.activeCampaign.ageMin=+this.value;document.getElementById('age-label').textContent=AppState.activeCampaign.ageMin+'-'+AppState.activeCampaign.ageMax+' anni'" style="flex:1;accent-color:#4F6EF7">
             <input type="range" min="13" max="75" value="${c.ageMax}" oninput="AppState.activeCampaign.ageMax=+this.value;document.getElementById('age-label').textContent=AppState.activeCampaign.ageMin+'-'+AppState.activeCampaign.ageMax+' anni'" style="flex:1;accent-color:#4F6EF7">
@@ -2427,7 +2427,7 @@ function renderStep3() {
           ${renderCharInput('Preheader', 'preh', 90, c.creative.preh||'')}
           <div style="margin-bottom:14px">
             <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Corpo email</label>
-            <textarea id="creative-body" rows="5" placeholder="Testo principale dell'email..." style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:13px;outline:none;resize:vertical;box-sizing:border-box" oninput="AppState.activeCampaign.creative.body=this.value">${c.creative.body||''}</textarea>
+            <textarea id="creative-body" rows="5" placeholder="Testo principale dell\'email..." style="width:100%;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:10px 14px;color:#F0F0F0;font-size:13px;outline:none;resize:vertical;box-sizing:border-box" oninput="AppState.activeCampaign.creative.body=this.value">${c.creative.body||''}</textarea>
           </div>
           ${renderCharInput('CTA Button', 'cta', 30, c.creative.cta||'Scopri di più')}
           <button class="btn-secondary" onclick="analyzeCreativeAI()" style="width:100%;margin-top:8px">🤖 Analizza con AI</button>
@@ -3070,7 +3070,7 @@ async function analyzeCampaignAI() {
     <div class="skeleton" style="height:12px;border-radius:6px;width:70%"></div>`;
 
   if (!apiKey) {
-    feedback.innerHTML = `<p style="font-size:12px;color:#777">Configura la API key per l'analisi AI.</p>`;
+    feedback.innerHTML = `<p style="font-size:12px;color:#777">Configura la API key per l\'analisi AI.</p>`;
     return;
   }
 
@@ -3988,7 +3988,7 @@ function renderAudienceStudio() {
             ${[
               {id:'bp-name',label:'Nome persona',placeholder:'Es. Marco, 35 anni'},
               {id:'bp-role',label:'Ruolo/Occupazione',placeholder:'Es. Marketing Manager'},
-              {id:'bp-age',label:'Fascia d'età',placeholder:'Es. 30-40'},
+              {id:'bp-age',label:'Fascia d\'età',placeholder:'Es. 30-40'},
               {id:'bp-income',label:'Reddito annuo',placeholder:'Es. €30.000-50.000'},
             ].map(({id,label,placeholder}) => `<div>
               <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px">${label}</label>
@@ -4084,21 +4084,21 @@ function renderInterviewCoach() {
   if (!el) return;
 
   const flashcards = [
-    {term:'CTR',def:'Click-Through Rate: % di utenti che cliccano dopo aver visto l'annuncio. Formula: (Click/Impressioni)×100'},
+    {term:'CTR',def:'Click-Through Rate: % di utenti che cliccano dopo aver visto l\'annuncio. Formula: (Click/Impressioni)×100'},
     {term:'ROAS',def:'Return On Ad Spend: ricavi generati per ogni € investito in pubblicità. Formula: Revenue/Spesa Ads'},
     {term:'CPM',def:'Cost Per Mille: costo per 1000 impressioni. Usato per campagne di awareness'},
     {term:'CPC',def:'Cost Per Click: quanto paghi per ogni click sul tuo annuncio'},
-    {term:'CVR',def:'Conversion Rate: % di utenti che completano l'azione desiderata dopo il click'},
+    {term:'CVR',def:'Conversion Rate: % di utenti che completano l\'azione desiderata dopo il click'},
     {term:'CPA',def:'Cost Per Acquisition: costo medio per acquisire un cliente. Formula: Spesa/Conversioni'},
     {term:'LTV',def:'Lifetime Value: valore totale che un cliente genera durante tutta la sua relazione con il brand'},
     {term:'CAC',def:'Customer Acquisition Cost: costo totale per acquisire un nuovo cliente (include marketing + sales)'},
     {term:'AOV',def:'Average Order Value: valore medio di ogni ordine/transazione'},
-    {term:'Lookalike',def:'Audience simile a un gruppo esistente di clienti, identificata dall'algoritmo della piattaforma'},
+    {term:'Lookalike',def:'Audience simile a un gruppo esistente di clienti, identificata dall\'algoritmo della piattaforma'},
   ];
 
   const questions = [
-    'Cos'è il ROAS e come lo calcoleresti per una campagna Meta Ads con €500 di spesa e €1800 di revenue?',
-    'Qual è la differenza tra CPM e CPC? Quando useresti l'uno piuttosto dell'altro?',
+    'Cos\'è il ROAS e come lo calcoleresti per una campagna Meta Ads con €500 di spesa e €1800 di revenue?',
+    'Qual è la differenza tra CPM e CPC? Quando useresti l\'uno piuttosto dell\'altro?',
     'Come struttureresti una campagna Google Ads per un e-commerce di moda?',
     'Cosa faresti se il CTR di una campagna è basso ma le impressioni sono alte?',
     'Spiega il concetto di retargeting e quando lo utilizzeresti.',
@@ -4179,7 +4179,7 @@ function renderICSimulation(state, questions) {
         {icon:'💡',tip:'Usa la struttura STAR: Situazione, Task, Azione, Risultato'},
         {icon:'📊',tip:'Cita sempre dati specifici: "ho migliorato il CTR del 35%"'},
         {icon:'🎯',tip:'Mostra di conoscere le metriche: ROAS, CPM, CPC, CVR'},
-        {icon:'❓',tip:'Fai domande intelligenti al recruiter sull'azienda'},
+        {icon:'❓',tip:'Fai domande intelligenti al recruiter sull\'azienda'},
       ].map(({icon,tip}) => `<div style="display:flex;gap:8px;margin-bottom:12px">
         <span style="font-size:16px;flex-shrink:0">${icon}</span>
         <span style="font-size:12px;color:var(--text-secondary);line-height:1.4">${tip}</span>
@@ -4225,11 +4225,11 @@ function prevFlash() {
 
 function renderICFaq() {
   const faqs = [
-    {q:'Come misuri il successo di una campagna social?',a:'Dipende dall'obiettivo. Per awareness: reach e CPM. Per consideration: CTR e engagement rate. Per conversion: ROAS, CPA e CVR. L'importante è definire KPI prima del lancio.'},
-    {q:'Qual è la differenza tra obiettivo Traffico e Conversioni su Meta?',a:'Traffico ottimizza per click economici, Conversioni ottimizza per chi ha più probabilità di compiere l'azione (acquisto, lead). Conversioni richiede il pixel installato e almeno 50 eventi/settimana.'},
+    {q:'Come misuri il successo di una campagna social?',a:'Dipende dall\'obiettivo. Per awareness: reach e CPM. Per consideration: CTR e engagement rate. Per conversion: ROAS, CPA e CVR. L\'importante è definire KPI prima del lancio.'},
+    {q:'Qual è la differenza tra obiettivo Traffico e Conversioni su Meta?',a:'Traffico ottimizza per click economici, Conversioni ottimizza per chi ha più probabilità di compiere l\'azione (acquisto, lead). Conversioni richiede il pixel installato e almeno 50 eventi/settimana.'},
     {q:'Come struttureresti un budget mensile di €1000?',a:'Inizierei con il 70% in testing su 2-3 piattaforme (€700), 20% per retargeting (€200) e 10% per sperimentare nuovi formati (€100). Dopo 2 settimane, sposto il budget sulle campagne che performano meglio.'},
     {q:'Cosa fa un Junior Digital Marketing Specialist?',a:'Gestisce campagne paid su 1-2 piattaforme, crea report settimanali, fa A/B test su copy e creatività, analizza dati con GA4, collabora con il team creativo e segue le ottimizzazioni quotidiane.'},
-    {q:'Come ottimizzeresti una campagna con CTR basso?',a:'Analizzerei prima l'audience (è la giusta?), poi le creatività (sono rilevanti?), poi il copy (c'è una CTA chiara?). Farei A/B test su headline, immagini e audience. Controllerei anche la frequenza (troppo alta = ad fatigue).'},
+    {q:'Come ottimizzeresti una campagna con CTR basso?',a:'Analizzerei prima l\'audience (è la giusta?), poi le creatività (sono rilevanti?), poi il copy (c\'è una CTA chiara?). Farei A/B test su headline, immagini e audience. Controllerei anche la frequenza (troppo alta = ad fatigue).'},
   ];
   return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
     <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 18px">Domande Frequenti ai Colloqui</h3>
@@ -4652,7 +4652,7 @@ function renderCreativeStudio() {
     <div style="padding:24px;max-width:1100px;margin:0 auto">
       <div style="margin-bottom:28px">
         <h1 style="font-size:22px;font-weight:700;color:var(--text);margin:0 0 6px">Creative Studio</h1>
-        <p style="color:var(--muted);font-size:14px;margin:0">Carica le tue creative pubblicitarie e ricevi un'analisi AI professionale</p>
+        <p style="color:var(--muted);font-size:14px;margin:0">Carica le tue creative pubblicitarie e ricevi un\'analisi AI professionale</p>
       </div>
       <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
         <div>
@@ -4660,7 +4660,7 @@ function renderCreativeStudio() {
             <div id="cs-drop-zone" onclick="document.getElementById('cs-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--blue)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleCreativeDrop(event)" style="border:2px dashed var(--border);border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface2)">
               <div id="cs-preview-area">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" style="margin-bottom:12px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <p style="color:var(--muted);font-size:14px;margin:0 0 4px">Trascina un'immagine qui o clicca per caricare</p>
+                <p style="color:var(--muted);font-size:14px;margin:0 0 4px">Trascina un\'immagine qui o clicca per caricare</p>
                 <p style="color:var(--muted);font-size:12px;margin:0;opacity:0.6">JPG, PNG, GIF, WebP — max 10MB</p>
               </div>
             </div>
@@ -4797,7 +4797,7 @@ async function analyzeCreative() {
     ${[...Array(4)].map(() => `<div style="height:14px;background:var(--surface2);border-radius:4px;margin-bottom:10px;animation:pulse 1.5s ease infinite"></div>`).join('')}
   </div>`;
 
-  const prompt = `Sei un esperto di digital marketing e creative advertising. Analizza questa creative pubblicitaria e fornisci un'analisi strutturata.
+  const prompt = `Sei un esperto di digital marketing e creative advertising. Analizza questa creative pubblicitaria e fornisci un\'analisi strutturata.
 
 Piattaforma: ${platform}
 Formato: ${format}
@@ -4805,7 +4805,7 @@ Obiettivo: ${objective}
 Settore: ${industry}
 Descrizione creative: ${description}
 
-Fornisci l'analisi in questo formato JSON esatto:
+Fornisci l\'analisi in questo formato JSON esatto:
 {
   "overall_score": <numero 1-10>,
   "hook_score": <numero 1-10>,
@@ -4836,7 +4836,7 @@ Fornisci l'analisi in questo formato JSON esatto:
     showCreativeAnalysisResult(analysis, { platform, format, objective, industry, description });
   } catch(err) {
     resultEl.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center">
-      <p style="color:#F87171;font-size:14px;margin:0 0 12px">Errore durante l'analisi. Verifica la chiave API.</p>
+      <p style="color:#F87171;font-size:14px;margin:0 0 12px">Errore durante l\'analisi. Verifica la chiave API.</p>
       <button onclick="analyzeCreative()" style="background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:8px 20px;color:var(--text);font-size:13px;cursor:pointer">Riprova</button>
     </div>`;
   }
