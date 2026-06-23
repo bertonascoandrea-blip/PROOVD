@@ -18,14 +18,39 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 /* === VARIABLES === */
 :root{
-  --bg:#0A0A0A;--surface:#111111;--surface2:#1A1A1A;--border:#2A2A2A;
-  --blue:#0055FF;--lime:#AAFF00;--text:#F0F0F0;--muted:#777777;
-  --red:#FF3B3B;--green:#00C853;--yellow:#FFB300;
+  --bg:#0D0D0D;
+  --surface:#161616;
+  --surface2:#1E1E1E;
+  --surface3:#252525;
+  --border:#2C2C2C;
+  --border-subtle:#232323;
+  --primary:#4F6EF7;
+  --primary-hover:#6B87FF;
+  --primary-dim:#4F6EF718;
+  --accent:#10B981;
+  --accent-dim:#10B98115;
+  --accent-text:#34D399;
+  --text:#EBEBEB;
+  --text-secondary:#A0A0A0;
+  --muted:#606060;
+  --red:#F87171;
+  --red-dim:#F8717115;
+  --yellow:#FBBF24;
+  --yellow-dim:#FBBF2415;
+  --green:#34D399;
+  --green-dim:#34D39915;
+  --blue:var(--primary);
+  --lime:var(--accent-text);
   --font:'Inter',system-ui,sans-serif;
-  --radius:16px;--radius-pill:100px;
-  --sidebar-w:220px;--sidebar-collapsed:64px;
-  --header-h:64px;
-  --transition:200ms ease;
+  --radius:12px;
+  --radius-sm:8px;
+  --radius-pill:100px;
+  --sidebar-w:240px;
+  --sidebar-collapsed:60px;
+  --header-h:56px;
+  --transition:180ms ease;
+  --shadow:0 1px 3px rgba(0,0,0,0.4),0 4px 16px rgba(0,0,0,0.2);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.5);
 }
 [data-theme="light"]{
   --bg:#F5F5F5;--surface:#FFFFFF;--surface2:#F0F0F0;--border:#E0E0E0;
@@ -37,7 +62,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 a{color:inherit;text-decoration:none}
 button{cursor:pointer;font-family:var(--font);font-size:14px}
 input,select,textarea{font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;width:100%;outline:none;transition:border-color var(--transition)}
-input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)}
 select option{background:var(--surface)}
 label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em}
 /* === LAYOUT === */
@@ -53,21 +78,25 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 #sidebar.collapsed{width:var(--sidebar-collapsed);min-width:var(--sidebar-collapsed)}
 .sidebar-logo{
   height:var(--header-h);display:flex;align-items:center;padding:0 20px;
-  font-size:22px;font-weight:900;color:var(--lime);border-bottom:1px solid var(--border);
-  white-space:nowrap;overflow:hidden;letter-spacing:-0.5px;flex-shrink:0;
+  font-size:17px;font-weight:800;color:var(--text);
+  border-bottom:1px solid var(--border-subtle);
+  white-space:nowrap;overflow:hidden;letter-spacing:-0.4px;flex-shrink:0;
 }
-.sidebar-logo span{margin-left:8px;opacity:1;transition:opacity var(--transition)}
+.sidebar-logo span{opacity:1;transition:opacity var(--transition)}
 #sidebar.collapsed .sidebar-logo span{opacity:0}
 .sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
 .nav-item{
-  display:flex;align-items:center;gap:12px;padding:10px 12px;
-  border-radius:12px;cursor:pointer;transition:background var(--transition),transform var(--transition);
-  white-space:nowrap;overflow:hidden;position:relative;
+  display:flex;align-items:center;gap:10px;padding:8px 12px;
+  border-radius:var(--radius-sm);cursor:pointer;
+  transition:background var(--transition),color var(--transition);
+  white-space:nowrap;overflow:hidden;
   border:none;background:none;color:var(--muted);width:100%;text-align:left;
+  font-size:13px;font-weight:500;
 }
-.nav-item:hover{background:rgba(0,85,255,0.15);color:var(--text);transform:translateX(2px)}
-.nav-item.active{background:var(--surface2);color:var(--lime);border-left:2px solid var(--lime);padding-left:10px}
-.nav-item svg{flex-shrink:0;width:20px;height:20px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--primary-dim);color:var(--primary);font-weight:600}
+.nav-item svg{flex-shrink:0;width:18px;height:18px;opacity:0.7}
+.nav-item.active svg{opacity:1}
 .nav-label{font-size:13px;font-weight:500;opacity:1;transition:opacity var(--transition)}
 #sidebar.collapsed .nav-label{opacity:0}
 .sidebar-footer{padding:12px 8px;border-top:1px solid var(--border);flex-shrink:0}
@@ -77,17 +106,16 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 #header{
   height:var(--header-h);min-height:var(--header-h);
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 24px;border-bottom:1px solid var(--border);
-  background:var(--surface);backdrop-filter:blur(10px);
-  position:sticky;top:0;z-index:50;flex-shrink:0;
+  padding:0 20px;border-bottom:1px solid var(--border-subtle);
+  background:var(--surface);position:sticky;top:0;z-index:50;flex-shrink:0;
 }
 .header-left{display:flex;align-items:center;gap:16px}
 .header-right{display:flex;align-items:center;gap:12px}
 #page-title{font-size:16px;font-weight:700;color:var(--text)}
 #menu-toggle{background:none;border:none;color:var(--muted);padding:8px;border-radius:8px}
 #menu-toggle:hover{background:var(--surface2);color:var(--text)}
-#token-badge{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 14px;font-size:13px;font-weight:600;color:var(--lime)}
-#score-badge{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 14px;font-size:13px;font-weight:600;color:var(--blue)}
+#token-badge{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--text);letter-spacing:0.01em}
+#score-badge{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--text-secondary)}
 #username-badge{font-size:13px;color:var(--muted)}
 #theme-toggle{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted)}
 #theme-toggle:hover{background:var(--surface2);color:var(--text)}
@@ -98,25 +126,25 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}}
 /* === CARDS === */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:transform var(--transition),border-color var(--transition);box-shadow:0 2px 12px rgba(0,0,0,0.3)}
-.card:hover:not(.no-hover){border-color:#3a3a3a}
+.card{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:border-color var(--transition)}
+.card:hover:not(.no-hover){border-color:var(--border)}
 .card-sm{padding:16px}
 /* === GRID === */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 /* === BUTTONS === */
-.btn-primary{background:var(--blue);color:#fff;border:none;border-radius:var(--radius-pill);padding:10px 20px;font-weight:600;transition:all 0.15s ease}
-.btn-primary:hover{transform:scale(0.98);opacity:0.9}
-.btn-primary:active{transform:scale(0.96)}
-.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
-.btn-secondary{background:none;color:var(--text);border:1px solid var(--border);border-radius:var(--radius-pill);padding:10px 20px;font-weight:600;transition:all 0.15s ease}
-.btn-secondary:hover{background:var(--surface2)}
+.btn-primary{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 18px;font-weight:600;font-size:13px;transition:all 0.15s ease;letter-spacing:0.01em}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-primary:active{transform:scale(0.98)}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 18px;font-weight:500;font-size:13px;transition:all 0.15s ease}
+.btn-secondary:hover{background:var(--surface2);border-color:var(--border)}
 .btn-secondary:active{transform:scale(0.98)}
 .btn-secondary:disabled{opacity:0.4;cursor:not-allowed}
-.btn-lime{background:var(--lime);color:#000;border:none;border-radius:var(--radius-pill);padding:10px 20px;font-weight:700;transition:all 0.15s ease}
-.btn-lime:hover{transform:scale(0.98)}
-.btn-lime:active{transform:scale(0.96)}
+.btn-lime{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 18px;font-weight:600;font-size:13px;transition:all 0.15s ease}
+.btn-lime:hover{opacity:0.9}
+.btn-lime:active{transform:scale(0.98)}
 .btn-lime:disabled{opacity:0.4;cursor:not-allowed}
 .btn-sm{padding:6px 14px;font-size:12px}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -130,20 +158,20 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 /* === PILLS === */
 .pill{display:inline-flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:4px 12px;font-size:12px;font-weight:500}
 .pill-status{border-radius:var(--radius-pill);padding:4px 10px;font-size:11px;font-weight:600}
-.status-good{background:#00C85320;color:#00C853;border:1px solid #00C85340}
-.status-warn{background:#FFB30020;color:#FFB300;border:1px solid #FFB30040}
-.status-bad{background:#FF3B3B20;color:#FF3B3B;border:1px solid #FF3B3B40}
-.status-paused{background:#77777720;color:#777;border:1px solid #77777740}
-.status-done{background:#0055FF20;color:#0055FF;border:1px solid #0055FF40}
+.status-good{background:var(--green-dim);color:var(--green);border:1px solid #34D39930}
+.status-warn{background:var(--yellow-dim);color:var(--yellow);border:1px solid #FBBF2430}
+.status-bad{background:var(--red-dim);color:var(--red);border:1px solid #F8717130}
+.status-paused{background:#60606015;color:var(--muted);border:1px solid #60606030}
+.status-done{background:var(--primary-dim);color:var(--primary);border:1px solid #4F6EF730}
 /* === TABS === */
-.tab-bar{display:flex;gap:4px;background:var(--surface2);border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content}
-.tab-btn{background:none;border:none;color:var(--muted);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:500;transition:background var(--transition),color var(--transition)}
+.tab-bar{display:flex;gap:0;background:transparent;border-bottom:1px solid var(--border-subtle);margin-bottom:24px;width:100%}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);padding:10px 16px;font-size:13px;font-weight:500;transition:all var(--transition);margin-bottom:-1px;border-radius:0}
 .tab-btn:hover{color:var(--text)}
-.tab-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--primary)}
 /* === CHIPS === */
 .chip-container{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:5px 12px;font-size:13px;cursor:pointer;transition:border-color var(--transition)}
-.chip-active{border-color:var(--lime);color:var(--lime)}
+.chip{display:inline-flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:500;cursor:pointer;transition:border-color var(--transition),background var(--transition)}
+.chip-active{border-color:var(--primary);color:var(--primary);background:var(--primary-dim)}
 /* === TEXT === */
 .text-muted{color:var(--muted)}
 .text-green{color:var(--green)}
@@ -158,20 +186,20 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .stepper{display:flex;align-items:center;margin-bottom:32px;gap:0}
 .step{display:flex;align-items:center;gap:8px;flex:1}
 .step:last-child{flex:0}
-.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;border:2px solid var(--border);color:var(--muted);background:var(--surface);transition:all var(--transition)}
-.step.active .step-dot{border-color:var(--blue);color:var(--blue);background:#0055FF10}
-.step.done .step-dot{border-color:var(--lime);background:var(--lime);color:#000}
+.step-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;border:1.5px solid var(--border);color:var(--muted);background:var(--surface);transition:all var(--transition)}
+.step.active .step-dot{border-color:var(--primary);color:var(--primary);background:var(--primary-dim)}
+.step.done .step-dot{border-color:var(--accent);background:var(--accent);color:#fff}
 .step-label{font-size:12px;color:var(--muted);font-weight:500}
 .step.active .step-label{color:var(--text)}
 .step.done .step-label{color:var(--muted)}
 .step-line{flex:1;height:1px;background:var(--border);margin:0 8px}
-.step-line.done{background:var(--lime)}
+.step-line.done{background:var(--accent)}
 /* === KPI CARD === */
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:transform var(--transition),border-color var(--transition);box-shadow:0 2px 12px rgba(0,0,0,0.3)}
-.kpi-card:hover{transform:translateY(-2px);border-color:#3a3a3a}
-.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;margin-bottom:8px}
-.kpi-value{font-size:28px;font-weight:700;line-height:1;margin-bottom:8px}
-.kpi-sub{font-size:12px;color:var(--muted)}
+.kpi-card{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:18px 20px;transition:border-color var(--transition)}
+.kpi-card:hover{border-color:var(--border)}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;margin-bottom:10px}
+.kpi-value{font-size:26px;font-weight:700;line-height:1;margin-bottom:6px;color:var(--text)}
+.kpi-sub{font-size:12px;color:var(--text-secondary)}
 /* === SKELETON === */
 .skeleton{background:linear-gradient(90deg,var(--surface2) 0%,var(--border) 40%,#333 50%,var(--border) 60%,var(--surface2) 100%);background-size:300% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px;will-change:background-position}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-100% 0}}
@@ -180,11 +208,11 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .skeleton-text.sm{height:10px;width:60%}
 /* === TOAST === */
 #toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:14px;display:flex;align-items:center;gap:10px;pointer-events:all;animation:toastIn 200ms ease;box-shadow:0 8px 32px rgba(0,0,0,0.4);min-width:260px;max-width:360px}
-.toast-success{border-color:#00C85340}
-.toast-error{border-color:#FF3B3B40}
-.toast-warning{border-color:#FFB30040}
-.toast-info{border-color:#0055FF40}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;pointer-events:all;animation:toastIn 200ms ease;box-shadow:var(--shadow-lg);min-width:280px;max-width:380px}
+.toast-success{border-left:3px solid var(--green)}
+.toast-error{border-left:3px solid var(--red)}
+.toast-warning{border-left:3px solid var(--yellow)}
+.toast-info{border-left:3px solid var(--primary)}
 .toast-icon{font-size:16px}
 @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 /* === TOOLTIP === */
@@ -208,7 +236,7 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .empty-state p{font-size:14px;margin-bottom:20px}
 /* === COACH === */
 #ai-coach-bubble{position:fixed;bottom:24px;right:24px;z-index:500}
-.coach-btn{width:52px;height:52px;background:var(--blue);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,85,255,0.4);transition:transform var(--transition)}
+.coach-btn{width:52px;height:52px;background:var(--primary);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(79,110,247,0.35);transition:transform var(--transition)}
 .coach-btn:hover{transform:scale(1.05)}
 #ai-coach-panel{position:absolute;bottom:64px;right:0;width:340px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,0.4);display:none;flex-direction:column;max-height:480px}
 #ai-coach-panel.open{display:flex}
@@ -216,12 +244,12 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .coach-panel-header h4{font-size:14px;font-weight:700}
 .coach-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
 .coach-message{background:var(--surface2);border-radius:12px;padding:12px;font-size:13px;line-height:1.5}
-.coach-message.user{background:var(--blue);color:#fff;margin-left:32px}
+.coach-message.user{background:var(--primary);color:#fff;margin-left:32px}
 .coach-message.ai{margin-right:32px}
 .coach-input-area{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
 .coach-input-area input{border-radius:var(--radius-pill);padding:8px 16px;font-size:13px}
 .coach-tip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
-.coach-tip-header{font-size:12px;font-weight:700;color:var(--lime);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
+.coach-tip-header{font-size:12px;font-weight:700;color:var(--accent-text);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
 .coach-tip-text{font-size:13px;line-height:1.6}
 /* === COMMAND PALETTE === */
 #command-palette{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:flex-start;justify-content:center;padding-top:80px}
@@ -233,9 +261,9 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .palette-item-icon{font-size:16px;width:24px;text-align:center}
 /* === PLATFORM GRID === */
 .platform-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
-.platform-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:border-color var(--transition),transform var(--transition)}
-.platform-card:hover{border-color:var(--blue);transform:translateY(-2px)}
-.platform-card.selected{border-color:var(--lime);background:#AAFF0008}
+.platform-card{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:14px;cursor:pointer;transition:border-color var(--transition),background var(--transition)}
+.platform-card:hover{border-color:var(--border);background:var(--surface2)}
+.platform-card.selected{border-color:var(--primary);background:var(--primary-dim)}
 .platform-emoji{font-size:28px;margin-bottom:10px}
 .platform-name{font-size:14px;font-weight:700;margin-bottom:4px}
 .platform-desc{font-size:12px;color:var(--muted)}
@@ -268,7 +296,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .deck-slide{background:var(--surface);padding:48px;min-height:360px;display:flex;align-items:center;justify-content:center}
 .slide-content{width:100%;text-align:center}
 .slide-content h1,.slide-content h2{font-weight:700;margin-bottom:16px}
-.slide-logo{font-size:20px;font-weight:900;color:var(--lime);margin-bottom:8px}
+.slide-logo{font-size:20px;font-weight:900;color:var(--accent-text);margin-bottom:8px}
 .slide-kpi{background:var(--surface2);border-radius:12px;padding:16px;text-align:center}
 .slide-kpi-val{font-size:28px;font-weight:700;color:var(--lime)}
 .slide-kpi-label{font-size:12px;color:var(--muted);margin-top:4px}
@@ -305,7 +333,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 /* === BADGE GRID === */
 .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .badge-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;transition:border-color var(--transition)}
-.badge-item.unlocked{border-color:#AAFF0040}
+.badge-item.unlocked{border-color:#10B98140}
 .badge-item.locked{opacity:0.4;filter:grayscale(1)}
 .badge-emoji{font-size:32px;margin-bottom:8px}
 .badge-name{font-size:13px;font-weight:600;margin-bottom:4px}
@@ -449,7 +477,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 <div id="app">
   <!-- SIDEBAR -->
   <aside id="sidebar">
-    <div class="sidebar-logo">P.<span> PROOVD</span></div>
+    <div class="sidebar-logo"><span style="font-weight:800;letter-spacing:-0.5px">PROOVD</span><span style="font-size:10px;color:var(--muted);margin-left:6px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase">Beta</span></div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
     <div class="sidebar-footer">
       <button class="nav-item" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Collassa sidebar">
@@ -2175,8 +2203,8 @@ function renderStep2() {
         <div style="margin-bottom:14px">
           <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Fascia d'età: <span id="age-label">${c.ageMin}-${c.ageMax} anni</span></label>
           <div style="display:flex;gap:8px;align-items:center">
-            <input type="range" min="13" max="65" value="${c.ageMin}" oninput="AppState.activeCampaign.ageMin=+this.value;document.getElementById('age-label').textContent=AppState.activeCampaign.ageMin+'-'+AppState.activeCampaign.ageMax+' anni'" style="flex:1;accent-color:#0055FF">
-            <input type="range" min="13" max="75" value="${c.ageMax}" oninput="AppState.activeCampaign.ageMax=+this.value;document.getElementById('age-label').textContent=AppState.activeCampaign.ageMin+'-'+AppState.activeCampaign.ageMax+' anni'" style="flex:1;accent-color:#0055FF">
+            <input type="range" min="13" max="65" value="${c.ageMin}" oninput="AppState.activeCampaign.ageMin=+this.value;document.getElementById('age-label').textContent=AppState.activeCampaign.ageMin+'-'+AppState.activeCampaign.ageMax+' anni'" style="flex:1;accent-color:#4F6EF7">
+            <input type="range" min="13" max="75" value="${c.ageMax}" oninput="AppState.activeCampaign.ageMax=+this.value;document.getElementById('age-label').textContent=AppState.activeCampaign.ageMin+'-'+AppState.activeCampaign.ageMax+' anni'" style="flex:1;accent-color:#4F6EF7">
           </div>
         </div>
 
@@ -2194,7 +2222,7 @@ function renderStep2() {
           <label style="font-size:12px;color:#777;display:block;margin-bottom:6px">Budget totale: <span id="budget-label" style="color:#AAFF00;font-weight:600">${formatCurrency(c.budget)}</span></label>
           <input type="range" min="${PLATFORMS.find(p=>p.id===c.platform)?.minBudget||50}" max="${Math.min(tokens, 500)}" value="${c.budget}" step="10"
             oninput="updateBudget(+this.value)"
-            style="width:100%;accent-color:#0055FF" />
+            style="width:100%;accent-color:#4F6EF7" />
           <div id="budget-error" style="font-size:11px;color:#FF4444;margin-top:4px;display:none">Budget supera i token disponibili (${formatCurrency(tokens)})</div>
           <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
             ${[[50,'Starter'],[200,'Standard'],[500,'Pro']].map(([amt,label]) => `<button onclick="updateBudget(${amt});document.querySelector('[oninput*=updateBudget]').value=${amt}" style="padding:4px 12px;border-radius:100px;border:1px solid ${c.budget===amt?'#AAFF00':'#2A2A2A'};background:${c.budget===amt?'#AAFF0011':'transparent'};color:${c.budget===amt?'#AAFF00':'#777'};font-size:11px;cursor:pointer">${label} €${amt}</button>`).join('')}
@@ -2615,7 +2643,7 @@ function renderStep4() {
       </div>
       <div style="margin-bottom:14px">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:#1A1A1A;border-radius:12px;border:1px solid ${c.retargeting?'#AAFF00':'#2A2A2A'}">
-          <input type="checkbox" ${c.retargeting?'checked':''} onchange="AppState.activeCampaign.retargeting=this.checked;renderBuilderStep()" style="width:16px;height:16px;accent-color:#AAFF00;cursor:pointer"/>
+          <input type="checkbox" ${c.retargeting?'checked':''} onchange="AppState.activeCampaign.retargeting=this.checked;renderBuilderStep()" style="width:16px;height:16px;accent-color:#10B981;cursor:pointer"/>
           <div>
             <div style="font-size:13px;font-weight:600;color:#F0F0F0">Includi retargeting (warm audience)</div>
             <div style="font-size:11px;color:#777;margin-top:2px">+40% CVR stimato su audience già esposta al brand</div>
@@ -3984,7 +4012,7 @@ function renderKPICalculator() {
               <label style="color:#777777;font-size:13px;">Budget (€) <span title="Budget totale per la campagna" style="color:#0055FF;cursor:help;">ℹ</span></label>
               <span id="kpi-budget-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€500</span>
             </div>
-            <input type="range" id="kpi-budget" min="100" max="5000" step="50" value="500" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+            <input type="range" id="kpi-budget" min="100" max="5000" step="50" value="500" oninput="updateKPICalculator()" style="width:100%;accent-color:#4F6EF7;">
           </div>
 
           <div style="margin-bottom:16px;">
@@ -3992,7 +4020,7 @@ function renderKPICalculator() {
               <label style="color:#777777;font-size:13px;">CPM (€) <span title="Cost Per Mille: costo per 1.000 impressioni" style="color:#0055FF;cursor:help;">ℹ</span></label>
               <span id="kpi-cpm-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€2.50</span>
             </div>
-            <input type="range" id="kpi-cpm" min="0.50" max="20" step="0.50" value="2.50" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+            <input type="range" id="kpi-cpm" min="0.50" max="20" step="0.50" value="2.50" oninput="updateKPICalculator()" style="width:100%;accent-color:#4F6EF7;">
           </div>
 
           <div style="margin-bottom:16px;">
@@ -4000,7 +4028,7 @@ function renderKPICalculator() {
               <label style="color:#777777;font-size:13px;">CTR (%) <span title="Click-Through Rate: % di utenti che cliccano sull'annuncio" style="color:#0055FF;cursor:help;">ℹ</span></label>
               <span id="kpi-ctr-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">1.5%</span>
             </div>
-            <input type="range" id="kpi-ctr" min="0.1" max="10" step="0.1" value="1.5" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+            <input type="range" id="kpi-ctr" min="0.1" max="10" step="0.1" value="1.5" oninput="updateKPICalculator()" style="width:100%;accent-color:#4F6EF7;">
           </div>
 
           <div style="margin-bottom:16px;">
@@ -4008,7 +4036,7 @@ function renderKPICalculator() {
               <label style="color:#777777;font-size:13px;">CVR (%) <span title="Conversion Rate: % di click che diventano conversioni" style="color:#0055FF;cursor:help;">ℹ</span></label>
               <span id="kpi-cvr-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">2.5%</span>
             </div>
-            <input type="range" id="kpi-cvr" min="0.1" max="20" step="0.1" value="2.5" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+            <input type="range" id="kpi-cvr" min="0.1" max="20" step="0.1" value="2.5" oninput="updateKPICalculator()" style="width:100%;accent-color:#4F6EF7;">
           </div>
 
           <div style="margin-bottom:16px;">
@@ -4016,7 +4044,7 @@ function renderKPICalculator() {
               <label style="color:#777777;font-size:13px;">CPC (€) <span title="Cost Per Click: quanto paghi per ogni click" style="color:#0055FF;cursor:help;">ℹ</span></label>
               <span id="kpi-cpc-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€0.80</span>
             </div>
-            <input type="range" id="kpi-cpc" min="0.01" max="5" step="0.01" value="0.80" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+            <input type="range" id="kpi-cpc" min="0.01" max="5" step="0.01" value="0.80" oninput="updateKPICalculator()" style="width:100%;accent-color:#4F6EF7;">
           </div>
 
           <div style="margin-bottom:16px;">
@@ -4024,7 +4052,7 @@ function renderKPICalculator() {
               <label style="color:#777777;font-size:13px;">Durata (giorni) <span title="Per quanto tempo la campagna rimarrà attiva" style="color:#0055FF;cursor:help;">ℹ</span></label>
               <span id="kpi-days-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">30 giorni</span>
             </div>
-            <input type="range" id="kpi-days" min="1" max="90" step="1" value="30" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+            <input type="range" id="kpi-days" min="1" max="90" step="1" value="30" oninput="updateKPICalculator()" style="width:100%;accent-color:#4F6EF7;">
           </div>
 
           <div style="margin-bottom:16px;">
@@ -4032,7 +4060,7 @@ function renderKPICalculator() {
               <label style="color:#777777;font-size:13px;">AOV (€) <span title="Average Order Value: valore medio di ogni acquisto" style="color:#0055FF;cursor:help;">ℹ</span></label>
               <span id="kpi-aov-val" style="color:#F0F0F0;font-size:13px;font-weight:600;">€80</span>
             </div>
-            <input type="range" id="kpi-aov" min="10" max="500" step="10" value="80" oninput="updateKPICalculator()" style="width:100%;accent-color:#0055FF;">
+            <input type="range" id="kpi-aov" min="10" max="500" step="10" value="80" oninput="updateKPICalculator()" style="width:100%;accent-color:#4F6EF7;">
           </div>
         </div>
       </div>
@@ -4354,14 +4382,14 @@ function renderWhatIfSimulator() {
               Variazione budget: <span id="whatif-budget-val" style="color:#AAFF00;">+0%</span>
             </label>
             <input type="range" id="whatif-budget" min="-50" max="200" step="5" value="0"
-              oninput="updateWhatIf()" style="width:100%;accent-color:#0055FF;">
+              oninput="updateWhatIf()" style="width:100%;accent-color:#4F6EF7;">
           </div>
           <div>
             <label style="color:#777777;font-size:13px;display:block;margin-bottom:8px;">
               Variazione CTR: <span id="whatif-ctr-val" style="color:#AAFF00;">+0%</span>
             </label>
             <input type="range" id="whatif-ctr" min="-50" max="200" step="5" value="0"
-              oninput="updateWhatIf()" style="width:100%;accent-color:#0055FF;">
+              oninput="updateWhatIf()" style="width:100%;accent-color:#4F6EF7;">
           </div>
         </div>
         <div>
@@ -4369,7 +4397,7 @@ function renderWhatIfSimulator() {
             Variazione CVR: <span id="whatif-cvr-val" style="color:#AAFF00;">+0%</span>
           </label>
           <input type="range" id="whatif-cvr" min="-50" max="200" step="5" value="0"
-            oninput="updateWhatIf()" style="width:33%;accent-color:#0055FF;">
+            oninput="updateWhatIf()" style="width:33%;accent-color:#4F6EF7;">
         </div>
       </div>
 
