@@ -727,19 +727,6 @@ function restartGame() {
   navigateTo('dashboard');
 }
 
-// === PROOVD SCORE ===
-function updateProovdScore(dimension, delta) {
-  if (!AppState.proovdDimensions[dimension] && AppState.proovdDimensions[dimension] !== 0) return;
-  AppState.proovdDimensions[dimension] = Math.min(100, Math.max(0, (AppState.proovdDimensions[dimension]||0) + delta));
-  AppState.score = Math.round(Object.values(AppState.proovdDimensions).reduce((a,b)=>a+b,0)/5);
-  const el = document.getElementById('score-badge');
-  if (el) el.textContent = AppState.score + '/100';
-  saveState();
-}
-function calculateTotalScore() {
-  return Math.round(Object.values(AppState.proovdDimensions).reduce((a,b)=>a+b,0)/5);
-}
-
 // === AI COACH ENGINE ===
 function showApiKeyModal() {
   document.getElementById('apikey-modal').style.display = 'flex';
@@ -1310,18 +1297,6 @@ const ALL_BADGES = [
   { id:'persona_builder', emoji:'👤', name:'Persona Expert', desc:'2+ buyer personas create', condition:s=>(s.personas?.length||0)>=2 },
   { id:'full_funnel', emoji:'🏆', name:'Full Funnel', desc:'Journey completo mappato', condition:s=>Object.keys(s.journey||{}).length>=4 },
 ];
-function checkBadges() {
-  let newBadge = false;
-  ALL_BADGES.forEach(badge => {
-    if (!AppState.badges.includes(badge.id) && badge.condition(AppState)) {
-      AppState.badges.push(badge.id);
-      showToast(`🏅 Badge sbloccato: ${badge.name}!`, 'success');
-      newBadge = true;
-    }
-  });
-  if (newBadge) saveState();
-}
-
 // === AUTH UI ===
 function showAuthScreen() {
   document.getElementById('app').style.display = 'none';
