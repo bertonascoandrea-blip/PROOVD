@@ -99,6 +99,7 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-wei
 .nav-item svg{flex-shrink:0;width:20px;height:20px}
 .nav-label{font-size:13px;font-weight:500;opacity:1;transition:opacity var(--transition)}
 #sidebar.collapsed .nav-label{opacity:0}
+#sidebar.collapsed #sidebar-xp-block{opacity:0;pointer-events:none}
 .sidebar-footer{padding:12px 8px;border-top:1px solid var(--border);flex-shrink:0}
 /* === MAIN === */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
@@ -594,6 +595,15 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
     <div class="sidebar-logo"><span style="font-weight:800;letter-spacing:-0.5px">PROOVD</span><span style="font-size:10px;color:var(--muted);margin-left:6px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase">Beta</span></div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
     <div class="sidebar-footer">
+      <div id="sidebar-xp-block" style="padding:10px 12px;margin-bottom:4px;opacity:1;transition:opacity var(--transition)">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span id="sidebar-level-icon" style="font-size:14px">🌱</span>
+          <span id="sidebar-level-text" class="nav-label" style="font-size:11px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        </div>
+        <div class="xp-bar-track nav-label" style="margin:0">
+          <div class="xp-bar-fill" id="sidebar-xp-fill" style="width:0%"></div>
+        </div>
+      </div>
       <button class="nav-item" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Collassa sidebar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         <span class="nav-label">Collassa</span>
@@ -897,12 +907,21 @@ function updateXPDisplay() {
   const xp = AppState.xp || 0;
   const lv = getLevel(xp);
   const prog = getLevelProgress(xp);
+  // Header badge
   const badgeEl = document.getElementById('xp-level-badge');
-  const barEl = document.getElementById('xp-bar-fill');
-  const labelEl = document.getElementById('xp-bar-label');
   if (badgeEl) badgeEl.textContent = `${lv.icon} Lv.${lv.level} ${lv.title}`;
+  // Generic XP bar fill
+  const barEl = document.getElementById('xp-bar-fill');
   if (barEl) barEl.style.width = prog.pct + '%';
+  const labelEl = document.getElementById('xp-bar-label');
   if (labelEl) labelEl.textContent = `${xp} XP — ${prog.current}/${prog.total} per il prossimo livello`;
+  // Sidebar
+  const sidebarIcon = document.getElementById('sidebar-level-icon');
+  const sidebarText = document.getElementById('sidebar-level-text');
+  const sidebarFill = document.getElementById('sidebar-xp-fill');
+  if (sidebarIcon) sidebarIcon.textContent = lv.icon;
+  if (sidebarText) sidebarText.textContent = `Lv.${lv.level} · ${xp} XP`;
+  if (sidebarFill) sidebarFill.style.width = prog.pct + '%';
 }
 function logActivity(entry) {
   if (!AppState.activityLog) AppState.activityLog = [];
@@ -2394,28 +2413,35 @@ function renderStepper(currentStep) {
   const container = document.getElementById('stepper-container');
   if (!container) return;
 
+  const pct = Math.round(((currentStep - 1) / (STEP_LABELS.length - 1)) * 100);
+
   container.innerHTML = `
-    <div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px">
-      ${STEP_LABELS.map((label, i) => {
-        const stepNum = i + 1;
-        const isCompleted = stepNum < currentStep;
-        const isActive = stepNum === currentStep;
-
-        const textColor = isCompleted ? '#AAFF00' : isActive ? '#F0F0F0' : '#555';
-        const borderStyle = isActive ? '2px solid #0055FF' : isCompleted ? '2px solid #AAFF00' : '2px solid #2A2A2A';
-        const bgColor = isCompleted ? '#AAFF0022' : isActive ? '#0055FF22' : 'transparent';
-
-        return `
-          <div style="display:flex;align-items:center;flex:1;min-width:0">
-            <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
-              <div style="width:34px;height:34px;border-radius:50%;border:${borderStyle};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:${bgColor};color:${textColor};transition:all .2s">
-                ${isCompleted ? '✓' : stepNum}
+    <div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:16px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span class="label-xs">Step ${currentStep} di ${STEP_LABELS.length} — ${STEP_LABELS[currentStep-1]}</span>
+        <span class="label-xs">${pct}% completato</span>
+      </div>
+      <div style="height:3px;background:var(--surface2);border-radius:100px;overflow:hidden;margin-bottom:14px">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),#A78BFA);border-radius:100px;transition:width .4s ease"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0;overflow-x:auto">
+        ${STEP_LABELS.map((label, i) => {
+          const stepNum = i + 1;
+          const isCompleted = stepNum < currentStep;
+          const isActive = stepNum === currentStep;
+          const dotBg = isCompleted ? 'var(--accent)' : isActive ? 'var(--primary)' : 'var(--surface2)';
+          const dotBorder = isCompleted ? 'var(--accent)' : isActive ? 'var(--primary)' : 'var(--border)';
+          const textColor = isActive ? 'var(--text)' : isCompleted ? 'var(--accent-text)' : 'var(--muted)';
+          return `
+            <div style="display:flex;align-items:center;flex:${i < STEP_LABELS.length-1 ? 1 : 0};min-width:0">
+              <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0" ${isCompleted ? `onclick="goToStep(${stepNum})"` : ''} style="cursor:${isCompleted ? 'pointer' : 'default'}">
+                <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${dotBorder};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:${dotBg};color:${isCompleted||isActive ? '#fff' : 'var(--muted)'};transition:all .2s">${isCompleted ? '✓' : stepNum}</div>
+                <div style="font-size:10px;color:${textColor};margin-top:4px;white-space:nowrap;font-weight:${isActive ? '600' : '400'}">${label}</div>
               </div>
-              <div style="font-size:10px;color:${textColor};margin-top:5px;white-space:nowrap;text-align:center;font-weight:${isActive ? '600' : '400'}">${label}</div>
-            </div>
-            ${i < STEP_LABELS.length - 1 ? `<div style="flex:1;height:2px;background:${isCompleted ? '#AAFF00' : '#2A2A2A'};margin:0 6px;margin-bottom:20px;transition:background .3s"></div>` : ''}
-          </div>`;
-      }).join('')}
+              ${i < STEP_LABELS.length - 1 ? `<div style="flex:1;height:2px;background:${isCompleted ? 'var(--accent)' : 'var(--border)'};margin:0 4px;margin-bottom:16px;transition:background .3s;min-width:8px"></div>` : ''}
+            </div>`;
+        }).join('')}
+      </div>
     </div>`;
 }
 
@@ -3760,6 +3786,15 @@ function prevStep() {
   document.getElementById('step-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function goToStep(stepNum) {
+  const c = AppState.activeCampaign;
+  if (!c) return;
+  if (stepNum >= (c.step || 1)) return; // solo step completati
+  AppState.activeCampaign.step = stepNum;
+  renderBuilderStep();
+  document.getElementById('step-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // === MODULE: LIVE MANAGER ===
 
 function renderLiveManager() {
@@ -4996,8 +5031,52 @@ function renderProovdScore() {
       </div>
       <div>
         ${renderScoreBreakdown()}
+
+        <!-- XP Progress in Score page -->
+        <div class="card" style="margin-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <h3 class="card-title" style="margin:0">Progressione XP</h3>
+            <span class="level-badge">${getLevel(AppState.xp||0).icon} Lv.${getLevel(AppState.xp||0).level}</span>
+          </div>
+          ${XP_LEVELS.map(lv => {
+            const xp = AppState.xp || 0;
+            const isCurrentLevel = getLevel(xp).level === lv.level;
+            const isPastLevel = xp >= lv.min;
+            const prog = lv.level < 5 ? Math.min(100, ((xp - lv.min) / (lv.max - lv.min)) * 100) : 100;
+            return `<div style="margin-bottom:12px;opacity:${isPastLevel?1:0.4}">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span style="font-size:13px;font-weight:${isCurrentLevel?'700':'500'};color:${isCurrentLevel?'var(--text)':'var(--muted)'}">
+                  ${lv.icon} Lv.${lv.level} ${lv.title}
+                </span>
+                <span class="xp-label">${lv.min}–${lv.max === 99999 ? '∞' : lv.max} XP</span>
+              </div>
+              ${isCurrentLevel ? `<div class="xp-bar-track"><div class="xp-bar-fill" style="width:${prog}%"></div></div>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+
+        <!-- Come guadagnare XP -->
+        <div class="card" style="margin-top:16px">
+          <h3 class="card-title" style="margin:0 0 12px">Come guadagnare XP</h3>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${[
+              {action:'Lancia una campagna',xp:10,icon:'🚀'},
+              {action:'ROAS ≥ 2x su campagna completata',xp:15,icon:'📈'},
+              {action:'ROAS ≥ 3x su campagna completata',xp:30,icon:'🔥'},
+              {action:'Risposta colloquio ≥ 8/10',xp:10,icon:'🎤'},
+              {action:'Genera un report',xp:8,icon:'📋'},
+              {action:'Crea una buyer persona',xp:5,icon:'👤'},
+              {action:'Badge sbloccato',xp:20,icon:'🏅'},
+              {action:'Sali di livello',xp:0,icon:'⚡',note:'Celebrazione automatica'},
+            ].map(a => `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:8px">
+              <span style="font-size:13px">${a.icon} ${a.action}</span>
+              <span style="font-size:12px;font-weight:700;color:#A78BFA">${a.xp > 0 ? '+'+a.xp+' XP' : a.note || ''}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+
         <div style="margin-top:20px;">
-          <h3 style="font-size:14px;color:#777;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">Badge</h3>
+          <h3 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">Badge</h3>
           <div id="badge-grid">${renderBadgeGrid()}</div>
         </div>
       </div>
