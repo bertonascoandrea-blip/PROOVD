@@ -316,6 +316,94 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 }
 /* === CHART FIX === */
 #portfolio-chart,[id^="chart-"]{overflow:hidden}
+/* === DESIGN SYSTEM EXTENSIONS === */
+/* XP / progression */
+--xp:#A78BFA;
+/* Aggiunto in :root body via override sotto */
+/* === TYPOGRAPHY CLASSES === */
+.page-title{font-size:26px;font-weight:700;letter-spacing:-0.5px;line-height:1.2}
+.section-title{font-size:18px;font-weight:700;letter-spacing:-0.3px}
+.card-title{font-size:15px;font-weight:600}
+.label-xs{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)}
+.kpi-value-xl{font-size:36px;font-weight:700;letter-spacing:-1px;line-height:1}
+.kpi-value-lg{font-size:28px;font-weight:700;letter-spacing:-0.5px;line-height:1}
+.kpi-value-md{font-size:22px;font-weight:700;line-height:1}
+.body{font-size:14px;line-height:1.6}
+.body-sm{font-size:13px;line-height:1.5}
+.delta-up{font-size:12px;font-weight:600;color:#34D399;display:inline-flex;align-items:center;gap:2px}
+.delta-up::before{content:'▲'}
+.delta-down{font-size:12px;font-weight:600;color:#F87171;display:inline-flex;align-items:center;gap:2px}
+.delta-down::before{content:'▼'}
+.delta-flat{font-size:12px;font-weight:600;color:var(--muted)}
+.metric{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+/* === BUTTON EXTENSIONS === */
+.btn-ghost{background:none;border:none;color:var(--text-secondary);border-radius:var(--radius-sm);padding:8px 14px;font-weight:500;font-size:13px;transition:all 0.15s ease}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:none;border:1px solid #F8717140;color:var(--red);border-radius:var(--radius-sm);padding:8px 14px;font-weight:600;font-size:13px;transition:all 0.15s ease}
+.btn-danger:hover{background:var(--red-dim)}
+.btn-success{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 18px;font-weight:600;font-size:13px;transition:all 0.15s ease}
+.btn-success:hover{background:#0ea370}
+.btn-icon{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 8px;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;transition:all 0.15s ease}
+.btn-icon:hover{background:var(--surface2);color:var(--text);border-color:#3a3a3a}
+/* === XP BAR === */
+.xp-bar-track{height:4px;background:var(--surface2);border-radius:100px;overflow:hidden}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,#A78BFA,#7C3AED);border-radius:100px;transition:width 600ms ease}
+.level-badge{display:inline-flex;align-items:center;gap:6px;background:#A78BFA18;border:1px solid #A78BFA40;border-radius:var(--radius-pill);padding:4px 12px;font-size:12px;font-weight:600;color:#A78BFA}
+.xp-label{font-size:11px;color:var(--muted);font-weight:500}
+/* === HERO DASHBOARD === */
+.dash-hero{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap}
+.dash-hero-left{flex:1;min-width:220px}
+.dash-hero-career{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dash-hero-name{font-size:24px;font-weight:700;margin-bottom:2px;letter-spacing:-0.3px}
+.dash-hero-xp-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+/* === NEXT ACTIONS === */
+.next-actions-list{display:flex;flex-direction:column;gap:8px}
+.next-action-item{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;transition:background var(--transition),border-color var(--transition);border:1px solid transparent}
+.next-action-item:hover{background:#252525;border-color:var(--border)}
+.next-action-icon{font-size:18px;flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--surface)}
+.next-action-text{flex:1;min-width:0}
+.next-action-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.next-action-desc{font-size:12px;color:var(--muted)}
+.next-action-xp{font-size:11px;font-weight:600;color:#A78BFA;white-space:nowrap}
+/* === ACTIVITY TIMELINE === */
+.timeline{display:flex;flex-direction:column;gap:0}
+.timeline-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-subtle)}
+.timeline-item:last-child{border-bottom:none}
+.timeline-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px}
+.timeline-dot.spend{background:#F8717118;border:1px solid #F8717130}
+.timeline-dot.earn{background:#34D39918;border:1px solid #34D39930}
+.timeline-dot.badge{background:#FBBF2418;border:1px solid #FBBF2430}
+.timeline-dot.launch{background:#4F6EF718;border:1px solid #4F6EF730}
+.timeline-dot.xp{background:#A78BFA18;border:1px solid #A78BFA30}
+.timeline-content{flex:1;min-width:0}
+.timeline-text{font-size:13px;font-weight:500;margin-bottom:2px}
+.timeline-time{font-size:11px;color:var(--muted)}
+/* === PREMIUM KPI CARD === */
+.kpi-card-premium{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:18px 20px;transition:all var(--transition)}
+.kpi-card-premium:hover{transform:translateY(-2px);border-color:#3a3a3a}
+.kpi-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kpi-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+/* === SKELETON PREMIUM === */
+.skeleton-premium{background:linear-gradient(90deg,var(--surface) 0%,var(--surface2) 40%,#2a2a2a 50%,var(--surface2) 60%,var(--surface) 100%);background-size:300% 100%;animation:shimmer 2s ease-in-out infinite;border-radius:8px}
+/* === XP GAIN ANIMATION === */
+@keyframes xpFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-40px) scale(1.2)}}
+.xp-float{position:fixed;font-size:14px;font-weight:700;color:#A78BFA;pointer-events:none;z-index:9999;animation:xpFloat 1.2s ease forwards}
+/* === STATUS BADGES === */
+.status-active{background:#34D39918;color:#34D399;border:1px solid #34D39930;border-radius:var(--radius-pill);padding:3px 10px;font-size:11px;font-weight:600}
+.status-paused-v2{background:#60606018;color:#909090;border:1px solid #60606030;border-radius:var(--radius-pill);padding:3px 10px;font-size:11px;font-weight:600}
+.status-completed{background:#4F6EF718;color:#4F6EF7;border:1px solid #4F6EF730;border-radius:var(--radius-pill);padding:3px 10px;font-size:11px;font-weight:600}
+.status-error{background:#F8717118;color:#F87171;border:1px solid #F8717130;border-radius:var(--radius-pill);padding:3px 10px;font-size:11px;font-weight:600}
+/* === INSIGHT CARD === */
+.insight-card{background:linear-gradient(135deg,#4F6EF710,#A78BFA08);border:1px solid #4F6EF725;border-radius:var(--radius);padding:14px 16px}
+.insight-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#4F6EF7;margin-bottom:6px}
+/* === TOAST PROGRESS === */
+.toast-with-bar{padding-bottom:0;overflow:hidden}
+.toast-bar{height:3px;border-radius:0 0 var(--radius-sm) var(--radius-sm);animation:toastBarShrink 4s linear forwards;transform-origin:left}
+@keyframes toastBarShrink{from{width:100%}to{width:0%}}
+.toast-bar-success{background:var(--accent)}
+.toast-bar-error{background:var(--red)}
+.toast-bar-warning{background:var(--yellow)}
+.toast-bar-info{background:var(--primary)}
 /* === DECK === */
 .deck-viewer{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .deck-slide{background:var(--surface);padding:48px;min-height:360px;display:flex;align-items:center;justify-content:center}
@@ -525,7 +613,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
       <div class="header-right">
         <span id="token-badge" data-tooltip="I tuoi token virtuali — il tuo budget per simulare campagne">€ 500 token</span>
         <span id="score-badge" data-tooltip="Il tuo PROOVD Score — misura le tue competenze">0/100</span>
-        <span id="username-badge">Marketer</span>
+        <span id="xp-level-badge" class="level-badge" data-tooltip="Il tuo livello di esperienza in PROOVD">🌱 Lv.1 Beginner Marketer</span>
         <button id="theme-toggle" onclick="toggleTheme()" aria-label="Cambia tema">🌙</button>
       </div>
     </header>
@@ -620,6 +708,7 @@ const DEFAULT_STATE = {
   wizardDone: false, wizardStep: 0, wizardAnswers: {},
   liveView: 'cards',
   activeLearningPath: null, academyCompleted: [],
+  xp: 0, activityLog: [],
 };
 let AppState = { ...DEFAULT_STATE };
 
@@ -652,15 +741,46 @@ function getPlatformName(p) {
   return m[p] || p;
 }
 
-// === TOAST ===
+// === TOAST (con barra progresso) ===
 function showToast(msg, type='info') {
   const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
   const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
-  document.getElementById('toast-container').appendChild(toast);
-  setTimeout(() => { toast.style.animation = 'toastOut 200ms ease forwards'; setTimeout(() => toast.remove(), 200); }, 4000);
+  toast.className = `toast toast-${type} toast-with-bar`;
+  toast.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding-bottom:8px">
+      <span class="toast-icon">${icons[type]||'ℹ️'}</span>
+      <span style="flex:1">${msg}</span>
+    </div>
+    <div class="toast-bar toast-bar-${type}"></div>`;
+  const container = document.getElementById('toast-container');
+  if (container) container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(20px)';
+    toast.style.transition = 'all 200ms ease';
+    setTimeout(() => toast.remove(), 200);
+  }, 4000);
 }
+
+// === CONFETTI (gamification) ===
+function triggerConfetti() {
+  const colors = ['#4F6EF7','#A78BFA','#34D399','#FBBF24','#F87171','#60A5FA'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      const size = 6 + Math.random() * 8;
+      el.style.cssText = `position:fixed;top:-10px;left:${Math.random()*100}vw;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};pointer-events:none;z-index:9998;animation:confettiFall ${0.8+Math.random()*1.2}s ease-in forwards`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2200);
+    }, i * 25);
+  }
+}
+// Inietta animazione confetti nel CSS dinamicamente
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}`;
+  document.head.appendChild(s);
+})();
 
 // === TOOLTIP ===
 const tooltip = document.getElementById('tooltip');
@@ -718,13 +838,86 @@ function showGameOver() {
   modal.style.display = 'flex';
 }
 function restartGame() {
-  const toKeep = { badges: AppState.badges, score: AppState.score, proovdDimensions: AppState.proovdDimensions, userName: AppState.userName, apiKey: AppState.apiKey, theme: AppState.theme };
+  const toKeep = { badges: AppState.badges, score: AppState.score, proovdDimensions: AppState.proovdDimensions, userName: AppState.userName, apiKey: AppState.apiKey, theme: AppState.theme, xp: AppState.xp || 0 };
   AppState = { ...DEFAULT_STATE, ...toKeep, tokens: 500, campaigns: [] };
   saveState();
   document.getElementById('gameover-modal').style.display = 'none';
   updateTokenBadge();
   showToast('Ricominciato con €500 token!', 'success');
   navigateTo('dashboard');
+}
+
+// === XP SYSTEM ===
+const XP_LEVELS = [
+  { level: 1, title: 'Beginner Marketer',    min: 0,    max: 100,  icon: '🌱' },
+  { level: 2, title: 'Junior Marketer',       min: 100,  max: 300,  icon: '📈' },
+  { level: 3, title: 'Growth Specialist',     min: 300,  max: 600,  icon: '🚀' },
+  { level: 4, title: 'Performance Manager',   min: 600,  max: 1000, icon: '⚡' },
+  { level: 5, title: 'Marketing Expert',      min: 1000, max: 99999, icon: '🏆' },
+];
+function getLevel(xp) {
+  xp = xp || 0;
+  for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
+    if (xp >= XP_LEVELS[i].min) return XP_LEVELS[i];
+  }
+  return XP_LEVELS[0];
+}
+function getLevelProgress(xp) {
+  const lv = getLevel(xp);
+  const range = lv.max - lv.min;
+  const progress = xp - lv.min;
+  return { pct: Math.min(100, (progress / range) * 100), current: progress, total: range };
+}
+function earnXP(amount, reason) {
+  if (!amount || amount <= 0) return;
+  AppState.xp = (AppState.xp || 0) + amount;
+  const prevLevel = getLevel(AppState.xp - amount);
+  const newLevel = getLevel(AppState.xp);
+  logActivity({ type: 'xp', text: `+${amount} XP — ${reason}`, icon: '✨' });
+  saveState();
+  showXPFloat(amount);
+  if (newLevel.level > prevLevel.level) {
+    setTimeout(() => {
+      showToast(`🎉 Livello ${newLevel.level} sbloccato! ${newLevel.icon} ${newLevel.title}`, 'success');
+      if (typeof triggerConfetti === 'function') triggerConfetti();
+    }, 300);
+  }
+  updateXPDisplay();
+}
+function showXPFloat(amount) {
+  const el = document.createElement('div');
+  el.className = 'xp-float';
+  el.textContent = `+${amount} XP`;
+  el.style.left = (window.innerWidth / 2 - 30) + 'px';
+  el.style.top = (window.innerHeight / 2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+function updateXPDisplay() {
+  const xp = AppState.xp || 0;
+  const lv = getLevel(xp);
+  const prog = getLevelProgress(xp);
+  const badgeEl = document.getElementById('xp-level-badge');
+  const barEl = document.getElementById('xp-bar-fill');
+  const labelEl = document.getElementById('xp-bar-label');
+  if (badgeEl) badgeEl.textContent = `${lv.icon} Lv.${lv.level} ${lv.title}`;
+  if (barEl) barEl.style.width = prog.pct + '%';
+  if (labelEl) labelEl.textContent = `${xp} XP — ${prog.current}/${prog.total} per il prossimo livello`;
+}
+function logActivity(entry) {
+  if (!AppState.activityLog) AppState.activityLog = [];
+  AppState.activityLog.unshift({ ...entry, date: Date.now() });
+  if (AppState.activityLog.length > 50) AppState.activityLog = AppState.activityLog.slice(0, 50);
+}
+function formatTimeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(diff / 3600000);
+  const d = Math.floor(diff / 86400000);
+  if (d > 0) return `${d}g fa`;
+  if (h > 0) return `${h}h fa`;
+  if (m > 0) return `${m}m fa`;
+  return 'Ora';
 }
 
 // === AI COACH ENGINE ===
@@ -970,8 +1163,17 @@ function startSimulation() {
       if (c.status !== 'active') return c;
       const next = simulateCampaignDay(c);
       if (next.status === 'completed' && c.status === 'active') {
-        if (next.roas > 3) earnTokens(c.budget * 0.2, `Bonus ROI — ${c.name}`);
+        if (next.roas > 3) {
+          earnTokens(c.budget * 0.2, `Bonus ROI — ${c.name}`);
+          earnXP(30, `ROAS eccellente su ${c.name}`);
+          logActivity({ type:'earn', icon:'🔥', text:`ROAS ${next.roas.toFixed(2)}x su ${c.name}`, date: Date.now() });
+        } else if (next.roas >= 2) {
+          earnXP(15, `Buon ROAS su ${c.name}`);
+        } else {
+          earnXP(10, `Campagna completata — ${c.name}`);
+        }
         if (next.roas < 1) showToast(`⚠️ "${c.name}" ha avuto un ROI negativo`, 'warning');
+        logActivity({ type:'launch', icon:'✅', text:`Campagna "${c.name}" completata`, date: Date.now() });
         checkBadges();
       }
       // AI daily insight ogni 5 giorni simulati
@@ -1581,18 +1783,32 @@ function renderDashboard() {
   if (!view) return;
 
   const campaigns = (AppState.campaigns || []).filter(c => c.status !== 'completed');
-  const avgRoas = campaigns.length
-    ? campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length
-    : 0;
+  const xp = AppState.xp || 0;
+  const lv = getLevel(xp);
+  const prog = getLevelProgress(xp);
+  const name = AppState.userName || 'Marketer';
 
   view.innerHTML = `
-    <div class="dashboard-header">
-      <div>
-        <h1 style="font-size:28px;font-weight:700;margin:0 0 4px">Benvenuto, Marketer 👋</h1>
-        <p style="color:#777;margin:0">Il tuo studio di digital marketing virtuale</p>
+    <!-- HERO -->
+    <div class="dash-hero">
+      <div class="dash-hero-left">
+        <div class="dash-hero-career">
+          <span class="level-badge" id="dash-level-badge">${lv.icon} Lv.${lv.level} ${lv.title}</span>
+        </div>
+        <div class="dash-hero-name">Bentornato, ${name} 👋</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px">Il tuo studio di digital marketing virtuale</div>
+        <div class="dash-hero-xp-row">
+          <div style="flex:1;max-width:200px">
+            <div class="xp-bar-track">
+              <div class="xp-bar-fill" id="dash-xp-fill" style="width:${prog.pct}%"></div>
+            </div>
+          </div>
+          <span class="xp-label" id="dash-xp-label">${xp} XP · ${prog.current}/${prog.total} per Lv.${lv.level+1}</span>
+        </div>
       </div>
-      <button class="btn-primary" onclick="navigateTo('builder')" style="display:flex;align-items:center;gap:8px">
-        <span>+</span> Nuova Campagna
+      <button class="btn-primary" onclick="navigateTo('builder')" style="display:flex;align-items:center;gap:8px;white-space:nowrap;margin-top:4px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuova Campagna
       </button>
     </div>
 
@@ -1603,21 +1819,21 @@ function renderDashboard() {
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:16px">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h3 style="margin:0;font-size:16px;font-weight:600">Andamento Portfolio</h3>
-          <span style="font-size:12px;color:#777">Ultimi 7 giorni</span>
+          <h3 class="card-title" style="margin:0">Andamento Portfolio</h3>
+          <span class="label-xs">Ultimi 7 giorni</span>
         </div>
         <div id="portfolio-chart" style="width:100%;height:180px"></div>
       </div>
 
       <div class="card" id="coach-tip-container" style="display:flex;flex-direction:column">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <div style="width:36px;height:36px;background:#4F6EF7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🤖</div>
+          <div style="width:36px;height:36px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🤖</div>
           <div>
             <div style="font-size:13px;font-weight:600">AI Coach</div>
-            <div style="font-size:11px;color:#777">Consiglio del giorno</div>
+            <div class="label-xs" style="text-transform:none;letter-spacing:0">Consiglio del giorno</div>
           </div>
         </div>
-        <div id="coach-tip-text" style="font-size:13px;line-height:1.6;color:#ccc;flex:1">
+        <div id="coach-tip-text" class="body-sm" style="color:var(--text-secondary);flex:1">
           <div class="skeleton" style="height:12px;border-radius:6px;margin-bottom:8px"></div>
           <div class="skeleton" style="height:12px;border-radius:6px;margin-bottom:8px;width:80%"></div>
           <div class="skeleton" style="height:12px;border-radius:6px;width:90%"></div>
@@ -1625,24 +1841,38 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <h3 style="margin:0;font-size:16px;font-weight:600">Campagne Attive</h3>
-        <span style="font-size:12px;color:#777">${campaigns.length} campagne</span>
+    <!-- GRID: Next Actions + Activity Log -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 class="card-title" style="margin:0">Prossime azioni</h3>
+          <span class="label-xs">Suggeriti per te</span>
+        </div>
+        <div class="next-actions-list" id="next-actions-list"></div>
       </div>
-      <div id="active-campaigns-list"></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 class="card-title" style="margin:0">Attività recente</h3>
+          <span class="label-xs">Ultime 5 azioni</span>
+        </div>
+        <div class="timeline" id="activity-timeline"></div>
+      </div>
     </div>
 
     <div class="card" style="margin-top:16px">
-      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600">Azioni Rapide</h3>
-      <div id="quick-actions"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 class="card-title" style="margin:0">Campagne Attive</h3>
+        <span class="label-xs">${campaigns.length} campagne</span>
+      </div>
+      <div id="active-campaigns-list"></div>
     </div>
   `;
 
   renderKPICards();
   renderPortfolioChart();
   renderActiveCampaignsList();
-  renderQuickActions();
+  renderNextActions();
+  renderActivityTimeline();
   loadDailyTip();
 }
 
@@ -1653,50 +1883,139 @@ function renderKPICards() {
   const tokens = AppState.tokens || 500;
   const maxTokens = 500;
   const tokenPct = Math.min(100, (tokens / maxTokens) * 100);
+  const tokenDelta = (() => {
+    const log = (AppState.activityLog || []).filter(e => e.date > Date.now() - 86400000);
+    const earned = log.filter(e => e.type === 'earn').reduce((s, e) => s + (e.amount || 0), 0);
+    const spent = log.filter(e => e.type === 'spend').reduce((s, e) => s + (e.amount || 0), 0);
+    return earned - spent;
+  })();
 
   const campaigns = (AppState.campaigns || []).filter(c => c.status !== 'completed');
   const avgRoas = campaigns.length
-    ? (campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length).toFixed(2)
+    ? campaigns.reduce((s, c) => s + (c.roas || 0), 0) / campaigns.length
     : 0;
-  const roasColor = avgRoas >= 1 ? '#34D399' : avgRoas > 0 ? '#FF9900' : '#FF4444';
+  const roasNum = parseFloat(avgRoas.toFixed(2));
+  const roasColor = roasNum >= 3 ? '#34D399' : roasNum >= 1 ? '#FBBF24' : roasNum > 0 ? '#F87171' : 'var(--muted)';
+  const roasLabel = roasNum >= 3 ? '🔥 Eccellente' : roasNum >= 1 ? '✅ Positivo' : roasNum > 0 ? '⚠️ In perdita' : 'Nessuna campagna';
 
-  const score = AppState.proovdScore || 0;
+  const score = AppState.proovdScore || AppState.score || 0;
+  const xp = AppState.xp || 0;
+  const lv = getLevel(xp);
+  const prog = getLevelProgress(xp);
 
   grid.innerHTML = `
-    <div class="card kpi-card">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Token Rimasti</div>
-      <div style="font-size:36px;font-weight:700;color:#34D399;margin-bottom:10px">${formatCurrency(tokens)}</div>
-      <div style="background:#1A1A1A;border-radius:100px;height:6px;overflow:hidden">
+    <div class="card kpi-card-premium" data-tooltip="I tuoi token virtuali rappresentano il budget virtuale per lanciare campagne">
+      <div class="kpi-card-header">
+        <span class="label-xs">Token Rimasti</span>
+        ${tokenDelta !== 0 ? `<span class="${tokenDelta > 0 ? 'delta-up' : 'delta-down'}">${tokenDelta > 0 ? '+' : ''}${tokenDelta.toFixed(2)}</span>` : ''}
+      </div>
+      <div class="kpi-value-xl metric" style="color:#34D399;margin-bottom:10px">${formatCurrency(tokens)}</div>
+      <div style="background:var(--surface2);border-radius:100px;height:5px;overflow:hidden">
         <div style="height:100%;width:${tokenPct}%;background:linear-gradient(90deg,#34D399,#00FF88);border-radius:100px;transition:width .5s"></div>
       </div>
-      <div style="font-size:11px;color:#777;margin-top:6px">${tokenPct.toFixed(0)}% del budget iniziale</div>
-    </div>
-
-    <div class="card kpi-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;align-self:flex-start">PROOVD Score</div>
-      <div id="score-gauge" style="width:100px;height:100px"></div>
-      <div style="font-size:13px;font-weight:600;margin-top:4px">${score}/100</div>
-    </div>
-
-    <div class="card kpi-card">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Campagne Attive</div>
-      <div style="font-size:36px;font-weight:700;margin-bottom:4px">${campaigns.length}</div>
-      <div style="font-size:13px;color:#777">${campaigns.length === 1 ? '1 campagna in corso' : campaigns.length + ' campagne in corso'}</div>
-      <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-        ${campaigns.slice(0,3).map(c => `<span style="font-size:11px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:100px;padding:2px 8px">${getPlatformEmoji(c.platform)} ${c.name}</span>`).join('')}
+      <div class="kpi-card-footer">
+        <span class="xp-label">${tokenPct.toFixed(0)}% del budget iniziale</span>
+        <span class="xp-label">${tokens < 100 ? '⚠️ Fondi bassi' : '💰 OK'}</span>
       </div>
     </div>
 
-    <div class="card kpi-card">
-      <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">ROI Medio <span class="tooltip" data-tip="Return On Ad Spend: ricavo generato per ogni euro speso in advertising">ROAS</span></div>
-      <div style="font-size:36px;font-weight:700;color:${roasColor};margin-bottom:4px">${avgRoas > 0 ? avgRoas + 'x' : '—'}</div>
-      <div style="font-size:11px;color:#777;margin-bottom:8px">${avgRoas >= 3 ? '🔥 Eccellente' : avgRoas >= 1 ? '✅ Positivo' : avgRoas > 0 ? '⚠️ In perdita' : 'Nessuna campagna attiva'}</div>
-      <div id="kpi-roas-spark" style="height:36px;width:100%"></div>
+    <div class="card kpi-card-premium" data-tooltip="Il tuo livello XP — cresce con ogni azione in PROOVD">
+      <div class="kpi-card-header">
+        <span class="label-xs">Livello & XP</span>
+        <span class="level-badge" style="font-size:10px">${lv.icon} Lv.${lv.level}</span>
+      </div>
+      <div class="kpi-value-md metric" style="margin-bottom:6px">${lv.title}</div>
+      <div class="xp-bar-track" style="margin-bottom:6px">
+        <div class="xp-bar-fill" style="width:${prog.pct}%"></div>
+      </div>
+      <div class="kpi-card-footer">
+        <span class="xp-label">${xp} XP totali</span>
+        <span class="xp-label">${prog.current}/${prog.total} per Lv.${Math.min(5, lv.level+1)}</span>
+      </div>
+    </div>
+
+    <div class="card kpi-card-premium" data-tooltip="Numero di campagne attualmente in simulazione">
+      <div class="kpi-card-header">
+        <span class="label-xs">Campagne Attive</span>
+      </div>
+      <div class="kpi-value-xl metric" style="margin-bottom:4px">${campaigns.length}</div>
+      <div class="body-sm" style="color:var(--muted);margin-bottom:10px">${campaigns.length === 1 ? '1 campagna in corso' : campaigns.length + ' campagne in corso'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${campaigns.slice(0,3).map(c => `<span style="font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:2px 8px">${getPlatformEmoji(c.platform)} ${c.name}</span>`).join('')}
+        ${campaigns.length > 3 ? `<span style="font-size:11px;color:var(--muted)">+${campaigns.length-3} altri</span>` : ''}
+      </div>
+    </div>
+
+    <div class="card kpi-card-premium" data-tooltip="Return On Ad Spend: ricavo medio per ogni euro investito in advertising">
+      <div class="kpi-card-header">
+        <span class="label-xs">ROAS Medio</span>
+        <span style="font-size:11px;color:var(--muted)">${roasLabel}</span>
+      </div>
+      <div class="kpi-value-xl metric" style="color:${roasColor};margin-bottom:4px">${roasNum > 0 ? roasNum + 'x' : '—'}</div>
+      <div id="kpi-roas-spark" style="height:36px;width:100%;margin-top:6px"></div>
     </div>
   `;
 
-  drawGauge(score, 100, 'score-gauge');
   renderKPISparklines();
+}
+
+function renderNextActions() {
+  const el = document.getElementById('next-actions-list');
+  if (!el) return;
+  const campaigns = AppState.campaigns || [];
+  const active = campaigns.filter(c => c.status === 'active');
+  const actions = [];
+
+  if (!campaigns.length) {
+    actions.push({ icon:'🚀', title:'Lancia la tua prima campagna', desc:'Scegli piattaforma, budget e obiettivo', xp:'+10 XP', fn:`navigateTo('builder')` });
+  }
+  if (active.length === 0 && campaigns.length > 0) {
+    actions.push({ icon:'▶️', title:'Riattiva una campagna', desc:'Hai campagne ferme — rilanciamole', xp:'', fn:`navigateTo('live')` });
+  }
+  if (active.length > 0) {
+    actions.push({ icon:'📊', title:'Analizza le performance', desc:`${active.length} campagna/e in corso con dati da esaminare`, xp:'+5 XP', fn:`navigateTo('analytics')` });
+  }
+  if (!(AppState.personas || []).length) {
+    actions.push({ icon:'👤', title:'Crea una buyer persona', desc:`Definisci il tuo cliente ideale`, xp:'+5 XP', fn:`navigateTo('audience')` });
+  }
+  if (!(AppState.reportsGenerated)) {
+    actions.push({ icon:'📋', title:'Genera il tuo primo report', desc:'Crea un report professionale per un cliente', xp:'+8 XP', fn:`navigateTo('reporting')` });
+  }
+  actions.push({ icon:'🎯', title:'Allenati al colloquio', desc:'Simula un colloquio da junior marketer', xp:'+10 XP', fn:`navigateTo('interview')` });
+
+  const shown = actions.slice(0, 3);
+  if (!shown.length) {
+    el.innerHTML = `<div class="body-sm" style="color:var(--muted);text-align:center;padding:16px">Ottimo lavoro! Nessuna azione urgente 🎉</div>`;
+    return;
+  }
+  el.innerHTML = shown.map(a => `
+    <div class="next-action-item" onclick="${a.fn}">
+      <div class="next-action-icon">${a.icon}</div>
+      <div class="next-action-text">
+        <div class="next-action-title">${a.title}</div>
+        <div class="next-action-desc">${a.desc}</div>
+      </div>
+      ${a.xp ? `<span class="next-action-xp">${a.xp}</span>` : ''}
+    </div>`).join('');
+}
+
+function renderActivityTimeline() {
+  const el = document.getElementById('activity-timeline');
+  if (!el) return;
+  const log = (AppState.activityLog || []).slice(0, 5);
+  if (!log.length) {
+    el.innerHTML = `<div class="body-sm" style="color:var(--muted);text-align:center;padding:16px 0">Nessuna attività ancora — inizia lanciando una campagna!</div>`;
+    return;
+  }
+  const dotClass = { spend:'spend', earn:'earn', badge:'badge', launch:'launch', xp:'xp' };
+  el.innerHTML = log.map(e => `
+    <div class="timeline-item">
+      <div class="timeline-dot ${dotClass[e.type] || 'xp'}">${e.icon || '•'}</div>
+      <div class="timeline-content">
+        <div class="timeline-text">${e.text}</div>
+        <div class="timeline-time">${formatTimeAgo(e.date)}</div>
+      </div>
+    </div>`).join('');
 }
 
 function renderKPISparklines() {
@@ -3272,12 +3591,15 @@ function launchCampaign() {
   if (!AppState.proovdScore) AppState.proovdScore = 0;
   AppState.proovdScore = Math.min(100, AppState.proovdScore + 5);
 
+  earnXP(10, `Campagna "${newCampaign.name}" lanciata`);
+  logActivity({ type:'launch', icon:'🚀', text:`Campagna "${newCampaign.name}" lanciata su ${getPlatformName(newCampaign.platform)}`, date: Date.now() });
+
   if (typeof saveState === 'function') saveState();
 
   AppState.activeCampaign = null;
 
   if (typeof showToast === 'function') {
-    showToast('Campagna "' + newCampaign.name + '" lanciata! 🚀 L\'AI sta analizzando...', 'success');
+    showToast(`Campagna "${newCampaign.name}" lanciata! 🚀 L'AI sta analizzando...`, 'success');
   }
 
   if (typeof navigateTo === 'function') navigateTo('live');
@@ -3512,51 +3834,64 @@ function renderLMCard(c) {
   const budget = c.budget || 1;
   const pct = Math.min(100, (spent/budget)*100).toFixed(0);
   const roas = spent > 0 ? ((c.revenue||0)/spent) : 0;
-  const statusColors = {active:'var(--accent-text)',paused:'var(--yellow)',completed:'var(--muted)'};
-  const statusLabels = {active:'Attiva',paused:'In Pausa',completed:'Completata'};
-  const platformColors = {
-    'Meta Ads':'#1877F2','Google Search':'#4285F4','TikTok':'#000000',
-    'LinkedIn':'#0A66C2','YouTube':'#FF0000','Pinterest':'#E60023'
-  };
-  const platColor = platformColors[c.platform] || 'var(--primary)';
+  const bench = platformBenchmarks[c.platform] || {};
+
+  // Semantic status badge
+  const statusBadge = c.status === 'active'
+    ? `<span class="status-active">⚡ Attiva</span>`
+    : c.status === 'paused'
+    ? `<span class="status-paused-v2">⏸ In Pausa</span>`
+    : `<span class="status-completed">✓ Completata</span>`;
+
+  // Semantic metric colors vs benchmark
+  const ctrColor = !bench.ctr ? 'var(--text)' : c.ctr >= bench.ctr ? 'var(--accent-text)' : c.ctr >= bench.ctr * 0.6 ? 'var(--yellow)' : 'var(--red)';
+  const roasColor = roas >= 3 ? 'var(--accent-text)' : roas >= 1 ? 'var(--yellow)' : roas > 0 ? 'var(--red)' : 'var(--muted)';
+
+  // Quick insight
+  let insight = '';
+  if (c.dayCount > 3 && roas < 0.5 && spent > 10) insight = `<div class="insight-card" style="margin-bottom:12px;padding:10px 12px"><span class="insight-card-title">⚠️ Attenzione</span><div style="font-size:12px;color:var(--text-secondary)">ROAS sotto soglia — considera di ottimizzare il targeting o sospendere.</div></div>`;
+  else if (roas >= 3 && c.dayCount > 2) insight = `<div class="insight-card" style="margin-bottom:12px;padding:10px 12px"><span class="insight-card-title">🔥 Ottima performance</span><div style="font-size:12px;color:var(--text-secondary)">ROAS eccellente! Considera di scalare il budget.</div></div>`;
 
   return `<div id="lm-card-${c.id}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color 0.2s"
     onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="this.style.borderColor='var(--border)'">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name||'Campagna'}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${platColor}"></span>
-          <span style="font-size:12px;color:var(--muted)">${c.platform||'Meta Ads'}</span>
+          <span style="font-size:13px">${getPlatformEmoji(c.platform)}</span>
+          <span style="font-size:12px;color:var(--muted)">${getPlatformName(c.platform)}</span>
+          ${c.dayCount ? `<span style="font-size:11px;color:var(--muted)">· Giorno ${c.dayCount}/${c.duration||7}</span>` : ''}
         </div>
       </div>
-      <span style="font-size:11px;font-weight:500;color:${statusColors[c.status]||'var(--muted)'};background:${statusColors[c.status]||'var(--muted)'}18;padding:3px 10px;border-radius:100px;flex-shrink:0">${statusLabels[c.status]||c.status}</span>
+      ${statusBadge}
     </div>
 
     <div style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:11px;color:var(--muted)">Budget consumato</span>
+        <span class="label-xs" style="text-transform:none;letter-spacing:0">Budget consumato</span>
         <span style="font-size:11px;color:var(--muted)">€${spent.toFixed(0)} / €${budget.toFixed(0)}</span>
       </div>
-      <div style="height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${pct>85?'var(--red)':pct>60?'var(--yellow)':'var(--primary)'};border-radius:100px"></div>
+      <div style="height:5px;background:var(--surface2);border-radius:100px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${pct>85?'var(--red)':pct>60?'var(--yellow)':'var(--primary)'};border-radius:100px;transition:width .5s"></div>
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
       ${[
-        {label:'CTR',value:(c.ctr||0).toFixed(2)+'%'},
-        {label:'CPM',value:'€'+(c.cpm||0).toFixed(2)},
-        {label:'ROAS',value:roas.toFixed(2)+'x'}
-      ].map(({label,value}) => `<div style="text-align:center;background:var(--surface2);border-radius:8px;padding:8px">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">${value}</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${label}</div>
+        {label:'CTR',value:(c.ctr||0).toFixed(2)+'%',color:ctrColor,tip:`Benchmark: ${bench.ctr||'—'}%`},
+        {label:'CPM',value:'€'+(c.cpm||0).toFixed(2),color:'var(--text)',tip:`Benchmark: €${bench.cpm||'—'}`},
+        {label:'ROAS',value:roas > 0 ? roas.toFixed(2)+'x':'—',color:roasColor,tip:'Return On Ad Spend'}
+      ].map(({label,value,color,tip}) => `<div style="text-align:center;background:var(--surface2);border-radius:8px;padding:8px;cursor:help" data-tooltip="${tip}">
+        <div style="font-size:13px;font-weight:700;color:${color}">${value}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px">${label}</div>
       </div>`).join('')}
     </div>
 
+    ${insight}
+
     ${(c.dailyData && c.dailyData.length > 1) ? `
     <div style="margin-bottom:12px">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Andamento Spesa</div>
+      <div class="label-xs" style="margin-bottom:4px">Andamento Spesa</div>
       <div id="lm-spark-${c.id}" style="height:36px;width:100%"></div>
     </div>` : ''}
 
@@ -3688,7 +4023,7 @@ function alTab(tab) {
     setTimeout(() => calcWhatIf(), 0);
   } else if (tab === 'benchmarks') {
     content.innerHTML = renderALBenchmarks();
-    setTimeout(renderALBenchmarkChart, 0);
+    setTimeout(() => { renderALBenchmarkChart(); renderIndustryBenchmarks(); }, 0);
   }
 }
 
@@ -3880,7 +4215,8 @@ function renderALWhatIf() {
 function calcWhatIf() {
   const get = id => parseFloat(document.getElementById(id)?.value)||0;
   const budget=get('wi-budget'), ctr=get('wi-ctr'), cvr=get('wi-cvr'), aov=get('wi-aov');
-  const impressions = budget / 8 * 1000;
+  const cpm = get('al-cpm') || 10; // usa CPM dall'input
+  const impressions = budget / cpm * 1000;
   const clicks = impressions * (ctr / 100);
   const conversions = clicks * (cvr / 100);
   const revenue = conversions * aov;
@@ -3952,6 +4288,52 @@ function renderALBenchmarks() {
         </tbody>
       </table>
     </div>
+
+    <!-- Industry Benchmarks Section -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <h3 class="card-title" style="margin:0">Benchmark per Settore</h3>
+        <select id="industry-select" onchange="renderIndustryBenchmarks()" style="width:auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--text)">
+          <option value="ecommerce">E-Commerce</option>
+          <option value="saas">SaaS / Software</option>
+          <option value="retail">Retail</option>
+          <option value="food">Food & Beverage</option>
+          <option value="finance">Finance</option>
+          <option value="education">Education</option>
+          <option value="health">Health & Wellness</option>
+          <option value="travel">Travel</option>
+        </select>
+      </div>
+      <div id="industry-bench-table"></div>
+    </div>
+  </div>`;
+}
+
+function renderIndustryBenchmarks() {
+  const sector = document.getElementById('industry-select')?.value || 'ecommerce';
+  const data = industryBenchmarks[sector];
+  const el = document.getElementById('industry-bench-table');
+  if (!el || !data) return;
+  const rows = Object.entries(data).map(([plat, d]) => {
+    const roasColor = d.roas >= 4 ? 'var(--accent-text)' : d.roas >= 2 ? 'var(--yellow)' : 'var(--red)';
+    return `<tr>
+      <td style="padding:10px 12px;font-size:13px;font-weight:500;color:var(--text)">${getPlatformEmoji(plat)} ${getPlatformName(plat)}</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text-secondary)">${d.ctr}%</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text-secondary)">€${d.cpc}</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text-secondary)">${d.cvr}%</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text-secondary)">€${d.cpa}</td>
+      <td style="padding:10px 12px;font-size:13px;font-weight:700;color:${roasColor}">${d.roas}x</td>
+    </tr>`;
+  });
+  el.innerHTML = `<div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:var(--surface2)">
+          ${['Piattaforma','CTR','CPC','CVR','CPA','ROAS'].map(h=>`<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${h}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>
   </div>`;
 }
 
@@ -4198,6 +4580,11 @@ function generateReport(type) {
   const revenue = campaigns.reduce((s,c)=>s+(c.revenue||0),0);
   const roas = spent>0?revenue/spent:0;
   const text = `${type}\n${'='.repeat(type.length)}\n\nData: ${new Date().toLocaleDateString('it-IT')}\n\nKPI PRINCIPALI\n• Campagne totali: ${total} (${active} attive)\n• Budget speso: €${spent.toFixed(2)}\n• Revenue generata: €${revenue.toFixed(2)}\n• ROAS medio: ${roas.toFixed(2)}x\n\nGenerato da PROOVD`;
+  AppState.reportsGenerated = (AppState.reportsGenerated || 0) + 1;
+  earnXP(8, `Report "${type}" generato`);
+  logActivity({ type:'xp', icon:'📋', text:`Report "${type}" generato`, date: Date.now() });
+  checkBadges();
+  saveState();
   document.getElementById('rs-ai-output').innerHTML = `<pre style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.6">${text}</pre><button onclick="copyReportText(${JSON.stringify(JSON.stringify(text))})" style="margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-pill);padding:7px 16px;color:var(--text);font-size:12px;cursor:pointer">📋 Copia</button>`;
 }
 
@@ -4539,7 +4926,14 @@ Dai un voto da 1 a 10 e un feedback costruttivo in italiano (max 3 frasi). Forma
     state.score = Math.round(((state.score||0) * (state.rounds-1) + eval_result.score) / state.rounds);
     state.chatHistory = [...(state.chatHistory||[]), {answer, feedback: eval_result.feedback, score: eval_result.score}];
 
-    if (eval_result.score >= 8) { addTokens(10); showToast('+10 token! Risposta eccellente 🎉','success'); }
+    if (eval_result.score >= 8) {
+      earnTokens(10, 'Risposta colloquio eccellente');
+      earnXP(10, `Risposta colloquio ${eval_result.score}/10`);
+      logActivity({ type:'xp', icon:'🎤', text:`Colloquio: ${eval_result.score}/10 — risposta eccellente`, date: Date.now() });
+    } else if (eval_result.score >= 6) {
+      earnXP(5, `Risposta colloquio ${eval_result.score}/10`);
+    }
+    updateProovdScore('interview', eval_result.score >= 8 ? 5 : eval_result.score >= 6 ? 2 : 0);
     localStorage.setItem('interview_state', JSON.stringify(state));
 
     if (chatEl) {
@@ -4746,6 +5140,9 @@ function checkBadges() {
       if (typeof showToast === 'function') {
         showToast(`${b.emoji} Badge sbloccato: ${b.name}!`, 'success');
       }
+      earnXP(20, `Badge "${b.name}" sbloccato`);
+      logActivity({ type:'badge', icon:b.emoji, text:`Badge "${b.name}" sbloccato!`, date: Date.now() });
+      if (typeof triggerConfetti === 'function') triggerConfetti();
     });
     // Refresh badge grid if visible
     const grid = document.getElementById('badge-grid');
@@ -4885,7 +5282,11 @@ function renderCreativeStudio() {
     <div style="padding:24px;max-width:1100px;margin:0 auto">
       <div style="margin-bottom:28px">
         <h1 style="font-size:22px;font-weight:700;color:var(--text);margin:0 0 6px">Creative Studio</h1>
-        <p style="color:var(--muted);font-size:14px;margin:0">Carica le tue creative pubblicitarie e ricevi un\'analisi AI professionale</p>
+        <p style="color:var(--muted);font-size:14px;margin:0">Analisi AI delle tue creative pubblicitarie basata su descrizione e best practice</p>
+        <div style="margin-top:10px;background:#FBBF2410;border:1px solid #FBBF2430;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px">ℹ️</span>
+          <span style="font-size:12px;color:var(--yellow)">L'analisi AI si basa sulla <strong>descrizione testuale</strong> della creative — l'immagine caricata viene usata come anteprima locale e non viene inviata ai server.</span>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
         <div>
@@ -5161,6 +5562,8 @@ function initApp() {
   if (!AppState.userName) AppState.userName = 'Marketer';
   if (!AppState.score) AppState.score = 0;
   if (!AppState.aiCallCount) AppState.aiCallCount = 0;
+  if (AppState.xp === undefined) AppState.xp = 0;
+  if (!AppState.activityLog) AppState.activityLog = [];
 
   // Recalculate score on load
   AppState.score = calculateTotalScore();
@@ -5171,10 +5574,13 @@ function initApp() {
   const scoreEl = document.getElementById('score-badge');
   if (scoreEl) scoreEl.textContent = AppState.score + '/100';
 
+  // Update XP display
+  updateXPDisplay();
+
   // Check badges on init
   checkBadges();
 
-  console.log('PROOVD: app inizializzata ✓', { tokens: AppState.tokens, score: AppState.score, badges: AppState.badges.length });
+  console.log('PROOVD: app inizializzata ✓', { tokens: AppState.tokens, score: AppState.score, xp: AppState.xp, badges: AppState.badges.length });
 }
 
 // Run init when DOM is ready
