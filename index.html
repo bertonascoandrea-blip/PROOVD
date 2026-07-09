@@ -1004,68 +1004,86 @@ function stopSimulation() {
 // === CHARTS (SVG) ===
 function drawLineChart(data, containerId, opts={}) {
   const el = document.getElementById(containerId);
-  if (!el || !data.length) return;
-  const W = el.offsetWidth || 400, H = el.offsetHeight || 120;
-  const pad = { top:10, right:10, bottom:20, left:40 };
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const xStep = (W - pad.left - pad.right) / Math.max(data.length-1, 1);
-  const yScale = v => pad.top + (H - pad.top - pad.bottom) * (1 - (v - min) / (max - min || 1));
-  const pts = data.map((v, i) => `${pad.left + i * xStep},${yScale(v)}`);
+  if (!el) return;
+  // Normalizza input: accetta sia array numerico sia array {label,value}
+  const values = data.map(d => (typeof d === 'object' ? d.value : d));
+  const labels = data.map((d, i) => (typeof d === 'object' && d.label ? d.label : `${i+1}`));
+  if (!values.length) return;
   const color = opts.color || '#4F6EF7';
-  const fillPts = `${pad.left},${H-pad.bottom} ${pts.join(' ')} ${pad.left+(data.length-1)*xStep},${H-pad.bottom}`;
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%" preserveAspectRatio="none">
-    <defs><linearGradient id="lg${containerId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.3"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
-    <polygon points="${fillPts}" fill="url(#lg${containerId})"/>
-    <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
-    ${data.map((v,i)=>`<circle cx="${pad.left+i*xStep}" cy="${yScale(v)}" r="3" fill="${color}"/>`).join('')}
-    <line x1="${pad.left}" y1="${H-pad.bottom}" x2="${W-pad.right}" y2="${H-pad.bottom}" stroke="var(--border)" stroke-width="1"/>
-    <text x="${pad.left-4}" y="${pad.top+4}" font-size="10" fill="var(--muted)" text-anchor="end">${Math.round(max)}</text>
-    <text x="${pad.left-4}" y="${H-pad.bottom}" font-size="10" fill="var(--muted)" text-anchor="end">${Math.round(min)}</text>
-  </svg>`;
+  // Distrugge istanza precedente se esiste
+  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
+  el.innerHTML = '';
+  const chart = new ApexCharts(el, {
+    chart: { type: 'area', height: el.offsetHeight || 180, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 600 }, sparkline: { enabled: false } },
+    series: [{ name: opts.label || 'Valore', data: values }],
+    xaxis: { categories: labels, labels: { style: { colors: '#777', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { labels: { style: { colors: '#777', fontSize: '10px' }, formatter: v => Math.round(v) }, min: Math.min(...values) * 0.9 },
+    colors: [color],
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.0, stops: [0, 100] } },
+    stroke: { curve: 'smooth', width: 2 },
+    markers: { size: 3, colors: [color], strokeColors: color },
+    tooltip: { theme: 'dark', y: { formatter: v => (opts.currency ? '€' : '') + (v != null ? v.toFixed(2) : '—') } },
+    grid: { borderColor: '#2A2A2A', strokeDashArray: 3 },
+    theme: { mode: 'dark' },
+  });
+  chart.render();
+  el._apexChart = chart;
 }
 function drawBarChart(data, containerId, opts={}) {
   const el = document.getElementById(containerId);
   if (!el || !data.length) return;
-  const W = el.offsetWidth || 300, barH = 24, gap = 8;
-  const H = data.length * (barH + gap);
-  const max = Math.max(...data.map(d=>d.value), 1);
   const color = opts.color || '#4F6EF7';
-  const labelW = 100;
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px">
-    ${data.map((d, i) => {
-      const barW = Math.max(4, (d.value/max) * (W - labelW - 60));
-      const y = i * (barH + gap);
-      return `<text x="${labelW-4}" y="${y+barH/2+4}" font-size="12" fill="var(--muted)" text-anchor="end">${d.label}</text>
-        <rect x="${labelW}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="${color}" opacity="0.85"/>
-        <text x="${labelW+barW+6}" y="${y+barH/2+4}" font-size="12" fill="var(--text)">${d.value.toFixed?d.value.toFixed(2):d.value}</text>`;
-    }).join('')}
-  </svg>`;
+  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
+  el.innerHTML = '';
+  const chart = new ApexCharts(el, {
+    chart: { type: 'bar', height: data.length * 40 + 20, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 500 } },
+    plotOptions: { bar: { horizontal: true, borderRadius: 4, dataLabels: { position: 'top' } } },
+    series: [{ name: opts.label || 'Valore', data: data.map(d => d.value) }],
+    xaxis: { categories: data.map(d => d.label), labels: { style: { colors: '#777', fontSize: '11px' } } },
+    yaxis: { labels: { style: { colors: '#777', fontSize: '11px' } } },
+    colors: [color],
+    dataLabels: { enabled: true, style: { colors: ['#F0F0F0'], fontSize: '11px' }, formatter: v => v.toFixed ? v.toFixed(2) : v },
+    tooltip: { theme: 'dark' },
+    grid: { borderColor: '#2A2A2A', strokeDashArray: 3 },
+    theme: { mode: 'dark' },
+  });
+  chart.render();
+  el._apexChart = chart;
 }
 function drawGauge(value, max, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   const pct = Math.min(value / max, 1);
-  const r = 54, cx = 70, cy = 70;
-  const circ = Math.PI * r;
-  const dash = pct * circ;
   const color = pct < 0.3 ? '#F87171' : pct < 0.6 ? '#FBBF24' : '#34D399';
-  el.innerHTML = `<svg viewBox="0 0 140 100" style="width:100%;max-width:140px">
-    <path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="var(--surface2)" stroke-width="12" stroke-linecap="round"/>
-    <path d="M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${dash} ${circ}" style="transition:stroke-dasharray 600ms ease"/>
-    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="22" font-weight="700" fill="var(--text)">${Math.round(value)}</text>
-    <text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="12" fill="var(--muted)">/ ${max}</text>
-  </svg>`;
+  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
+  el.innerHTML = '';
+  const chart = new ApexCharts(el, {
+    chart: { type: 'radialBar', height: 140, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 700 } },
+    series: [Math.round(pct * 100)],
+    plotOptions: { radialBar: { startAngle: -90, endAngle: 90, hollow: { size: '60%' }, track: { background: '#1A1A1A', strokeWidth: '100%' }, dataLabels: { name: { show: false }, value: { offsetY: -8, fontSize: '20px', fontWeight: '700', color: color, formatter: () => `${Math.round(value)}` } } } },
+    colors: [color],
+    labels: [`/ ${max}`],
+    theme: { mode: 'dark' },
+  });
+  chart.render();
+  el._apexChart = chart;
 }
 function drawSparkline(data, containerId) {
   const el = document.getElementById(containerId);
   if (!el || !data.length) return;
-  const W = 80, H = 32;
-  const max = Math.max(...data, 1), min = Math.min(...data, 0);
-  const xStep = W / Math.max(data.length-1, 1);
-  const yScale = v => H * (1 - (v - min) / (max - min || 1));
-  const pts = data.map((v, i) => `${i*xStep},${yScale(v)}`).join(' ');
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;height:${H}px"><polyline points="${pts}" fill="none" stroke="var(--lime)" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+  const values = data.map(d => (typeof d === 'object' ? d.value : d));
+  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
+  el.innerHTML = '';
+  const chart = new ApexCharts(el, {
+    chart: { type: 'line', height: 32, width: 80, background: 'transparent', sparkline: { enabled: true }, animations: { enabled: false } },
+    series: [{ data: values }],
+    stroke: { curve: 'smooth', width: 1.5 },
+    colors: ['#AAFF00'],
+    tooltip: { enabled: false },
+    theme: { mode: 'dark' },
+  });
+  chart.render();
+  el._apexChart = chart;
 }
 
 // === ROUTER ===
@@ -4398,17 +4416,18 @@ function getScoreLabel(score) {
 function drawScoreGauge(value, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
-  const pct = value / 100;
   const color = value >= 70 ? '#34D399' : value >= 50 ? '#4F6EF7' : '#FF6B35';
-  const angle = pct * 180;
-  el.innerHTML = `
-    <svg viewBox="0 0 160 80" style="width:160px;height:80px;">
-      <path d="M10,80 A70,70 0 0,1 150,80" stroke="#1A1A1A" stroke-width="12" fill="none" stroke-linecap="round"/>
-      <path d="M10,80 A70,70 0 0,1 150,80" stroke="${color}" stroke-width="12" fill="none" stroke-linecap="round"
-        stroke-dasharray="${pct * 220} 220" style="transition:stroke-dasharray .8s ease;"/>
-      <text x="80" y="70" text-anchor="middle" fill="${color}" font-size="22" font-weight="900" font-family="Inter,sans-serif">${value}</text>
-    </svg>
-  `;
+  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
+  el.innerHTML = '';
+  const chart = new ApexCharts(el, {
+    chart: { type: 'radialBar', height: 160, width: 160, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 800 } },
+    series: [value],
+    plotOptions: { radialBar: { startAngle: -90, endAngle: 90, hollow: { size: '55%' }, track: { background: '#1A1A1A' }, dataLabels: { name: { show: false }, value: { offsetY: -10, fontSize: '26px', fontWeight: '900', fontFamily: 'Inter, sans-serif', color: color, formatter: v => Math.round(v) } } } },
+    colors: [color],
+    theme: { mode: 'dark' },
+  });
+  chart.render();
+  el._apexChart = chart;
 }
 
 function renderScoreBreakdown() {
@@ -4452,44 +4471,32 @@ function renderScoreBreakdown() {
   `;
 }
 
-function drawRadarSVG(data) {
-  const cx = 90, cy = 90, r = 70;
-  const n = data.length;
-  const angles = data.map((_, i) => (i * 2 * Math.PI / n) - Math.PI / 2);
-
-  function point(val, angle, radius) {
-    const pct = val / 100;
-    return [cx + radius * pct * Math.cos(angle), cy + radius * pct * Math.sin(angle)];
-  }
-
-  // Grid circles
-  const gridCircles = [0.25, 0.5, 0.75, 1].map(g =>
-    `<circle cx="${cx}" cy="${cy}" r="${r * g}" fill="none" stroke="#2A2A2A" stroke-width="1"/>`
-  ).join('');
-
-  // Axes
-  const axes = angles.map(a =>
-    `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(a)}" y2="${cy + r * Math.sin(a)}" stroke="#2A2A2A" stroke-width="1"/>`
-  ).join('');
-
-  // Data polygon
-  const pts = data.map((d2, i) => point(d2.value, angles[i], r));
-  const polygon = pts.map(p => p.join(',')).join(' ');
-
-  // Labels
-  const labels = data.map((d2, i) => {
-    const [lx, ly] = [cx + (r + 14) * Math.cos(angles[i]), cy + (r + 14) * Math.sin(angles[i])];
-    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#777" font-size="9" font-family="Inter,sans-serif">${d2.label}</text>`;
-  }).join('');
-
-  return `
-    <svg viewBox="0 0 180 180" style="width:180px;height:180px;">
-      ${gridCircles}${axes}
-      <polygon points="${polygon}" fill="#4F6EF722" stroke="#4F6EF7" stroke-width="2"/>
-      ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#4F6EF7"/>`).join('')}
-      ${labels}
-    </svg>
-  `;
+function drawRadarSVG(data, containerId) {
+  // Se viene passato un containerId, renderizza ApexCharts nel container
+  // Se no (retrocompatibilità), restituisce un div placeholder con id generato
+  const tempId = containerId || ('radar-' + Math.random().toString(36).slice(2, 7));
+  // Restituisce il div placeholder; renderizzazione avviene dopo che l'HTML è nel DOM
+  setTimeout(() => {
+    const el = document.getElementById(tempId);
+    if (!el || typeof ApexCharts === 'undefined') return;
+    if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
+    const chart = new ApexCharts(el, {
+      chart: { type: 'radar', height: 220, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 700 } },
+      series: [{ name: 'Score', data: data.map(d => d.value) }],
+      xaxis: { categories: data.map(d => d.label) },
+      yaxis: { min: 0, max: 100, show: false },
+      colors: ['#4F6EF7'],
+      fill: { opacity: 0.15 },
+      stroke: { width: 2 },
+      markers: { size: 4 },
+      plotOptions: { radar: { polygons: { strokeColors: '#2A2A2A', fill: { colors: ['#111111', '#161616'] } } } },
+      tooltip: { theme: 'dark', y: { formatter: v => v + '/100' } },
+      theme: { mode: 'dark' },
+    });
+    chart.render();
+    el._apexChart = chart;
+  }, 0);
+  return `<div id="${tempId}" style="width:220px;height:220px;"></div>`;
 }
 
 function calculateTotalScore() {
