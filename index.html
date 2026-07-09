@@ -3936,6 +3936,7 @@ function renderLMCard(c) {
         c.status === 'paused' ?
         `<button onclick="resumeCampaign('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:7px;font-size:12px;color:var(--muted);cursor:pointer">▶ Riprendi</button>` :
         `<div style="flex:1"></div>`}
+      <button onclick="showAIInsight('${c.id}')" style="flex:1;background:linear-gradient(135deg,#A78BFA18,#4F6EF710);border:1px solid #A78BFA40;border-radius:var(--radius-pill);padding:7px;font-size:12px;color:#A78BFA;cursor:pointer">✨ AI</button>
       <button onclick="showLMDetail('${c.id}')" style="flex:1;background:var(--primary-dim);border:1px solid var(--primary);border-radius:var(--radius-pill);padding:7px;font-size:12px;color:var(--primary);cursor:pointer">Dettaglio →</button>
     </div>
   </div>`;
@@ -3977,6 +3978,85 @@ function pauseCampaign(id) {
 function resumeCampaign(id) {
   const c = (AppState.campaigns||[]).find(x => x.id === id);
   if (c) { c.status = 'active'; saveState(); renderLiveManager(); showToast('Campagna riattivata', 'success'); }
+}
+
+async function showAIInsight(id) {
+  const c = (AppState.campaigns||[]).find(x => x.id === id);
+  if (!c) return;
+  const roas = c.spent > 0 ? ((c.revenue||0)/c.spent) : 0;
+  const bench = platformBenchmarks[c.platform] || {};
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = (e) => { if(e.target===modal) modal.remove(); };
+  modal.innerHTML = `<div style="background:var(--surface);border:1px solid #A78BFA40;border-radius:var(--radius);padding:28px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h2 style="font-size:16px;font-weight:700;color:var(--text);margin:0 0 2px">✨ AI Coach — ${c.name}</h2>
+        <span style="font-size:11px;color:var(--muted)">Analisi intelligente campagna</span>
+      </div>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div id="ai-insight-body">
+      <div style="display:flex;align-items:center;gap:10px;padding:20px;justify-content:center">
+        <div style="width:20px;height:20px;border:2px solid #A78BFA;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+        <span style="color:var(--text-secondary);font-size:13px">AI Coach sta analizzando la campagna…</span>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+
+  const apiKey = localStorage.getItem('groq_api_key') || AppState.apiKey;
+  const insightEl = document.getElementById('ai-insight-body');
+  if (!apiKey) {
+    insightEl.innerHTML = `<p style="color:var(--muted);font-size:13px;text-align:center">Configura la chiave API Groq nelle impostazioni per usare l'AI Coach.</p>`;
+    return;
+  }
+
+  const prompt = `Sei un AI Coach di digital marketing. Analizza questa campagna pubblicitaria di un junior marketer e dai feedback precisi e utili in italiano.
+
+DATI CAMPAGNA:
+- Nome: ${c.name}
+- Piattaforma: ${getPlatformName(c.platform)}
+- Budget totale: €${c.budget}
+- Budget speso: €${c.spent?.toFixed(2)||0} (${((c.spent||0)/(c.budget||1)*100).toFixed(0)}%)
+- Giorno ${c.dayCount||0} su ${c.duration||7}
+- Impressioni: ${(c.impressions||0).toLocaleString('it-IT')}
+- Click: ${(c.clicks||0).toLocaleString('it-IT')}
+- CTR: ${(c.ctr||0).toFixed(2)}% (benchmark settore: ${bench.ctr||'—'}%)
+- CPC medio: €${(c.cpc||0).toFixed(2)}
+- CPM: €${(c.cpm||0).toFixed(2)} (benchmark: €${bench.cpm||'—'})
+- Revenue generata: €${(c.revenue||0).toFixed(2)}
+- ROAS: ${roas.toFixed(2)}x
+
+Fornisci:
+1. **Valutazione** (1 frase: campagna va bene/male/media e perché)
+2. **Punto di forza** (cosa sta funzionando)
+3. **Criticità principale** (il problema più urgente, se presente)
+4. **Azione consigliata** (cosa fare ORA — specifica e pratica)
+5. **Proiezione** (se continua così, ROAS finale stimato?)
+
+Sii diretto, pratico, come un vero media buyer senior. Max 180 parole.`;
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body: JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:450})
+    });
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || 'Nessun insight disponibile.';
+    const formatted = text.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text)">$1</strong>');
+    insightEl.innerHTML = `
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.7">${formatted}</div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="copyReportText(${JSON.stringify(JSON.stringify(text))})" style="background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:6px 14px;color:var(--text-secondary);font-size:12px;cursor:pointer">📋 Copia</button>
+        <button onclick="saveReport('AI Insight — ${c.name}',${JSON.stringify(JSON.stringify(text))})" style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:100px;padding:6px 14px;color:var(--primary);font-size:12px;cursor:pointer">💾 Salva nel Report</button>
+      </div>`;
+    earnXP(5, `AI Insight su "${c.name}"`);
+    logActivity({ type:'ai', icon:'✨', text:`AI Coach analizzato campagna "${c.name}"`, date: Date.now() });
+  } catch(e) {
+    insightEl.innerHTML = `<p style="color:#F87171;font-size:13px">Errore AI: ${e.message}</p>`;
+  }
 }
 
 function showLMDetail(id) {
@@ -4678,7 +4758,16 @@ function renderAudienceStudio() {
               ).join('')}
             </div>
           </div>
-          <button onclick="savePersona()" style="margin-top:16px;width:100%;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-pill);padding:10px;font-size:13px;font-weight:600;cursor:pointer">Salva Persona</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+            <button onclick="savePersona()" style="background:var(--primary);color:#fff;border:none;border-radius:var(--radius-pill);padding:10px;font-size:13px;font-weight:600;cursor:pointer">Salva Persona</button>
+            <button onclick="aiGeneratePersona()" style="background:var(--surface2);border:1px solid #A78BFA40;border-radius:var(--radius-pill);padding:10px;font-size:13px;font-weight:600;color:#A78BFA;cursor:pointer">✨ Genera con AI</button>
+          </div>
+          <div id="as-ai-status" style="margin-top:10px;display:none">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">
+              <div style="width:14px;height:14px;border:2px solid #A78BFA;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0"></div>
+              Generazione persona AI…
+            </div>
+          </div>
         </div>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
@@ -4695,6 +4784,35 @@ function renderAudienceStudio() {
                 <button onclick="deletePersona(${i})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;flex-shrink:0">×</button>
               </div>`).join('')}
           </div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0">Analisi Competitor AI</h3>
+          <button onclick="runCompetitorAnalysis()" style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:var(--radius-pill);padding:7px 16px;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer">🔍 Analizza</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div>
+            <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px">Settore / Mercato</label>
+            <select id="comp-sector" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px">
+              <option value="ecommerce">E-commerce / Retail</option>
+              <option value="saas">SaaS / Software</option>
+              <option value="food">Food & Beverage</option>
+              <option value="fashion">Fashion & Lifestyle</option>
+              <option value="finance">Finance / Fintech</option>
+              <option value="health">Health & Wellness</option>
+              <option value="education">Education / Formazione</option>
+              <option value="travel">Travel & Tourism</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px">Prodotto / Brand</label>
+            <input id="comp-brand" placeholder="Es. Nike, Spotify, Canva..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px;box-sizing:border-box">
+          </div>
+        </div>
+        <div id="as-competitor-output" style="background:var(--surface2);border-radius:10px;padding:16px;min-height:80px">
+          <p style="color:var(--muted);font-size:12px;text-align:center;margin:16px 0">Inserisci settore e brand → AI analizza strategie pubblicitarie competitor</p>
         </div>
       </div>
 
@@ -4746,6 +4864,110 @@ function deletePersona(index) {
   personas.splice(index, 1);
   localStorage.setItem('personas', JSON.stringify(personas));
   renderAudienceStudio();
+}
+
+async function aiGeneratePersona() {
+  const statusEl = document.getElementById('as-ai-status');
+  if (statusEl) statusEl.style.display = 'block';
+  const sector = document.getElementById('comp-sector')?.value || 'ecommerce';
+  const brand = document.getElementById('comp-brand')?.value || '';
+  const existingName = document.getElementById('bp-name')?.value || '';
+  const existingRole = document.getElementById('bp-role')?.value || '';
+  const hint = [existingName, existingRole, brand, sector].filter(Boolean).join(', ') || sector;
+
+  const prompt = `Sei un esperto di marketing. Crea una buyer persona dettagliata in italiano per il settore "${sector}"${brand ? ` (brand di riferimento: ${brand})` : ''}.
+
+Rispondi SOLO con un JSON valido con questa struttura esatta:
+{
+  "name": "Nome Cognome, XX anni",
+  "role": "Titolo professionale",
+  "age": "XX-XX anni",
+  "income": "€XX.000-XX.000/anno",
+  "interests": "3-4 interessi specifici e pain points reali",
+  "channels": ["canale1", "canale2", "canale3"]
+}
+
+I canali devono essere scelti tra: Instagram, LinkedIn, Google, TikTok, Email, YouTube.`;
+
+  try {
+    const apiKey = localStorage.getItem('groq_api_key') || AppState.apiKey;
+    if (!apiKey) { showToast('Configura la chiave API Groq nelle impostazioni','warn'); if(statusEl) statusEl.style.display='none'; return; }
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body: JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:400,temperature:0.8})
+    });
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || '';
+    const jsonMatch = text.match(/\{[\s\S]+\}/);
+    if (!jsonMatch) throw new Error('JSON non trovato');
+    const persona = JSON.parse(jsonMatch[0]);
+    const fillField = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+    fillField('bp-name', persona.name);
+    fillField('bp-role', persona.role);
+    fillField('bp-age', persona.age);
+    fillField('bp-income', persona.income);
+    fillField('bp-interests', persona.interests);
+    if (persona.channels) {
+      document.querySelectorAll('#bp-channels button').forEach(btn => {
+        const active = persona.channels.includes(btn.dataset.channel);
+        btn.classList.toggle('active', active);
+        btn.style.background = active ? 'var(--primary)' : 'var(--surface2)';
+        btn.style.color = active ? '#fff' : 'var(--text-secondary)';
+      });
+    }
+    showToast('Persona generata! Modifica se vuoi, poi salva.', 'success');
+    earnXP(3, 'Persona generata con AI');
+  } catch(e) {
+    showToast('Errore generazione AI. Riprova.', 'error');
+  } finally {
+    if (statusEl) statusEl.style.display = 'none';
+  }
+}
+
+async function runCompetitorAnalysis() {
+  const sector = document.getElementById('comp-sector')?.value || 'ecommerce';
+  const brand = document.getElementById('comp-brand')?.value?.trim() || '';
+  const outputEl = document.getElementById('as-competitor-output');
+  if (!outputEl) return;
+
+  outputEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">
+    <div style="width:14px;height:14px;border:2px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0"></div>
+    Analisi competitor in corso…
+  </div>
+  ${[...Array(4)].map(()=>`<div style="height:10px;background:var(--surface);border-radius:4px;margin:8px 0;animation:pulse 1.5s ease infinite"></div>`).join('')}`;
+
+  const prompt = `Sei un esperto di digital advertising. Analizza brevemente in italiano la strategia pubblicitaria tipica dei competitor nel settore "${sector}"${brand ? ` per brand simili a "${brand}"` : ''}.
+
+Fornisci:
+1. Le 2-3 piattaforme più usate (con % budget tipico)
+2. Angolo creativo dominante (es. "UGC testimonial", "Offerta sconto", "Educazionale")
+3. Posizionamento di prezzo (premium / medio / low-cost)
+4. Stagionalità principale (quando investono di più)
+5. Una raccomandazione per differenziarsi
+
+Sii conciso, pratico, professionale. Max 200 parole.`;
+
+  try {
+    const apiKey = localStorage.getItem('groq_api_key') || AppState.apiKey;
+    if (!apiKey) { outputEl.innerHTML = `<p style="color:var(--muted);font-size:12px;text-align:center;margin:16px 0">Configura la chiave API Groq per usare questa funzione</p>`; return; }
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body: JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:400})
+    });
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || 'Nessuna risposta';
+    outputEl.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap">${text}</div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+        <button onclick="copyReportText(${JSON.stringify(JSON.stringify(text))})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-pill);padding:5px 14px;color:var(--text-secondary);font-size:11px;cursor:pointer">📋 Copia</button>
+        <span style="font-size:11px;color:var(--muted);align-self:center">Analisi AI per settore ${sector}</span>
+      </div>`;
+    earnXP(5, 'Analisi competitor completata');
+    logActivity({ type:'insight', icon:'🔍', text:`Analisi competitor settore ${sector}`, date: Date.now() });
+  } catch(e) {
+    outputEl.innerHTML = `<p style="color:#F87171;font-size:12px">Errore: ${e.message}</p><button onclick="runCompetitorAnalysis()" style="background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:5px 14px;color:var(--text);font-size:11px;cursor:pointer">Riprova</button>`;
+  }
 }
 
 // === MODULE: INTERVIEW COACH ===
