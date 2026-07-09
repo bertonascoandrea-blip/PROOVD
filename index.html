@@ -1002,88 +1002,166 @@ function stopSimulation() {
 }
 
 // === CHARTS (SVG) ===
-function drawLineChart(data, containerId, opts={}) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  // Normalizza input: accetta sia array numerico sia array {label,value}
-  const values = data.map(d => (typeof d === 'object' ? d.value : d));
-  const labels = data.map((d, i) => (typeof d === 'object' && d.label ? d.label : `${i+1}`));
-  if (!values.length) return;
-  const color = opts.color || '#4F6EF7';
-  // Distrugge istanza precedente se esiste
-  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
-  el.innerHTML = '';
-  const chart = new ApexCharts(el, {
-    chart: { type: 'area', height: el.offsetHeight || 180, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 600 }, sparkline: { enabled: false } },
-    series: [{ name: opts.label || 'Valore', data: values }],
-    xaxis: { categories: labels, labels: { style: { colors: '#777', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
-    yaxis: { labels: { style: { colors: '#777', fontSize: '10px' }, formatter: v => Math.round(v) }, min: Math.min(...values) * 0.9 },
-    colors: [color],
-    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.0, stops: [0, 100] } },
-    stroke: { curve: 'smooth', width: 2 },
-    markers: { size: 3, colors: [color], strokeColors: color },
-    tooltip: { theme: 'dark', y: { formatter: v => (opts.currency ? '€' : '') + (v != null ? v.toFixed(2) : '—') } },
+// === PROOVD CHART MANAGER ===
+// Sistema centralizzato per tutti i grafici ApexCharts.
+// Ogni funzione destroy la precedente istanza per evitare memory leak.
+const ProovdCharts = {
+  _theme: {
+    background: 'transparent',
     grid: { borderColor: '#2A2A2A', strokeDashArray: 3 },
-    theme: { mode: 'dark' },
-  });
-  chart.render();
-  el._apexChart = chart;
+    colors: { primary: '#4F6EF7', accent: '#10B981', yellow: '#FBBF24', red: '#F87171', muted: '#777777' },
+    labels: { style: { colors: '#777', fontSize: '11px', fontFamily: 'Inter, sans-serif' } },
+  },
+
+  _mount(el, config) {
+    if (!el) return null;
+    if (typeof ApexCharts === 'undefined') { console.warn('[ProovdCharts] ApexCharts non disponibile'); return null; }
+    if (el._apexChart) { try { el._apexChart.destroy(); } catch(e) {} el._apexChart = null; }
+    el.innerHTML = '';
+    try {
+      const chart = new ApexCharts(el, config);
+      chart.render();
+      el._apexChart = chart;
+      return chart;
+    } catch(e) { console.warn('[ProovdCharts] Errore render:', e); return null; }
+  },
+
+  createAreaChart(containerId, series, opts={}) {
+    const el = document.getElementById(containerId);
+    if (!el) { console.warn('[ProovdCharts] Container non trovato:', containerId); return null; }
+    const colors = opts.colors || [this._theme.colors.primary, this._theme.colors.accent, this._theme.colors.yellow];
+    return this._mount(el, {
+      chart: { type: 'area', height: opts.height || el.offsetHeight || 200, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 700, easing: 'easeinout' }, fontFamily: 'Inter, sans-serif' },
+      series: series,
+      xaxis: { categories: opts.labels || [], labels: this._theme.labels, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: (opts.yaxis || [{ labels: { ...this._theme.labels, formatter: v => opts.currency ? '€'+Math.round(v) : (v != null ? parseFloat(v).toFixed(1) : '0') } }]),
+      colors: colors,
+      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.0, stops: [0, 100] } },
+      stroke: { curve: 'smooth', width: 2 },
+      markers: { size: 0, hover: { size: 4 } },
+      legend: opts.legend !== false ? { position: 'top', horizontalAlign: 'right', labels: { colors: '#999' }, fontSize: '12px' } : { show: false },
+      tooltip: { theme: 'dark', shared: true, intersect: false, y: { formatter: (v, { seriesIndex }) => { const prefix = (opts.currencyByIndex || [])[seriesIndex] !== false ? '€' : ''; return prefix + (v != null ? parseFloat(v).toFixed(2) : '—'); } } },
+      grid: this._theme.grid,
+      theme: { mode: 'dark' },
+    });
+  },
+
+  createLineChart(containerId, series, opts={}) {
+    const el = document.getElementById(containerId);
+    if (!el) { console.warn('[ProovdCharts] Container non trovato:', containerId); return null; }
+    const colors = opts.colors || [this._theme.colors.primary];
+    return this._mount(el, {
+      chart: { type: 'line', height: opts.height || el.offsetHeight || 180, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 600 }, fontFamily: 'Inter, sans-serif' },
+      series: series,
+      xaxis: { categories: opts.labels || [], labels: this._theme.labels, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { ...this._theme.labels, formatter: v => opts.currency ? '€'+parseFloat(v).toFixed(0) : (v != null ? parseFloat(v).toFixed(1) : '0') } },
+      colors: colors,
+      stroke: { curve: 'smooth', width: 2 },
+      markers: { size: 3 },
+      tooltip: { theme: 'dark', y: { formatter: v => (opts.currency ? '€' : '') + (v != null ? parseFloat(v).toFixed(2) : '—') } },
+      grid: this._theme.grid,
+      legend: { labels: { colors: '#999' } },
+      theme: { mode: 'dark' },
+    });
+  },
+
+  createBarChart(containerId, categories, series, opts={}) {
+    const el = document.getElementById(containerId);
+    if (!el) { console.warn('[ProovdCharts] Container non trovato:', containerId); return null; }
+    const horizontal = opts.horizontal !== false;
+    const colors = opts.colors || [this._theme.colors.primary, this._theme.colors.accent, this._theme.colors.yellow];
+    const h = opts.height || (horizontal ? categories.length * 44 + 60 : 260);
+    return this._mount(el, {
+      chart: { type: 'bar', height: h, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 500 }, fontFamily: 'Inter, sans-serif' },
+      plotOptions: { bar: { horizontal, borderRadius: 4, columnWidth: '60%', distributed: opts.distributed || false } },
+      series: series,
+      xaxis: { categories, labels: this._theme.labels, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { ...this._theme.labels, formatter: v => opts.currency ? '€'+parseFloat(v).toFixed(0) : (v != null ? parseFloat(v).toFixed(1) : '') } },
+      colors: colors,
+      dataLabels: { enabled: opts.dataLabels || false, style: { colors: ['#F0F0F0'], fontSize: '11px' }, formatter: v => opts.currency ? '€'+parseFloat(v).toFixed(0) : (v != null ? parseFloat(v).toFixed(2) : '') },
+      legend: opts.legend !== false ? { position: 'top', labels: { colors: '#999' }, fontSize: '12px' } : { show: false },
+      tooltip: { theme: 'dark', y: { formatter: v => (opts.currency ? '€' : '') + (v != null ? parseFloat(v).toFixed(2) : '—') } },
+      grid: this._theme.grid,
+      theme: { mode: 'dark' },
+    });
+  },
+
+  createGaugeChart(containerId, value, max, opts={}) {
+    const el = document.getElementById(containerId);
+    if (!el) { console.warn('[ProovdCharts] Container non trovato:', containerId); return null; }
+    const pct = Math.min((value / (max || 1)) * 100, 100);
+    const color = opts.color || (pct < 30 ? this._theme.colors.red : pct < 60 ? this._theme.colors.yellow : this._theme.colors.accent);
+    const label = opts.label || String(Math.round(value));
+    const size = opts.size || 140;
+    return this._mount(el, {
+      chart: { type: 'radialBar', height: size, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 800 }, fontFamily: 'Inter, sans-serif' },
+      series: [Math.round(pct)],
+      plotOptions: { radialBar: { startAngle: -90, endAngle: 90, hollow: { size: opts.hollow || '58%' }, track: { background: '#1A1A1A', strokeWidth: '100%', margin: 4 }, dataLabels: { name: { show: opts.sublabel !== false, offsetY: -4, fontSize: '11px', color: '#555', fontFamily: 'Inter, sans-serif' }, value: { offsetY: opts.valueOffsetY !== undefined ? opts.valueOffsetY : -10, fontSize: opts.valueFontSize || '20px', fontWeight: '700', color: color, fontFamily: 'Inter, sans-serif', formatter: () => label } } } },
+      colors: [color],
+      labels: [opts.sublabel || ''],
+      theme: { mode: 'dark' },
+    });
+  },
+
+  createSparkline(containerId, values, opts={}) {
+    const el = document.getElementById(containerId);
+    if (!el || !values || !values.length) return null;
+    const color = opts.color || '#AAFF00';
+    const h = opts.height || 32;
+    const w = opts.width || 80;
+    return this._mount(el, {
+      chart: { type: opts.type || 'line', height: h, width: w, background: 'transparent', sparkline: { enabled: true }, animations: { enabled: false }, fontFamily: 'Inter, sans-serif' },
+      series: [{ data: values }],
+      stroke: { curve: 'smooth', width: opts.strokeWidth || 1.5 },
+      colors: [color],
+      fill: opts.fill ? { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } } : { opacity: 0 },
+      tooltip: { enabled: true, theme: 'dark', x: { show: false }, y: { formatter: v => (opts.prefix || '') + (v != null ? parseFloat(v).toFixed(2) : '—') + (opts.suffix || '') } },
+      theme: { mode: 'dark' },
+    });
+  },
+
+  createFunnel(containerId, steps, opts={}) {
+    const el = document.getElementById(containerId);
+    if (!el || !steps.length) return null;
+    const colors = opts.colors || ['#4F6EF7', '#10B981', '#FBBF24', '#F87171'];
+    return this._mount(el, {
+      chart: { type: 'bar', height: opts.height || 220, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 500 }, fontFamily: 'Inter, sans-serif' },
+      plotOptions: { bar: { horizontal: true, borderRadius: 3, distributed: true, dataLabels: { position: 'right' } } },
+      series: [{ name: 'Valore', data: steps.map(s => s.value) }],
+      xaxis: { categories: steps.map(s => s.label), labels: this._theme.labels, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { ...this._theme.labels } },
+      colors: colors,
+      dataLabels: { enabled: true, textAnchor: 'start', style: { colors: ['#F0F0F0'], fontSize: '12px', fontFamily: 'Inter, sans-serif' }, formatter: (v, w2) => steps[w2.dataPointIndex]?.formatted || Math.round(v).toLocaleString('it-IT') },
+      legend: { show: false },
+      tooltip: { theme: 'dark', y: { formatter: (v, w2) => steps[w2.dataPointIndex]?.formatted || Math.round(v).toLocaleString('it-IT') } },
+      grid: this._theme.grid,
+      theme: { mode: 'dark' },
+    });
+  },
+
+  destroyAll(containerIds) {
+    (containerIds || []).forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el._apexChart) { try { el._apexChart.destroy(); } catch(e) {} el._apexChart = null; }
+    });
+  },
+};
+
+// Wrapper backward-compat — delegano a ProovdCharts
+function drawLineChart(data, containerId, opts={}) {
+  const values = data.map(d => (typeof d === 'object' ? d.value : d));
+  const labels = data.map((d, i) => (typeof d === 'object' && d.label ? d.label : String(i+1)));
+  ProovdCharts.createAreaChart(containerId, [{ name: opts.label || 'Valore', data: values }], { labels, height: opts.height, colors: [opts.color || '#4F6EF7'], currency: opts.currency, legend: false });
 }
 function drawBarChart(data, containerId, opts={}) {
-  const el = document.getElementById(containerId);
-  if (!el || !data.length) return;
-  const color = opts.color || '#4F6EF7';
-  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
-  el.innerHTML = '';
-  const chart = new ApexCharts(el, {
-    chart: { type: 'bar', height: data.length * 40 + 20, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 500 } },
-    plotOptions: { bar: { horizontal: true, borderRadius: 4, dataLabels: { position: 'top' } } },
-    series: [{ name: opts.label || 'Valore', data: data.map(d => d.value) }],
-    xaxis: { categories: data.map(d => d.label), labels: { style: { colors: '#777', fontSize: '11px' } } },
-    yaxis: { labels: { style: { colors: '#777', fontSize: '11px' } } },
-    colors: [color],
-    dataLabels: { enabled: true, style: { colors: ['#F0F0F0'], fontSize: '11px' }, formatter: v => v.toFixed ? v.toFixed(2) : v },
-    tooltip: { theme: 'dark' },
-    grid: { borderColor: '#2A2A2A', strokeDashArray: 3 },
-    theme: { mode: 'dark' },
-  });
-  chart.render();
-  el._apexChart = chart;
+  ProovdCharts.createBarChart(containerId, data.map(d => d.label), [{ name: opts.label || 'Valore', data: data.map(d => d.value) }], { horizontal: true, colors: [opts.color || '#4F6EF7'], dataLabels: true, legend: false, currency: opts.currency });
 }
 function drawGauge(value, max, containerId) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const pct = Math.min(value / max, 1);
-  const color = pct < 0.3 ? '#F87171' : pct < 0.6 ? '#FBBF24' : '#34D399';
-  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
-  el.innerHTML = '';
-  const chart = new ApexCharts(el, {
-    chart: { type: 'radialBar', height: 140, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 700 } },
-    series: [Math.round(pct * 100)],
-    plotOptions: { radialBar: { startAngle: -90, endAngle: 90, hollow: { size: '60%' }, track: { background: '#1A1A1A', strokeWidth: '100%' }, dataLabels: { name: { show: false }, value: { offsetY: -8, fontSize: '20px', fontWeight: '700', color: color, formatter: () => `${Math.round(value)}` } } } },
-    colors: [color],
-    labels: [`/ ${max}`],
-    theme: { mode: 'dark' },
-  });
-  chart.render();
-  el._apexChart = chart;
+  ProovdCharts.createGaugeChart(containerId, value, max, { size: 140, valueFontSize: '20px', valueOffsetY: -8, sublabel: false });
 }
 function drawSparkline(data, containerId) {
-  const el = document.getElementById(containerId);
-  if (!el || !data.length) return;
   const values = data.map(d => (typeof d === 'object' ? d.value : d));
-  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
-  el.innerHTML = '';
-  const chart = new ApexCharts(el, {
-    chart: { type: 'line', height: 32, width: 80, background: 'transparent', sparkline: { enabled: true }, animations: { enabled: false } },
-    series: [{ data: values }],
-    stroke: { curve: 'smooth', width: 1.5 },
-    colors: ['#AAFF00'],
-    tooltip: { enabled: false },
-    theme: { mode: 'dark' },
-  });
-  chart.render();
-  el._apexChart = chart;
+  ProovdCharts.createSparkline(containerId, values, { color: '#AAFF00', height: 32, width: 80 });
 }
 
 // === ROUTER ===
@@ -1637,14 +1715,38 @@ function renderKPICards() {
     <div class="card kpi-card">
       <div style="font-size:12px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">ROI Medio <span class="tooltip" data-tip="Return On Ad Spend: ricavo generato per ogni euro speso in advertising">ROAS</span></div>
       <div style="font-size:36px;font-weight:700;color:${roasColor};margin-bottom:4px">${avgRoas > 0 ? avgRoas + 'x' : '—'}</div>
-      <div style="font-size:13px;color:#777">${avgRoas >= 3 ? '🔥 Eccellente' : avgRoas >= 1 ? '✅ Positivo' : avgRoas > 0 ? '⚠️ In perdita' : 'Nessuna campagna attiva'}</div>
+      <div style="font-size:11px;color:#777;margin-bottom:8px">${avgRoas >= 3 ? '🔥 Eccellente' : avgRoas >= 1 ? '✅ Positivo' : avgRoas > 0 ? '⚠️ In perdita' : 'Nessuna campagna attiva'}</div>
+      <div id="kpi-roas-spark" style="height:36px;width:100%"></div>
     </div>
   `;
 
-  // Draw score gauge
-  if (typeof drawGauge === 'function') {
-    drawGauge(score, 100, 'score-gauge');
+  drawGauge(score, 100, 'score-gauge');
+  renderKPISparklines();
+}
+
+function renderKPISparklines() {
+  const campaigns = (AppState.campaigns || []).filter(c => (c.dailyData || []).length > 1);
+  if (!campaigns.length) return;
+
+  // Aggrega ROAS giornaliero su tutte le campagne attive
+  const maxDays = Math.max(...campaigns.map(c => (c.dailyData || []).length));
+  const roasByDay = [];
+  for (let i = 0; i < maxDays; i++) {
+    let totalSpend = 0, totalRevenue = 0;
+    campaigns.forEach(c => {
+      const d = (c.dailyData || [])[i];
+      if (d) {
+        totalSpend += d.spent || 0;
+        const cvr = (platformBenchmarks[c.platform] || {}).cvr || 2;
+        totalRevenue += (d.conversions || d.clicks * cvr / 100) * (c.aov || 45);
+      }
+    });
+    roasByDay.push(totalSpend > 0 ? parseFloat((totalRevenue / totalSpend).toFixed(2)) : 0);
   }
+
+  ProovdCharts.createSparkline('kpi-roas-spark', roasByDay, {
+    color: '#10B981', height: 36, width: '100%', suffix: 'x', prefix: 'ROAS ', fill: true,
+  });
 }
 
 function renderPortfolioChart() {
@@ -1652,64 +1754,56 @@ function renderPortfolioChart() {
   if (!container) return;
 
   const campaigns = AppState.campaigns || [];
-  let data = [];
+  const labels = [];
+  const spendData = [];
+  const revenueData = [];
 
   if (campaigns.length === 0) {
-    // Trend finto positivo con varianza
-    let base = 480;
+    // Demo data positivo con varianza realistica
+    let spendBase = 45, revBase = 120;
     for (let i = 0; i < 7; i++) {
-      base += Math.random() * 20 - 5;
-      data.push({ label: `Giorno ${i+1}`, value: Math.max(400, base) });
+      labels.push('G' + (i + 1));
+      const s = parseFloat((spendBase + Math.random() * 15 - 5).toFixed(2));
+      const r = parseFloat((revBase + Math.random() * 40 - 10).toFixed(2));
+      spendData.push(Math.max(20, s));
+      revenueData.push(Math.max(60, r));
+      spendBase = s; revBase = r;
     }
   } else {
-    // Genera dati reali da spend campagne
-    for (let i = 0; i < 7; i++) {
-      const daySpend = campaigns.reduce((s, c) => {
-        const history = c.history || [];
-        return s + (history[i] ? history[i].spend : (c.spentBudget || 0) / 7);
-      }, 0);
-      data.push({ label: `G${i+1}`, value: parseFloat(daySpend.toFixed(2)) });
+    // Aggrega dati reali da dailyData delle campagne
+    const maxDays = Math.max(...campaigns.map(c => (c.dailyData || []).length), 7);
+    const days = Math.min(maxDays, 14);
+    for (let i = 0; i < days; i++) {
+      labels.push('G' + (i + 1));
+      let daySpend = 0, dayRevenue = 0;
+      campaigns.forEach(c => {
+        const d = (c.dailyData || [])[i];
+        if (d) {
+          daySpend += d.spent || 0;
+          const cvr = (platformBenchmarks[c.platform] || {}).cvr || 2;
+          dayRevenue += (d.conversions || d.clicks * (cvr / 100)) * (c.aov || 45);
+        }
+      });
+      spendData.push(parseFloat(daySpend.toFixed(2)));
+      revenueData.push(parseFloat(dayRevenue.toFixed(2)));
     }
   }
 
-  if (typeof drawLineChart === 'function') {
-    drawLineChart(data, 'portfolio-chart', { color: '#34D399', fill: true });
-  } else {
-    // Fallback SVG chart
-    const max = Math.max(...data.map(d => d.value)) * 1.1 || 1;
-    const w = container.clientWidth || 400;
-    const h = 180;
-    const pad = 30;
-    const denom = data.length > 1 ? data.length - 1 : 1;
-    const pts = data.map((d, i) => {
-      const x = pad + (i / denom) * (w - pad * 2);
-      const y = h - pad - ((d.value / max) * (h - pad * 2));
-      return `${x},${y}`;
-    }).join(' ');
-    const areaPath = `M${pad},${h-pad} ` + data.map((d, i) => {
-      const x = pad + (i / denom) * (w - pad * 2);
-      const y = h - pad - ((d.value / max) * (h - pad * 2));
-      return `L${x},${y}`;
-    }).join(' ') + ` L${w-pad},${h-pad} Z`;
-
-    container.innerHTML = `
-      <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#34D399" stop-opacity="0.2"/>
-            <stop offset="100%" stop-color="#34D399" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <path d="${areaPath}" fill="url(#areaGrad)"/>
-        <polyline points="${pts}" fill="none" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        ${data.map((d, i) => {
-          const x = pad + (i / denom) * (w - pad * 2);
-          const y = h - pad - ((d.value / max) * (h - pad * 2));
-          return `<circle cx="${x}" cy="${y}" r="3" fill="#34D399"/>
-                  <text x="${x}" y="${h-8}" text-anchor="middle" fill="#555" font-size="10">${d.label}</text>`;
-        }).join('')}
-      </svg>`;
-  }
+  ProovdCharts.createAreaChart('portfolio-chart', [
+    { name: 'Spesa', data: spendData },
+    { name: 'Revenue', data: revenueData },
+  ], {
+    labels,
+    height: 200,
+    colors: ['#4F6EF7', '#10B981'],
+    currency: true,
+    currencyByIndex: [true, true],
+    yaxis: [
+      { seriesName: 'Spesa', labels: { style: { colors: '#777', fontSize: '10px' }, formatter: v => '€' + Math.round(v) } },
+      { seriesName: 'Revenue', opposite: true, labels: { style: { colors: '#777', fontSize: '10px' }, formatter: v => '€' + Math.round(v) } },
+    ],
+    legend: true,
+  });
 }
 
 function renderActiveCampaignsList() {
@@ -3421,6 +3515,21 @@ function renderLiveManager() {
     </div>`;
 
   window._lmCurrentFilter = 'all';
+  setTimeout(renderLMSparklines, 0);
+}
+
+function renderLMSparklines() {
+  const campaigns = AppState.campaigns || [];
+  campaigns.forEach(c => {
+    if (!c.dailyData || c.dailyData.length < 2) return;
+    const el = document.getElementById('lm-spark-' + c.id);
+    if (!el) return;
+    const spendValues = c.dailyData.map(d => parseFloat((d.spent || 0).toFixed(2)));
+    const color = c.status === 'active' ? '#10B981' : c.status === 'paused' ? '#FBBF24' : '#777';
+    ProovdCharts.createSparkline('lm-spark-' + c.id, spendValues, {
+      color, height: 36, width: '100%', prefix: '€', fill: true,
+    });
+  });
 }
 
 function renderLMCard(c) {
@@ -3470,6 +3579,12 @@ function renderLMCard(c) {
       </div>`).join('')}
     </div>
 
+    ${(c.dailyData && c.dailyData.length > 1) ? `
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Andamento Spesa</div>
+      <div id="lm-spark-${c.id}" style="height:36px;width:100%"></div>
+    </div>` : ''}
+
     <div style="display:flex;gap:8px">
       ${c.status === 'active' ?
         `<button onclick="pauseCampaign('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:7px;font-size:12px;color:var(--muted);cursor:pointer">⏸ Pausa</button>` :
@@ -3501,6 +3616,7 @@ function lmFilter(filter) {
     btn.style.borderColor = isActive ? 'var(--primary)' : 'var(--border)';
     btn.style.color = isActive ? '#fff' : 'var(--muted)';
   });
+  setTimeout(renderLMSparklines, 0);
 }
 
 function pauseCampaign(id) {
@@ -3574,6 +3690,7 @@ function renderAnalyticsLab() {
         ${renderALCalculator()}
       </div>
     </div>`;
+  setTimeout(() => renderALCalcCharts(500, 8, 1.5, 2, 45), 0);
 }
 
 function alTab(tab) {
@@ -3585,10 +3702,19 @@ function alTab(tab) {
   });
   const content = document.getElementById('al-content');
   if (!content) return;
-  if (tab === 'calc') content.innerHTML = renderALCalculator();
-  else if (tab === 'scenario') content.innerHTML = renderALScenario();
-  else if (tab === 'whatif') content.innerHTML = renderALWhatIf();
-  else if (tab === 'benchmarks') content.innerHTML = renderALBenchmarks();
+  if (tab === 'calc') {
+    content.innerHTML = renderALCalculator();
+    setTimeout(() => renderALCalcCharts(500, 8, 1.5, 2, 45), 0);
+  } else if (tab === 'scenario') {
+    content.innerHTML = renderALScenario();
+    setTimeout(renderALScenarioChart, 0);
+  } else if (tab === 'whatif') {
+    content.innerHTML = renderALWhatIf();
+    setTimeout(() => calcWhatIf(), 0);
+  } else if (tab === 'benchmarks') {
+    content.innerHTML = renderALBenchmarks();
+    setTimeout(renderALBenchmarkChart, 0);
+  }
 }
 
 function renderALCalculator() {
@@ -3605,10 +3731,18 @@ function renderALCalculator() {
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">${label}</label>
         <input id="${id}" type="${type}" value="${value}" placeholder="${placeholder}" oninput="calcKPIs()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;box-sizing:border-box">
       </div>`).join('')}
+      <div style="margin-top:8px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">ROAS Stimato</div>
+        <div id="al-roas-gauge" style="height:130px"></div>
+      </div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
-      <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 20px">Risultati Stimati</h3>
+      <h3 style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 16px">Risultati Stimati</h3>
       <div id="al-calc-results">${getCalcResults(500,8,1.5,2,45)}</div>
+      <div style="margin-top:20px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Funnel di Conversione</div>
+        <div id="al-funnel-chart" style="height:220px"></div>
+      </div>
     </div>
   </div>`;
 }
@@ -3637,8 +3771,36 @@ function getCalcResults(budget,cpm,ctr,cvr,aov) {
 
 function calcKPIs() {
   const get = id => parseFloat(document.getElementById(id)?.value)||0;
+  const budget=get('al-budget'), cpm=get('al-cpm'), ctr=get('al-ctr'), cvr=get('al-cvr'), aov=get('al-aov');
   const res = document.getElementById('al-calc-results');
-  if (res) res.innerHTML = getCalcResults(get('al-budget'),get('al-cpm'),get('al-ctr'),get('al-cvr'),get('al-aov'));
+  if (res) res.innerHTML = getCalcResults(budget, cpm, ctr, cvr, aov);
+  renderALCalcCharts(budget, cpm, ctr, cvr, aov);
+}
+
+function renderALCalcCharts(budget, cpm, ctr, cvr, aov) {
+  const impressions = cpm > 0 ? (budget / cpm) * 1000 : 0;
+  const clicks = impressions * (ctr / 100);
+  const conversions = clicks * (cvr / 100);
+  const revenue = conversions * aov;
+  const roas = budget > 0 ? revenue / budget : 0;
+
+  // Gauge ROAS — scala 0-10x
+  ProovdCharts.createGaugeChart('al-roas-gauge', Math.min(roas, 10), 10, {
+    size: 130,
+    label: roas.toFixed(2) + 'x',
+    sublabel: 'ROAS',
+    valueFontSize: '18px',
+    valueOffsetY: -4,
+    color: roas >= 3 ? '#10B981' : roas >= 1 ? '#FBBF24' : '#F87171',
+  });
+
+  // Funnel di conversione
+  ProovdCharts.createFunnel('al-funnel-chart', [
+    { label: 'Impression', value: Math.round(impressions), formatted: Math.round(impressions).toLocaleString('it-IT') },
+    { label: 'Click', value: Math.round(clicks), formatted: Math.round(clicks).toLocaleString('it-IT') },
+    { label: 'Conversioni', value: Math.round(conversions), formatted: Math.round(conversions).toLocaleString('it-IT') },
+    { label: 'Revenue', value: parseFloat(revenue.toFixed(2)), formatted: '€' + revenue.toFixed(2) },
+  ], { height: 220, colors: ['#4F6EF7', '#10B981', '#FBBF24', '#F87171'] });
 }
 
 function renderALScenario() {
@@ -3648,7 +3810,7 @@ function renderALScenario() {
     {name:'Ottimistico',budget:1000,cpm:6,ctr:2.5,cvr:3,aov:50},
   ];
   return `<div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
       ${scenarios.map((s,i) => {
         const impressions = (s.budget/s.cpm)*1000;
         const clicks = impressions*(s.ctr/100);
@@ -3656,8 +3818,8 @@ function renderALScenario() {
         const revenue = conversions*s.aov;
         const roas = revenue/s.budget;
         const isBest = i === 2;
-        return `<div style="background:var(--surface);border:2px solid ${isBest?'var(--accent-text)':'var(--border)'};border-radius:var(--radius);padding:20px;position:relative">
-          ${isBest?`<span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent-text);color:#000;font-size:10px;font-weight:700;padding:2px 12px;border-radius:100px">BEST</span>`:''}
+        return `<div style="background:var(--surface);border:2px solid ${isBest?'#10B981':'var(--border)'};border-radius:var(--radius);padding:20px;position:relative">
+          ${isBest?'<span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#10B981;color:#000;font-size:10px;font-weight:700;padding:2px 12px;border-radius:100px">BEST</span>':''}
           <h3 style="font-size:14px;font-weight:700;color:var(--text);margin:0 0 14px;text-align:center">${s.name}</h3>
           ${[
             {label:'Budget',value:'€'+s.budget},
@@ -3674,7 +3836,35 @@ function renderALScenario() {
         </div>`;
       }).join('')}
     </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+      <h3 style="font-size:14px;font-weight:600;color:var(--text);margin:0 0 16px">Confronto Scenari</h3>
+      <div id="al-scenario-chart" style="height:260px"></div>
+    </div>
   </div>`;
+}
+
+function renderALScenarioChart() {
+  const scenarios = [
+    {name:'Conservativo',budget:300,cpm:10,ctr:1,cvr:1.5,aov:40},
+    {name:'Base',budget:500,cpm:8,ctr:1.5,cvr:2,aov:45},
+    {name:'Ottimistico',budget:1000,cpm:6,ctr:2.5,cvr:3,aov:50},
+  ];
+  const cats = scenarios.map(s => s.name);
+  const revenue = scenarios.map(s => { const imp=(s.budget/s.cpm)*1000; return parseFloat((imp*(s.ctr/100)*(s.cvr/100)*s.aov).toFixed(2)); });
+  const roas = scenarios.map(s => { const rev=revenue[scenarios.indexOf(s)]; return parseFloat((rev/s.budget).toFixed(2)); });
+  const cpa = scenarios.map(s => { const imp=(s.budget/s.cpm)*1000; const conv=imp*(s.ctr/100)*(s.cvr/100); return conv>0 ? parseFloat((s.budget/conv).toFixed(2)) : 0; });
+
+  ProovdCharts.createBarChart('al-scenario-chart', cats, [
+    { name: 'Revenue (€)', data: revenue },
+    { name: 'Budget (€)', data: scenarios.map(s => s.budget) },
+  ], {
+    horizontal: false,
+    height: 260,
+    colors: ['#10B981', '#4F6EF7'],
+    currency: true,
+    dataLabels: true,
+    legend: true,
+  });
 }
 
 function renderALWhatIf() {
@@ -3700,11 +3890,13 @@ function renderALWhatIf() {
             <span style="font-size:11px;color:var(--muted)">${max}</span>
           </div>
         </div>`).join('')}
+        <div id="wi-results" style="background:var(--surface2);border-radius:10px;padding:16px;margin-top:8px">
+          <p style="color:var(--muted);font-size:13px;margin:0">Muovi gli slider per vedere i risultati</p>
+        </div>
       </div>
       <div>
-        <div id="wi-results" style="background:var(--surface2);border-radius:10px;padding:20px">
-          <p style="color:var(--muted);font-size:13px">Muovi gli slider per vedere i risultati</p>
-        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Budget → Revenue → ROAS</div>
+        <div id="wi-chart" style="height:280px"></div>
       </div>
     </div>
   </div>`;
@@ -3712,58 +3904,100 @@ function renderALWhatIf() {
 
 function calcWhatIf() {
   const get = id => parseFloat(document.getElementById(id)?.value)||0;
-  const budget=get('wi-budget'),ctr=get('wi-ctr'),cvr=get('wi-cvr'),aov=get('wi-aov');
-  const impressions = budget/8*1000;
-  const clicks = impressions*(ctr/100);
-  const conversions = clicks*(cvr/100);
-  const revenue = conversions*aov;
-  const roas = revenue/budget;
+  const budget=get('wi-budget'), ctr=get('wi-ctr'), cvr=get('wi-cvr'), aov=get('wi-aov');
+  const impressions = budget / 8 * 1000;
+  const clicks = impressions * (ctr / 100);
+  const conversions = clicks * (cvr / 100);
+  const revenue = conversions * aov;
+  const roas = budget > 0 ? revenue / budget : 0;
   const el = document.getElementById('wi-results');
-  if (!el) return;
-  el.innerHTML = [
-    {label:'Impressioni',value:Math.round(impressions).toLocaleString('it-IT')},
-    {label:'Click',value:Math.round(clicks).toLocaleString('it-IT')},
-    {label:'Conversioni',value:Math.round(conversions)},
-    {label:'Revenue',value:'€'+revenue.toFixed(2)},
-    {label:'ROAS',value:roas.toFixed(2)+'x',highlight:true,good:roas>=3},
-  ].map(({label,value,highlight,good}) => `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${label}</div>
-    <div style="font-size:${highlight?'22':'16'}px;font-weight:700;color:${highlight?(good?'var(--accent-text)':'var(--red)'):'var(--text)'};margin-top:2px">${value}</div>
-  </div>`).join('');
+  if (el) {
+    el.innerHTML = [
+      {label:'Impressioni',value:Math.round(impressions).toLocaleString('it-IT')},
+      {label:'Click',value:Math.round(clicks).toLocaleString('it-IT')},
+      {label:'Conversioni',value:Math.round(conversions)},
+      {label:'Revenue',value:'€'+revenue.toFixed(2)},
+      {label:'ROAS',value:roas.toFixed(2)+'x',highlight:true,good:roas>=3},
+    ].map(({label,value,highlight,good}) => `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${label}</div>
+      <div style="font-size:${highlight?'20':'15'}px;font-weight:700;color:${highlight?(good?'#10B981':'#F87171'):'var(--text)'};margin-top:2px">${value}</div>
+    </div>`).join('');
+  }
+  // Grafico dinamico: confronto Budget vs Revenue con ROAS in tooltip
+  const wiChartEl = document.getElementById('wi-chart');
+  if (wiChartEl) {
+    ProovdCharts.createBarChart('wi-chart', ['Budget', 'Revenue', 'Conversioni x10'], [
+      { name: 'Valore (€)', data: [parseFloat(budget.toFixed(2)), parseFloat(revenue.toFixed(2)), parseFloat((conversions*10).toFixed(2))] },
+    ], {
+      horizontal: false,
+      height: 280,
+      colors: ['#4F6EF7', '#10B981', '#FBBF24'],
+      distributed: true,
+      currency: true,
+      dataLabels: true,
+      legend: false,
+    });
+  }
 }
 
 function renderALBenchmarks() {
   const benches = [
-    {platform:'Meta Ads',cpm:'€6-12',ctr:'0.9-1.5%',cvr:'1-3%',cpc:'€0.5-1.5',color:'#1877F2'},
-    {platform:'Google Search',cpm:'€8-15',ctr:'3-8%',cvr:'3-6%',cpc:'€0.8-3',color:'#4285F4'},
-    {platform:'TikTok Ads',cpm:'€4-8',ctr:'0.5-1%',cvr:'0.5-2%',cpc:'€0.3-1',color:'#69C9D0'},
-    {platform:'LinkedIn Ads',cpm:'€20-40',ctr:'0.3-0.8%',cvr:'2-5%',cpc:'€3-8',color:'#0A66C2'},
-    {platform:'YouTube Ads',cpm:'€5-10',ctr:'0.1-0.4%',cvr:'1-3%',cpc:'€0.5-2',color:'#FF0000'},
-    {platform:'Pinterest Ads',cpm:'€3-8',ctr:'0.2-0.5%',cvr:'0.5-1.5%',cpc:'€0.3-1',color:'#E60023'},
+    {platform:'Meta Ads',cpm:'€8-12',ctr:'0.9-1.3%',cvr:'1-3%',cpc:'€0.7-1.5',color:'#1877F2'},
+    {platform:'Google Search',cpm:'cpc-based',ctr:'4-8%',cvr:'5-8%',cpc:'€1.5-4',color:'#4285F4'},
+    {platform:'TikTok Ads',cpm:'€8-12',ctr:'0.4-0.8%',cvr:'1-3%',cpc:'€1-2',color:'#69C9D0'},
+    {platform:'LinkedIn Ads',cpm:'€25-38',ctr:'0.3-0.5%',cvr:'4-8%',cpc:'€5-10',color:'#0A66C2'},
+    {platform:'YouTube Ads',cpm:'€7-11',ctr:'0.6-1%',cvr:'0.8-1.5%',cpc:'€0.8-1.5',color:'#FF0000'},
+    {platform:'Pinterest Ads',cpm:'€7-12',ctr:'0.2-0.4%',cvr:'1-2.5%',cpc:'€2-4',color:'#E60023'},
   ];
-  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
-    <table style="width:100%;border-collapse:collapse">
-      <thead>
-        <tr style="background:var(--surface2)">
-          ${['Piattaforma','CPM','CTR','CVR','CPC'].map(h => `<th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${h}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        ${benches.map(b => `<tr style="border-top:1px solid var(--border)">
-          <td style="padding:12px 16px">
-            <div style="display:flex;align-items:center;gap:8px">
-              <div style="width:10px;height:10px;border-radius:50%;background:${b.color};flex-shrink:0"></div>
-              <span style="font-size:13px;font-weight:500;color:var(--text)">${b.platform}</span>
-            </div>
-          </td>
-          <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.cpm}</td>
-          <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.ctr}</td>
-          <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.cvr}</td>
-          <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.cpc}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
+  return `<div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px">
+      <h3 style="font-size:14px;font-weight:600;color:var(--text);margin:0 0 16px">CPM Medio per Piattaforma (2024) — €</h3>
+      <div id="al-bench-chart" style="height:240px"></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--surface2)">
+            ${['Piattaforma','CPM','CTR','CVR','CPC'].map(h => `<th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${h}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${benches.map(b => `<tr style="border-top:1px solid var(--border)">
+            <td style="padding:12px 16px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:10px;height:10px;border-radius:50%;background:${b.color};flex-shrink:0"></div>
+                <span style="font-size:13px;font-weight:500;color:var(--text)">${b.platform}</span>
+              </div>
+            </td>
+            <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.cpm}</td>
+            <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.ctr}</td>
+            <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.cvr}</td>
+            <td style="padding:12px 16px;font-size:13px;color:var(--muted)">${b.cpc}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
   </div>`;
+}
+
+function renderALBenchmarkChart() {
+  // Usa valori medi reali dal platformBenchmarks già aggiornato
+  const platforms = ['Meta Ads','TikTok','YouTube','Pinterest','LinkedIn'];
+  const keys = ['meta','tiktok','youtube','pinterest','linkedin'];
+  const cpmVals = keys.map(k => platformBenchmarks[k] ? parseFloat(platformBenchmarks[k].cpm.toFixed(1)) : 0);
+  const ctrVals = keys.map(k => platformBenchmarks[k] ? parseFloat(platformBenchmarks[k].ctr.toFixed(2)) : 0);
+
+  ProovdCharts.createBarChart('al-bench-chart', platforms, [
+    { name: 'CPM (€)', data: cpmVals },
+    { name: 'CTR (%)', data: ctrVals },
+  ], {
+    horizontal: false,
+    height: 240,
+    colors: ['#4F6EF7', '#10B981'],
+    dataLabels: true,
+    legend: true,
+    currency: false,
+  });
 }
 
 // Industry benchmarks — all platforms × all industries with realistic data
@@ -4414,20 +4648,15 @@ function getScoreLabel(score) {
 }
 
 function drawScoreGauge(value, containerId) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const color = value >= 70 ? '#34D399' : value >= 50 ? '#4F6EF7' : '#FF6B35';
-  if (el._apexChart) { el._apexChart.destroy(); el._apexChart = null; }
-  el.innerHTML = '';
-  const chart = new ApexCharts(el, {
-    chart: { type: 'radialBar', height: 160, width: 160, background: 'transparent', toolbar: { show: false }, animations: { enabled: true, speed: 800 } },
-    series: [value],
-    plotOptions: { radialBar: { startAngle: -90, endAngle: 90, hollow: { size: '55%' }, track: { background: '#1A1A1A' }, dataLabels: { name: { show: false }, value: { offsetY: -10, fontSize: '26px', fontWeight: '900', fontFamily: 'Inter, sans-serif', color: color, formatter: v => Math.round(v) } } } },
-    colors: [color],
-    theme: { mode: 'dark' },
+  ProovdCharts.createGaugeChart(containerId, value, 100, {
+    size: 160,
+    label: String(Math.round(value)),
+    valueFontSize: '26px',
+    valueOffsetY: -10,
+    hollow: '55%',
+    color: value >= 70 ? '#34D399' : value >= 50 ? '#4F6EF7' : '#FF6B35',
+    sublabel: false,
   });
-  chart.render();
-  el._apexChart = chart;
 }
 
 function renderScoreBreakdown() {
